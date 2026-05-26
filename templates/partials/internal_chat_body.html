@@ -1,0 +1,178 @@
+{# يتطلب في السياق: portal_slug = "shipping" | "warehouse" — وبقية متغيرات internal_chat #}
+<section class="support-page">
+  <div class="support-title">
+    <h1>💬 {% if portal_slug == 'shipping' %}محادثات داخلية - الشحن{% else %}محادثات داخلية - المستودع{% endif %}</h1>
+    <p class="support-title-sub">{% if portal_slug == 'shipping' %}تواصل داخلي مباشر بين فريق الشحن ومسؤول الشحن.{% else %}تواصل داخلي مباشر بين فريق التجهيز ومسؤول المستودع.{% endif %}</p>
+  </div>
+
+  {% if is_manager %}
+  <div style="display:grid; grid-template-columns:300px 1fr; gap:1rem;">
+    <aside class="support-chat-shell" style="overflow:auto; max-height:72vh;">
+      <div class="support-chat-head" style="border-bottom:none;">
+        <div class="support-chat-head__meta">
+          <div class="support-chat-head__title">قائمة المحادثات</div>
+          <div class="support-banner">{% if portal_slug == 'shipping' %}الواردة من مناديب الشحن{% else %}الواردة من مناديب المستودع{% endif %}</div>
+        </div>
+      </div>
+      <div style="padding:0.8rem;">
+        {% for t in threads %}
+        <a href="?thread_id={{ t.id }}" style="display:block; padding:0.6rem; border:1px solid rgba(15,23,42,0.08); border-radius:12px; margin-bottom:0.5rem; text-decoration:none; color:inherit; background:#fff;">
+          <div style="font-weight:900;">#{{ t.id }} - {{ t.staff_user.username }}</div>
+          <div style="font-size:0.82rem; color:#64748b;">{{ t.get_status_display }} - {{ t.updated_at|date:"Y-m-d H:i" }}</div>
+        </a>
+        {% empty %}
+        <div class="support-loading-text">لا توجد محادثات حالياً.</div>
+        {% endfor %}
+      </div>
+    </aside>
+
+    {% if selected_thread %}
+    <div class="support-chat-shell">
+      <div class="support-chat-head">
+        <div class="support-chat-head__icon">{% if portal_slug == 'shipping' %}🚚{% else %}🏭{% endif %}</div>
+        <div class="support-chat-head__meta">
+          <div class="support-chat-head__title">المحادثة #{{ selected_thread.id }} مع {{ selected_thread.staff_user.username }}</div>
+          <div class="support-banner">{% if portal_slug == 'shipping' %}الرد باسم مسؤول الشحن{% else %}الرد باسم مسؤول المستودع{% endif %}</div>
+        </div>
+      </div>
+      <div class="support-messages">
+        {% for m in chat_messages %}
+        <div class="support-msg {% if m.sender_type == 'staff' %}support-msg--customer{% elif m.sender_type == 'manager' %}support-msg--staff{% else %}support-msg--system{% endif %}{% if m.image and not m.text %} support-msg--image-only{% endif %}">
+          <div class="support-msg-sender{% if m.image and not m.text %} support-msg-sender--image{% endif %}">
+            {% if m.sender_type == 'system' %}
+              النظام
+            {% elif m.sender_user %}
+              {{ m.sender_user.username }}
+            {% else %}
+              {{ m.get_sender_type_display }}
+            {% endif %}
+          </div>
+          {% if m.text %}<div class="support-msg-text">{{ m.text }}</div>{% endif %}
+          {% if m.image %}
+          <div class="support-msg-image-wrap{% if not m.text %} support-msg-image-wrap--timed{% endif %}">
+            <a href="{{ m.image.url }}" target="_blank" rel="noopener">
+              <img class="support-msg-image" src="{{ m.image.url }}" alt="صورة مرفقة">
+            </a>
+            {% if not m.text %}
+            <div class="support-msg-meta support-msg-meta--overlay">{{ m.created_at|date:"H:i" }}</div>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if m.text or not m.image %}
+          <div class="support-msg-meta">{{ m.created_at|date:"H:i" }}</div>
+          {% endif %}
+        </div>
+        {% empty %}
+        <div class="support-loading-text">لا توجد رسائل بعد.</div>
+        {% endfor %}
+      </div>
+      <form method="post" enctype="multipart/form-data" class="support-input-area js-support-compose-form">
+        {% csrf_token %}
+        <input type="hidden" name="thread_id" value="{{ selected_thread.id }}">
+        <div class="support-preview-box js-support-preview-box" hidden>
+          <div class="support-preview-head">
+            <div class="support-preview-title">معاينة قبل الإرسال</div>
+            <button type="button" class="support-preview-clear js-support-preview-clear">إزالة الكل</button>
+          </div>
+          <div class="support-preview-grid js-support-preview-grid"></div>
+          <div class="support-preview-name js-support-preview-name"></div>
+        </div>
+        <div class="support-compose-row">
+          <div class="support-compose-main">
+            <textarea class="support-textarea support-textarea--compose" name="message" placeholder="اكتب ردك..."></textarea>
+          </div>
+          <div class="support-compose-side">
+            <input class="support-file-input js-support-file-input" type="file" name="image" accept="image/*" multiple hidden>
+            <label class="support-file-trigger">
+              <span class="support-file-trigger__icon">🖼️</span>
+              <span class="support-file-trigger__label">صورة</span>
+            </label>
+          </div>
+          <div class="support-compose-send">
+            <button class="support-send-mobile" type="submit" name="action" value="send" aria-label="إرسال">➜</button>
+          </div>
+        </div>
+        <div class="support-row">
+          <button class="support-btn support-btn--desktop-send" type="submit" name="action" value="send">إرسال</button>
+          <button class="support-secondary-btn" type="submit" name="action" value="close" onclick="return confirm('إغلاق المحادثة؟');">إغلاق</button>
+        </div>
+      </form>
+    </div>
+    {% else %}
+    <div class="support-chat-shell" style="display:grid; place-items:center; min-height:50vh;">
+      <div class="support-loading-text">اختر محادثة من القائمة.</div>
+    </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="support-chat-shell">
+    <div class="support-chat-head">
+      <div class="support-chat-head__icon">💬</div>
+      <div class="support-chat-head__meta">
+        <div class="support-chat-head__title">{% if portal_slug == 'shipping' %}التواصل مع مسؤول الشحن{% else %}التواصل مع مسؤول المستودع{% endif %}</div>
+        <div class="support-banner">أرسل رسالتك وسيتم الرد عليك عند توفر المسؤول</div>
+      </div>
+    </div>
+    <div class="support-messages">
+      {% for m in chat_messages %}
+      <div class="support-msg {% if m.sender_type == 'staff' %}support-msg--customer{% elif m.sender_type == 'manager' %}support-msg--staff{% else %}support-msg--system{% endif %}{% if m.image and not m.text %} support-msg--image-only{% endif %}">
+        <div class="support-msg-sender{% if m.image and not m.text %} support-msg-sender--image{% endif %}">
+          {% if m.sender_type == 'system' %}
+            النظام
+          {% elif m.sender_user %}
+            {{ m.sender_user.username }}
+          {% else %}
+            {{ m.get_sender_type_display }}
+          {% endif %}
+        </div>
+        {% if m.text %}<div class="support-msg-text">{{ m.text }}</div>{% endif %}
+        {% if m.image %}
+        <div class="support-msg-image-wrap{% if not m.text %} support-msg-image-wrap--timed{% endif %}">
+          <a href="{{ m.image.url }}" target="_blank" rel="noopener">
+            <img class="support-msg-image" src="{{ m.image.url }}" alt="صورة مرفقة">
+          </a>
+          {% if not m.text %}
+          <div class="support-msg-meta support-msg-meta--overlay">{{ m.created_at|date:"H:i" }}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+        {% if m.text or not m.image %}
+        <div class="support-msg-meta">{{ m.created_at|date:"H:i" }}</div>
+        {% endif %}
+      </div>
+      {% empty %}
+      <div class="support-loading-text">{% if portal_slug == 'shipping' %}ابدأ بإرسال أول رسالة لمسؤول الشحن.{% else %}ابدأ بإرسال أول رسالة لمسؤول المستودع.{% endif %}</div>
+      {% endfor %}
+    </div>
+    <form method="post" enctype="multipart/form-data" class="support-input-area js-support-compose-form">
+      {% csrf_token %}
+      <div class="support-preview-box js-support-preview-box" hidden>
+        <div class="support-preview-head">
+          <div class="support-preview-title">معاينة قبل الإرسال</div>
+          <button type="button" class="support-preview-clear js-support-preview-clear">إزالة الكل</button>
+        </div>
+        <div class="support-preview-grid js-support-preview-grid"></div>
+        <div class="support-preview-name js-support-preview-name"></div>
+      </div>
+      <div class="support-compose-row">
+        <div class="support-compose-main">
+          <textarea class="support-textarea support-textarea--compose" name="message" placeholder="{% if portal_slug == 'shipping' %}اكتب رسالتك لمسؤول الشحن...{% else %}اكتب رسالتك لمسؤول المستودع...{% endif %}"></textarea>
+        </div>
+        <div class="support-compose-side">
+          <input class="support-file-input js-support-file-input" type="file" name="image" accept="image/*" multiple hidden>
+          <label class="support-file-trigger">
+            <span class="support-file-trigger__icon">🖼️</span>
+            <span class="support-file-trigger__label">صورة</span>
+          </label>
+        </div>
+        <div class="support-compose-send">
+          <button class="support-send-mobile" type="submit" aria-label="إرسال">➜</button>
+        </div>
+      </div>
+      <div class="support-row">
+        <button class="support-btn support-btn--desktop-send" type="submit">إرسال</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</section>

@@ -1,0 +1,116 @@
+{% extends "manage/base_manage.html" %}
+{% load static %}
+{% block title %}طباعة بوليصة الطلب #{{ order.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .label-print-wrap { max-width: 900px; margin: 0 auto; }
+  .label-page { background: #fff; border: 2px dashed #cbd5e1; border-radius: 14px; padding: 1.5rem; }
+  .label-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom: 1.25rem; }
+  .brand { font-weight: 900; font-size: 1.35rem; color:#2c5f4f; }
+  .meta { text-align:left; }
+  .meta div { color:#334155; font-weight:700; }
+  .grid { display:grid; grid-template-columns: 1.2fr 0.8fr; gap: 1rem; }
+  .box { border:1px solid #e2e8f0; border-radius: 12px; padding: 1rem; background:#f8fafc; }
+  .box h3 { margin:0 0 0.6rem; font-size: 1rem; color:#0f172a; }
+  .kv { display:grid; grid-template-columns: 120px 1fr; gap:0.35rem 0.75rem; font-size: 0.95rem; }
+  .kv .k { color:#64748b; font-weight:800; }
+  .kv .v { color:#0f172a; font-weight:700; white-space: pre-line; }
+  .items { margin-top: 0.75rem; font-size: 0.95rem; }
+  .items li { margin: 0.15rem 0; }
+  .barcode-wrap { display:flex; flex-direction:column; gap:0.5rem; align-items:center; justify-content:center; background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding: 1rem; }
+  .qr-img { width: 190px; height: 190px; object-fit: contain; image-rendering: pixelated; }
+  .barcode-text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-weight:900; letter-spacing: 0.12em; }
+  .pay-row { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; padding: 0.75rem 1rem; border-radius: 12px; background:#fff; border:1px solid #e2e8f0; margin-top: 0.9rem; }
+  .pay-amount { font-size: 1.25rem; font-weight: 900; color:#0f172a; }
+  .print-actions { margin: 1rem 0; display:flex; gap:0.75rem; flex-wrap:wrap; align-items:center; }
+  .print-badge { font-size:0.85rem; color:#64748b; font-weight:700; }
+  @media print {
+    .manage-header, .manage-messages, .image-modal, .print-actions, .print-badge { display:none !important; }
+    body, .manage-body { background:#fff !important; }
+    .manage-main { padding: 0 !important; }
+    .label-page { border: none; border-radius: 0; padding: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block manage_content %}
+<div class="label-print-wrap">
+  <div class="print-actions">
+    <button type="button" class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
+    <a class="btn btn-secondary" href="{% url 'manage:order_detail' order.id %}">← رجوع لتفاصيل الطلب</a>
+    <span class="print-badge">نسخة من لوحة الإدارة — نفس بيانات بوليصة المستودع</span>
+  </div>
+
+  <div class="label-page">
+    <div class="label-header">
+      <div>
+        <div class="brand">شركة السريع للشحن</div>
+        <div style="color:#64748b; font-weight:800;">بوليصة شحن — طباعة إدارية</div>
+      </div>
+      <div class="meta">
+        <div>Order #{{ order.id }}</div>
+        {% if shipment and shipment.tracking_number %}
+        <div style="font-family: monospace;">Tracking: {{ shipment.tracking_number }}</div>
+        {% else %}
+        <div style="color:#64748b;">Tracking: -</div>
+        {% endif %}
+        <div>{{ order.created_at|date:"Y-m-d H:i" }}</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="box">
+        <h3>بيانات المستلم</h3>
+        <div class="kv">
+          <div class="k">الاسم</div><div class="v">{{ order.customer_name }}</div>
+          <div class="k">الجوال</div><div class="v">{{ order.customer_phone }}</div>
+          <div class="k">العنوان</div><div class="v">{{ order.address }}</div>
+        </div>
+
+        <h3 style="margin-top:1rem;">محتويات الطلب (مختصر)</h3>
+        <ul class="items">
+          {% for item in order.items.all %}
+          <li>
+            {{ item.display_product_name }}
+            {% if item.display_variant_label %} — النسخة: {{ item.display_variant_label }}{% endif %}
+            — الكمية: {{ item.quantity }}
+            — SKU: {{ item.display_sku }}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="box">
+        <h3>باركود</h3>
+        <div class="barcode-wrap">
+          <img class="qr-img" alt="QR" src="{% url 'manage:order_waybill_qr' order.id %}">
+          <div class="barcode-text">{{ label.code }}</div>
+          {% if shipment and shipment.tracking_number %}
+          <div class="barcode-text" style="font-size:0.85rem; color:#64748b;">{{ shipment.tracking_number }}</div>
+          {% endif %}
+        </div>
+
+        <div class="pay-row">
+          <div style="flex: 1; min-width: 220px;">
+            <div style="color:#64748b; font-weight:900; font-size:0.85rem;">المبلغ الإجمالي</div>
+            <div class="pay-amount">{{ order.total }} ر.س</div>
+          </div>
+          <div style="flex: 1; min-width: 220px;">
+            <div style="color:#64748b; font-weight:900; font-size:0.85rem;">عند الاستلام</div>
+            {% if order.payment_method == 'cash_on_delivery' %}
+              <div class="pay-amount">{{ order.total }} ر.س</div>
+            {% else %}
+              <div class="pay-amount">0 ر.س</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div style="margin-top:0.75rem; color:#64748b; font-size:0.85rem;">
+          إذا تعذر المسح: أدخل الكود أعلاه يدوياً في بوابة المستودع أو شركة الشحن.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

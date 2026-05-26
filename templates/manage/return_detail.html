@@ -1,0 +1,536 @@
+﻿{% extends "manage/base_manage.html" %}
+{% load static %}
+{% block title %}مرتجع #{{ return_obj.id }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/return-timeline.css' %}?v=20">
+{% endblock %}
+{% block manage_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 class="manage-page-title">🔄 تفاصيل المرتجع #{{ return_obj.id }}</h1>
+    <a href="{% url 'manage:returns_list' %}" class="btn btn-secondary">← قائمة المرتجعات</a>
+</div>
+
+<div class="manage-section">
+    <h2>📋 معلومات المرتجع</h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">رقم المرتجع:</strong>
+            <span style="font-size: 1.2rem; font-weight: 700; color: #2c5f4f;">#{{ return_obj.id }}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">الطلب الأصلي:</strong>
+            <a href="{% url 'manage:order_detail' return_obj.order.id %}" style="font-size: 1.2rem; font-weight: 700; color: #2c5f4f; text-decoration: underline;">
+                #{{ return_obj.order.id }}
+            </a>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">العميل:</strong>
+            {% if return_obj.user %}
+            <a href="{% url 'manage:user_detail' return_obj.user.id %}" style="color: #2c5f4f; text-decoration: underline;">
+                {{ return_obj.user.username }}
+            </a>
+            {% else %}
+            <span>{{ return_obj.order.customer_name }}</span>
+            {% endif %}
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">التاريخ:</strong>
+            <span>{{ return_obj.created_at|date:"Y-m-d H:i" }}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">عدد القطع:</strong>
+            <span style="font-size: 1.1rem; font-weight: 600;">{{ return_obj.total_items }} قطعة</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">مبلغ الاسترجاع:</strong>
+            <span style="font-size: 1.2rem; font-weight: 700; color: #dc3545;">{{ return_obj.refund_amount }} ر.س</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">الحالة:</strong>
+            <span class="badge" id="return-status-badge" style="
+                {% if return_obj.status == 'rejected' %}background:#fee2e2;color:#991b1b;
+                {% elif return_obj.status == 'completed' %}background:#d1fae5;color:#065f46;
+                {% elif return_obj.status == 'approved' %}background:#dbeafe;color:#1e40af;
+                {% elif return_obj.status == 'received' %}background:#ede9fe;color:#5b21b6;
+                {% else %}background:#fff3cd;color:#92400e;{% endif %}">
+                {{ return_obj.get_status_display }}
+            </span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">حالة الاسترداد:</strong>
+            <span class="badge" id="return-refund-status-badge" style="
+                {% if return_obj.refund_status == 'completed' %}background:#d1fae5;color:#065f46;
+                {% elif return_obj.refund_status == 'pending' %}background:#fff3cd;color:#92400e;
+                {% elif return_obj.refund_status == 'partial' %}background:#ede9fe;color:#5b21b6;
+                {% else %}background:#f1f5f9;color:#475569;{% endif %}">
+                {{ return_obj.get_refund_status_display }}
+            </span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">حالة المخزون:</strong>
+            <span class="badge" id="return-stock-status-badge" style="
+                {% if return_obj.stock_status == 'restocked' %}background:#d1fae5;color:#065f46;
+                {% elif return_obj.stock_status == 'damaged' %}background:#fee2e2;color:#991b1b;
+                {% else %}background:#f1f5f9;color:#475569;{% endif %}">
+                {{ return_obj.get_stock_status_display }}
+            </span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">السبب:</strong>
+            <span>{{ return_obj.get_reason_display }}</span>
+        </div>
+    </div>
+
+    {% if return_obj.reason_details %}
+    <div style="margin-top: 1.5rem;">
+        <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">تفاصيل السبب من العميل:</strong>
+        <p style="background: #fff3cd; padding: 1rem; border-radius: 6px; margin: 0; white-space: pre-line;">{{ return_obj.reason_details }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="manage-section">
+    <h2>📍 مسار المرتجع</h2>
+    <p style="color:#64748b;font-size:0.95rem;margin:0 0 1rem;">نفس الترتيب الظاهر للعميل في صفحة المرتجع؛ يتحدّث تلقائياً بعد كل إجراء سريع.</p>
+    <div id="return-timeline-root">
+        {% include 'store/partials/return_timeline.html' %}
+    </div>
+</div>
+
+<div class="manage-section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);" id="manage-return-quick-actions" data-post-url="{% url 'manage:return_detail' return_obj.pk %}">
+    <h2>⚡ إجراءات سريعة</h2>
+    
+    <div id="manage-return-quick-actions-inner" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        {% if next_statuses %}
+            {% for st_code, st_label in next_statuses %}
+            <form method="post" action="{% url 'manage:return_detail' return_obj.pk %}" style="margin: 0;" class="js-return-action-form" data-confirm="تأكيد الانتقال إلى: {{ st_label }}؟">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="advance">
+                <input type="hidden" name="new_status" value="{{ st_code }}">
+                <button type="submit" class="btn btn-primary">
+                    ▶ {{ st_label }}
+                </button>
+            </form>
+            {% endfor %}
+        {% endif %}
+
+        {% if return_obj.status == 'requested' or return_obj.status == 'reviewing' %}
+        <form method="post" action="{% url 'manage:return_detail' return_obj.pk %}" style="margin: 0;" class="js-return-action-form" data-confirm="هل أنت متأكد من رفض هذا المرتجع؟">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="reject">
+            <button type="submit" class="btn btn-danger">
+                ❌ رفض المرتجع
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    
+    {% if return_obj.status == 'received' %}
+    <div style="background: #d1e7dd; border: 1px solid #28a745; padding: 1rem; border-radius: 6px; margin-top: 1rem;">
+        ✅ <strong>تم استلام المنتجات:</strong> تم تحديث المخزون تلقائياً (محاكاة).
+    </div>
+    {% endif %}
+</div>
+
+<div class="manage-section">
+    <h2>📦 المنتجات المرتجعة ({{ return_obj.items.count }})</h2>
+    {% if return_obj.items.all %}
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الصورة</th>
+                    <th>SKU</th>
+                    <th>المنتج</th>
+                    <th>السعر عند الشراء</th>
+                    <th>الكمية المرتجعة</th>
+                    <th>حالة المنتج</th>
+                    <th>المجموع</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in return_obj.items.all %}
+                <tr>
+                    <td><strong>{{ forloop.counter }}</strong></td>
+                    <td>
+                        {% if item.product_id and item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.display_product_name }}" class="table-thumbnail">
+                        {% else %}
+                        <div class="table-placeholder">{{ item.display_product_name|slice:":1"|default:"?" }}</div>
+                        {% endif %}
+                    </td>
+                    <td><strong style="color: #6c757d; font-family: monospace; font-size: 0.9rem;">{{ item.display_product_sku }}</strong></td>
+                    <td>
+                        {% if item.product_id %}
+                        <a href="{% url 'manage:product_edit' item.product_id %}" style="color: var(--accent); text-decoration: underline;">
+                            {{ item.display_product_name }}
+                        </a>
+                        {% else %}
+                        <span>{{ item.display_product_name }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.price_at_purchase }} ر.س</td>
+                    <td><strong style="color: #dc3545;">{{ item.quantity }}</strong></td>
+                    <td>{{ item.condition|default:"--" }}</td>
+                    <td><strong style="color: #dc3545;">{{ item.subtotal }} ر.س</strong></td>
+                </tr>
+                {% endfor %}
+                <tr style="background: #f8f9fa; font-weight: bold; font-size: 1.1rem;">
+                    <td colspan="7" style="text-align: left; padding: 1rem;">إجمالي المبلغ المسترجع:</td>
+                    <td style="color: #dc3545; font-size: 1.3rem;">{{ return_obj.refund_amount }} ر.س</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">لا توجد منتجات مرتجعة.</p>
+    {% endif %}
+</div>
+
+<div class="manage-section">
+    <h2>📝 ملاحظات الإدارة</h2>
+    <form method="post" id="return-update-notes-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_notes">
+        <div class="form-group">
+            <label for="refund_amount">مبلغ الاسترداد (يمكن تعديله):</label>
+            <input type="number" step="0.01" name="refund_amount" id="refund_amount" class="input" value="{{ return_obj.refund_amount }}">
+        </div>
+        <div class="form-group">
+            <label for="admin_notes">ملاحظات داخلية للإدارة:</label>
+            <textarea name="admin_notes" id="admin_notes" rows="4" class="input" placeholder="أضف ملاحظاتك هنا...">{{ return_obj.admin_notes }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" id="return-update-notes-btn">💾 حفظ الملاحظات</button>
+        <div id="return-update-notes-msg" style="display:none; margin-top:0.65rem; font-weight:800; color:#065f46;">تم تحديث الملاحظات.</div>
+    </form>
+</div>
+
+<div class="manage-section">
+    <h2>⏱️ التواريخ</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">تاريخ الإنشاء:</strong>
+            <span>{{ return_obj.created_at|date:"Y-m-d H:i" }}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">آخر تحديث:</strong>
+            <span id="return-updated-at">{{ return_obj.updated_at|date:"Y-m-d H:i" }}</span>
+        </div>
+        {% if return_obj.completed_at %}
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">تاريخ الإكمال:</strong>
+            <span>{{ return_obj.completed_at|date:"Y-m-d H:i" }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<script>
+  (function () {
+    var form = document.getElementById('return-update-notes-form');
+    var btn = document.getElementById('return-update-notes-btn');
+    var msg = document.getElementById('return-update-notes-msg');
+    if (!form || !btn) return;
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      btn.disabled = true;
+      if (msg) msg.style.display = 'none';
+
+      fetch(getFormActionUrl(form), {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+        },
+        body: new FormData(form)
+      })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) throw new Error('save_failed');
+        if (msg) {
+          msg.textContent = data.message || 'تم تحديث الملاحظات.';
+          msg.style.display = 'block';
+          setTimeout(function () { msg.style.display = 'none'; }, 2500);
+        }
+        var updated = document.getElementById('return-updated-at');
+        if (updated && data.updated_at) updated.textContent = data.updated_at;
+        btn.disabled = false;
+      })
+      .catch(function () {
+        btn.disabled = false;
+      });
+    });
+  })();
+</script>
+<script>
+  (function () {
+    function csrfFromForm(form) {
+      var inp = form.querySelector('[name=csrfmiddlewaretoken]');
+      return (inp && inp.value) ? inp.value : (window.MANAGE_CSRF_TOKEN || '');
+    }
+
+    function rebuildQuickActions(data) {
+      var host = document.getElementById('manage-return-quick-actions');
+      var inner = document.getElementById('manage-return-quick-actions-inner');
+      if (!host || !inner) return;
+      var postUrl = host.getAttribute('data-post-url') || window.location.pathname;
+      var tok = document.querySelector('[name=csrfmiddlewaretoken]');
+      var csrf = (tok && tok.value) ? tok.value : (window.MANAGE_CSRF_TOKEN || '');
+      inner.innerHTML = '';
+
+      function addHidden(form, name, value) {
+        var h = document.createElement('input');
+        h.type = 'hidden';
+        h.name = name;
+        h.value = value;
+        form.appendChild(h);
+      }
+
+      var list = data.next_statuses || [];
+      for (var i = 0; i < list.length; i++) {
+        var row = list[i];
+        var code = row.code || '';
+        var label = row.label || code;
+        var f = document.createElement('form');
+        f.method = 'post';
+        f.action = postUrl;
+        f.className = 'js-return-action-form';
+        f.style.margin = '0';
+        f.setAttribute('data-confirm', 'تأكيد الانتقال إلى: ' + label + '؟');
+        addHidden(f, 'csrfmiddlewaretoken', csrf);
+        addHidden(f, 'action', 'advance');
+        addHidden(f, 'new_status', code);
+        var b = document.createElement('button');
+        b.type = 'submit';
+        b.className = 'btn btn-primary';
+        b.appendChild(document.createTextNode('▶ ' + label));
+        f.appendChild(b);
+        inner.appendChild(f);
+      }
+      if (data.show_reject_button) {
+        var fr = document.createElement('form');
+        fr.method = 'post';
+        fr.action = postUrl;
+        fr.className = 'js-return-action-form';
+        fr.style.margin = '0';
+        fr.setAttribute('data-confirm', 'هل أنت متأكد من رفض هذا المرتجع؟');
+        addHidden(fr, 'csrfmiddlewaretoken', csrf);
+        addHidden(fr, 'action', 'reject');
+        var br = document.createElement('button');
+        br.type = 'submit';
+        br.className = 'btn btn-danger';
+        br.appendChild(document.createTextNode('❌ رفض المرتجع'));
+        fr.appendChild(br);
+        inner.appendChild(fr);
+      }
+      if (!inner.children.length) {
+        var empty = document.createElement('p');
+        empty.className = 'empty-msg';
+        empty.style.margin = '0';
+        empty.textContent = 'لا توجد إجراءات متاحة لهذه الحالة.';
+        inner.appendChild(empty);
+      }
+    }
+
+    document.addEventListener('submit', function (e) {
+      var form = e.target.closest('form.js-return-action-form');
+      if (!form) return;
+      e.preventDefault();
+
+      var confirmMsg = form.getAttribute('data-confirm');
+      if (confirmMsg && !window.confirm(confirmMsg)) return;
+
+      var btn = form.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+
+      fetch(getFormActionUrl(form), {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrfFromForm(form)
+        },
+        body: new FormData(form)
+      })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) {
+          return r.text().then(function () {
+            throw new Error('انتهت الجلسة أو تم رفض الطلب. حدّث الصفحة ثم أعد المحاولة.');
+          });
+        }
+        return r.json().then(function (data) {
+          if (!r.ok || !data || data.success === false) {
+            throw new Error((data && data.error) ? data.error : 'تعذر تنفيذ العملية.');
+          }
+          return data;
+        });
+      })
+      .then(function (data) {
+        var st = document.getElementById('return-status-badge');
+        if (st && data.status_display) {
+          st.textContent = data.status_display;
+          if (data.status === 'rejected') {
+            st.style.background = '#fee2e2'; st.style.color = '#991b1b';
+          } else if (data.status === 'completed') {
+            st.style.background = '#d1fae5'; st.style.color = '#065f46';
+          } else if (data.status === 'approved') {
+            st.style.background = '#dbeafe'; st.style.color = '#1e40af';
+          } else if (data.status === 'received') {
+            st.style.background = '#ede9fe'; st.style.color = '#5b21b6';
+          } else {
+            st.style.background = '#fff3cd'; st.style.color = '#92400e';
+          }
+        }
+        var rs = document.getElementById('return-refund-status-badge');
+        if (rs && data.refund_status_display) {
+          rs.textContent = data.refund_status_display;
+          if (data.refund_status === 'completed') {
+            rs.style.background = '#d1fae5'; rs.style.color = '#065f46';
+          } else if (data.refund_status === 'pending') {
+            rs.style.background = '#fff3cd'; rs.style.color = '#92400e';
+          } else if (data.refund_status === 'partial') {
+            rs.style.background = '#ede9fe'; rs.style.color = '#5b21b6';
+          } else {
+            rs.style.background = '#f1f5f9'; rs.style.color = '#475569';
+          }
+        }
+        var ss = document.getElementById('return-stock-status-badge');
+        if (ss && data.stock_status_display) {
+          ss.textContent = data.stock_status_display;
+          if (data.stock_status === 'restocked') {
+            ss.style.background = '#d1fae5'; ss.style.color = '#065f46';
+          } else if (data.stock_status === 'damaged') {
+            ss.style.background = '#fee2e2'; ss.style.color = '#991b1b';
+          } else {
+            ss.style.background = '#f1f5f9'; ss.style.color = '#475569';
+          }
+        }
+        var updated = document.getElementById('return-updated-at');
+        if (updated && data.updated_at) updated.textContent = data.updated_at;
+        var refundInput = document.getElementById('refund_amount');
+        if (refundInput && data.refund_amount !== undefined) refundInput.value = data.refund_amount;
+        rebuildQuickActions(data);
+        var tlRoot = document.getElementById('return-timeline-root');
+        if (tlRoot && data.timeline_html) {
+          tlRoot.innerHTML = data.timeline_html;
+        }
+        if (typeof showManageSuccess === 'function') {
+          showManageSuccess(data.message || 'تم تنفيذ العملية بنجاح.');
+        }
+        if (btn) btn.disabled = false;
+      })
+      .catch(function (err) {
+        if (btn) btn.disabled = false;
+        var msg = (err && err.message) ? err.message : 'تعذر تنفيذ العملية. حاول مرة أخرى.';
+        if (typeof showManageError === 'function') {
+          showManageError(msg);
+        } else {
+          alert(msg);
+        }
+      });
+    });
+  })();
+
+  /* ─── polling تلقائي لتحديث حالة المرتجع بدون reload ─── */
+  (function () {
+    'use strict';
+    var pollUrl = "{% url 'manage:return_detail_live_state' return_obj.pk %}";
+    var lastSig = "{{ return_obj.status }}|{{ return_obj.refund_status|default:'' }}|{{ return_obj.stock_status|default:'' }}|{{ return_obj.updated_at|date:'c' }}";
+
+    /* ألوان شارات الحالة */
+    var STATUS_COLORS = {
+      rejected:  'background:#fee2e2;color:#991b1b',
+      completed: 'background:#d1fae5;color:#065f46',
+      approved:  'background:#dbeafe;color:#1e40af',
+      received:  'background:#ede9fe;color:#5b21b6',
+      _default:  'background:#fff3cd;color:#92400e'
+    };
+    var REFUND_COLORS = {
+      completed: 'background:#d1fae5;color:#065f46',
+      pending:   'background:#fff3cd;color:#92400e',
+      partial:   'background:#ede9fe;color:#5b21b6',
+      _default:  'background:#f1f5f9;color:#475569'
+    };
+    var STOCK_COLORS = {
+      restocked: 'background:#d1fae5;color:#065f46',
+      damaged:   'background:#fee2e2;color:#991b1b',
+      _default:  'background:#f1f5f9;color:#475569'
+    };
+
+    function setbadge(id, text, colorMap, key) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = text;
+      el.setAttribute('style', colorMap[key] || colorMap['_default']);
+    }
+
+    function applyUpdate(data) {
+      setbadge('return-status-badge', data.status_display || '', STATUS_COLORS, data.status || '');
+      setbadge('return-refund-status-badge', data.refund_status_display || '', REFUND_COLORS, data.refund_status || '');
+      setbadge('return-stock-status-badge', data.stock_status_display || '', STOCK_COLORS, data.stock_status || '');
+
+      /* تحديث الجدول الزمني */
+      var tlRoot = document.getElementById('return-timeline-root');
+      if (tlRoot && data.timeline_html) {
+        tlRoot.innerHTML = data.timeline_html;
+      }
+
+      /* تحديث أزرار الإجراءات السريعة */
+      if (data.next_statuses !== undefined) {
+        var inner = document.getElementById('manage-return-quick-actions-inner');
+        var actionsWrap = document.getElementById('manage-return-quick-actions');
+        var postUrl = actionsWrap ? actionsWrap.getAttribute('data-post-url') : '';
+        if (inner && postUrl) {
+          var csrf = (document.querySelector('[name=csrfmiddlewaretoken]') || {}).value || '';
+          var html = '';
+          (data.next_statuses || []).forEach(function (s) {
+            html += '<form method="post" action="' + postUrl + '" style="margin:0;" class="js-return-action-form" data-confirm="تأكيد الانتقال إلى: ' + s.label + '؟">' +
+              '<input type="hidden" name="csrfmiddlewaretoken" value="' + csrf + '">' +
+              '<input type="hidden" name="action" value="advance">' +
+              '<input type="hidden" name="new_status" value="' + s.code + '">' +
+              '<button type="submit" class="btn btn-primary">▶ ' + s.label + '</button></form>';
+          });
+          if (data.show_reject_button) {
+            html += '<form method="post" action="' + postUrl + '" style="margin:0;" class="js-return-action-form" data-confirm="هل أنت متأكد من رفض هذا المرتجع؟">' +
+              '<input type="hidden" name="csrfmiddlewaretoken" value="' + csrf + '">' +
+              '<input type="hidden" name="action" value="reject">' +
+              '<button type="submit" class="btn btn-danger">✖ رفض المرتجع</button></form>';
+          }
+          inner.innerHTML = html;
+        }
+      }
+    }
+
+    function poll() {
+      if (document.hidden) return;
+      fetch(pollUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) return null;
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data || !data.success) return;
+          var sig = data.signature || '';
+          if (sig && sig !== lastSig) {
+            lastSig = sig;
+            applyUpdate(data);
+          }
+        })
+        .catch(function () {});
+    }
+
+    setInterval(poll, 8000);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') poll();
+    });
+  })();
+</script>
+{% endblock %}
+

@@ -1,0 +1,22 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block manage_content %}
+<h1 class="manage-page-title">📝 {{ title }}</h1>
+<div class="manage-section">
+    <form method="post" enctype="multipart/form-data" class="manage-form manage-form--dnd-images">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}<small style="display: block; margin-top: 0.25rem; color: #6c757d;">{{ field.help_text }}</small>{% endif %}
+            {% if field.errors %}<span class="form-error">{{ field.errors.0 }}</span>{% endif %}
+        </div>
+        {% endfor %}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 حفظ</button>
+            <a href="{% url 'manage:compartment_list' %}" class="btn btn-secondary">❌ إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

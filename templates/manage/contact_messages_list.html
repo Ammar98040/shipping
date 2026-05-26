@@ -1,0 +1,53 @@
+{% extends "manage/base_manage.html" %}
+{% load manage_seen_tags %}
+{% block title %}رسائل اتصل بنا{% endblock %}
+{% block manage_content %}
+<h1 class="manage-page-title">📬 رسائل اتصل بنا</h1>
+
+<div class="manage-section">
+    {% if items %}
+    <div style="display:flex; justify-content:flex-end; margin-bottom:0.65rem;">
+        <button type="button" class="btn btn-secondary btn-sm manage-mark-visible-btn" data-manage-mark-visible=".manage-table-container">✔️ تعيين الظاهر كمقروء</button>
+    </div>
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الاسم</th>
+                    <th>رقم الجوال</th>
+                    <th>البريد</th>
+                    <th>الموضوع</th>
+                    <th>الرسالة</th>
+                    <th>التاريخ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for msg in items %}
+                {% manage_row_state request.user msg "contact" as msg_state %}
+                <tr class="{% if msg_state == 'new' %}manage-row--new{% elif msg_state == 'updated' %}manage-row--updated{% endif %}" data-manage-row-key="contact:{{ msg.id }}">
+                    <td>
+                        {% if msg_state == 'new' %}<span class="manage-row-new-dot" title="رسالة جديدة"></span>{% elif msg_state == 'updated' %}<span class="manage-row-new-dot" title="رسالة محدثة"></span>{% endif %}
+                        <strong>{{ msg.id }}</strong>
+                    </td>
+                    <td>{{ msg.name }}</td>
+                    <td>
+                        <a href="tel:{{ msg.phone }}" style="color: #2c5f4f; font-weight: 600;">{{ msg.phone }}</a>
+                    </td>
+                    <td><a href="mailto:{{ msg.email }}">{{ msg.email }}</a></td>
+                    <td><strong>{{ msg.subject }}</strong></td>
+                    <td style="max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ msg.message }}</td>
+                    <td>{{ msg.created_at|date:"Y-m-d H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if items.has_other_pages %}
+    {% include "manage/pagination_include.html" with page_obj=items query_string=query_string %}
+    {% endif %}
+    {% else %}
+    <p class="empty-msg">لا توجد رسائل حتى الآن.</p>
+    {% endif %}
+</div>
+{% endblock %}

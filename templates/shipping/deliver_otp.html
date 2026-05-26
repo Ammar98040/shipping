@@ -1,0 +1,276 @@
+﻿{% extends "shipping/base_shipping.html" %}
+{% load static %}
+{% block title %}تأكيد التسليم{% endblock %}
+
+{% block content %}
+<style>
+  .otp-wrap{max-width: 980px; margin: 1rem auto;}
+  .otp-hero{
+    background: linear-gradient(135deg, rgba(37,99,235,0.16), rgba(14,165,233,0.10));
+    border: 1px solid rgba(37,99,235,0.18);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .otp-hero h1{margin:0; font-size:1.2rem;}
+  .otp-hero p{margin:0.35rem 0 0; color:#475569; font-weight:800;}
+  .otp-grid{display:grid; grid-template-columns: 1.25fr 0.75fr; gap: 1rem;}
+  .otp-card{background:#fff; border:1px solid rgba(15,23,42,0.12); border-radius:16px; box-shadow: 0 10px 28px rgba(15,23,42,0.08); overflow:hidden;}
+  .otp-card-h{padding: 0.9rem 1rem; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; border-bottom:1px solid rgba(15,23,42,0.08);}
+  .otp-card-h strong{font-size:0.98rem;}
+  .otp-body{padding: 1rem;}
+  .otp-step{display:flex; gap:0.65rem; align-items:flex-start; margin-bottom:0.75rem;}
+  .otp-num{width: 28px; height: 28px; border-radius: 999px; background:#2563eb; color:#fff; font-weight:900; display:flex; align-items:center; justify-content:center; flex:0 0 auto;}
+  .otp-text{color:#334155; font-weight:850;}
+  .otp-actions{display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.85rem;}
+  .otp-hint{color:#64748b; font-weight:800; font-size:0.9rem; margin-top:0.4rem;}
+  .otp-inputs{display:flex; gap:0.5rem; justify-content:center; flex-wrap:nowrap; direction:ltr;}
+  .otp-box{
+    width: 48px; height: 52px;
+    border-radius: 14px;
+    border: 1px solid rgba(15,23,42,0.18);
+    background:#f8fafc;
+    font-size: 1.25rem;
+    font-weight: 900;
+    text-align:center;
+    direction:ltr;
+    unicode-bidi:isolate;
+    outline:none;
+  }
+  .otp-box:focus{border-color:#2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.18); background:#fff;}
+  .otp-hidden{position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;}
+  .otp-note{background:#f1f5f9; border:1px solid rgba(15,23,42,0.10); border-radius:14px; padding:0.85rem 1rem; color:#0f172a; font-weight:850;}
+  @media (max-width: 900px){
+    .otp-grid{grid-template-columns: 1fr;}
+    .otp-inputs{justify-content:space-between;}
+    .otp-box{width: 44px; height: 50px;}
+  }
+  @media (max-width: 380px){
+    .otp-box{width: 40px; height: 48px; border-radius: 12px;}
+  }
+  body.theme-dark .otp-hero{
+    background: linear-gradient(135deg, rgba(37,99,235,0.26), rgba(14,165,233,0.16));
+    border-color: rgba(125,211,252,0.28);
+  }
+  body.theme-dark .otp-hero h1{color:#f8fafc;}
+  body.theme-dark .otp-hero p{color:#cbd5e1;}
+  body.theme-dark .otp-card{
+    background:#0f172a;
+    border-color: rgba(148,163,184,0.24);
+    box-shadow: 0 12px 28px rgba(2,6,23,0.48);
+  }
+  body.theme-dark .otp-card-h{
+    border-bottom-color: rgba(148,163,184,0.2);
+  }
+  body.theme-dark .otp-card-h strong,
+  body.theme-dark .otp-text{color:#e2e8f0;}
+  body.theme-dark .otp-hint,
+  body.theme-dark #deliver-send-hint,
+  body.theme-dark .otp-card .otp-body > div[style]{
+    color:#94a3b8 !important;
+  }
+  body.theme-dark .otp-box{
+    background:#111827;
+    color:#f8fafc;
+    border-color: rgba(148,163,184,0.35);
+  }
+  body.theme-dark .otp-box:focus{
+    border-color:#2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.28);
+    background:#0b1220;
+  }
+  body.theme-dark .otp-note{
+    background:#111827;
+    border-color: rgba(148,163,184,0.26);
+    color:#e2e8f0;
+  }
+</style>
+
+<div class="otp-wrap">
+  <div class="otp-hero">
+    <h1>✅ تأكيد تسليم الشحنة (OTP)</h1>
+    <p>الطلب رقم <strong>#{{ order.id }}</strong> — كود البوليصة: <strong>{{ label.code }}</strong></p>
+  </div>
+
+  <div class="otp-grid">
+    <div class="otp-card">
+      <div class="otp-card-h">
+        <strong>إتمام التسليم</strong>
+        <a class="btn btn-secondary" href="{% url 'shipping:scan_deliver' %}">رجوع لمسح التسليم</a>
+      </div>
+      <div class="otp-body">
+        <div class="otp-step">
+          <div class="otp-num">1</div>
+          <div class="otp-text">
+            أرسل رمز للعميل ثم اطلب منه قراءته لك.
+            <div class="otp-hint">للتجربة: يظهر في التيرمنال، ويرسل للبريد إن كان متوفرًا.</div>
+          </div>
+        </div>
+
+        <form method="post" id="sendOtpForm">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="send">
+          {% with rem=otp_sends_remaining|default:4 %}
+          <button class="btn btn-primary" type="submit" id="sendOtpBtn" {% if rem <= 0 %}disabled aria-disabled="true"{% endif %}>إرسال OTP (6 أرقام)</button>
+          <p id="deliver-send-hint" style="margin-top:0.45rem; font-size:0.88rem; color:#64748b; font-weight:800;">
+            {% if rem <= 0 %}استُنفدت محاولات الإرسال لهذه البوليصة في الجلسة (4 كحد أقصى).{% else %}متبقٍ {{ rem }} إرسال لهذه الجلسة (حد أقصى 4: أول إرسال + 3 إعادات).{% endif %}
+          </p>
+          {% endwith %}
+        </form>
+
+        <hr style="border:none;border-top:1px solid rgba(15,23,42,0.08); margin: 1rem 0;">
+
+        <div class="otp-step">
+          <div class="otp-num">2</div>
+          <div class="otp-text">
+            أدخل الرمز لتأكيد التسليم.
+            <div class="otp-hint">يمكنك لصق الرمز مباشرة وسيتم توزيعه على الخانات.</div>
+          </div>
+        </div>
+
+        <form method="post" id="otpForm" style="position:relative;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="confirm">
+          <input class="otp-hidden" name="otp" id="otpHidden" maxlength="6" minlength="6" inputmode="numeric" pattern="[0-9]{6}" required>
+
+          <div class="otp-inputs" dir="ltr">
+            <input class="otp-box" inputmode="numeric" maxlength="1" autocomplete="one-time-code">
+            <input class="otp-box" inputmode="numeric" maxlength="1">
+            <input class="otp-box" inputmode="numeric" maxlength="1">
+            <input class="otp-box" inputmode="numeric" maxlength="1">
+            <input class="otp-box" inputmode="numeric" maxlength="1">
+            <input class="otp-box" inputmode="numeric" maxlength="1">
+          </div>
+
+          <div class="otp-actions">
+            <button class="btn btn-primary" type="submit">تأكيد التسليم</button>
+          </div>
+        </form>
+        <div id="otp-inline-msg" style="display:none; margin-top:0.8rem; font-weight:800;"></div>
+      </div>
+    </div>
+
+    <div class="otp-card">
+      <div class="otp-card-h"><strong>معلومات سريعة</strong></div>
+      <div class="otp-body">
+        <div class="otp-note">
+          عند نجاح التحقق سيتم تحديث حالة الشحنة إلى <strong>تم التسليم</strong> وتحديث الطلب تلقائياً.
+        </div>
+        <div style="margin-top:0.85rem; color:#64748b; font-weight:800;">
+          إذا تعذر وصول الرمز: اضغط “إرسال OTP” مرة أخرى (حتى 3 إعادات بعد الإرسال الأول في نفس الجلسة). الرمز صالح 10 دقائق.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/otp-inputs.js' %}?v=20"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const sendForm = document.getElementById('sendOtpForm');
+  const confirmForm = document.getElementById('otpForm');
+  const hidden = document.getElementById('otpHidden');
+  const msg = document.getElementById('otp-inline-msg');
+
+  if (confirmForm && hidden) {
+    initOtpInputs(confirmForm, '.otp-box', {
+      hiddenInput: hidden,
+      minLength: 6,
+      autocompleteFirst: 'one-time-code'
+    });
+  }
+
+  function showMsg(text, ok) {
+    if (!msg) return;
+    msg.style.display = 'block';
+    msg.style.color = ok ? '#065f46' : '#b91c1c';
+    msg.textContent = text;
+  }
+  function ajaxSubmit(form) {
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    const actionUrl = getFormActionUrl(form);
+    return fetch(actionUrl, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      const ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) {
+        if (data && typeof data.otp_sends_remaining === 'number') {
+          var h = document.getElementById('deliver-send-hint');
+          var sb = document.getElementById('sendOtpBtn');
+          var n = data.otp_sends_remaining;
+          if (h) {
+            h.textContent = n <= 0
+              ? 'استُنفدت محاولات الإرسال لهذه البوليصة في الجلسة (4 كحد أقصى).'
+              : ('متبقٍ ' + n + ' إرسال لهذه الجلسة (حد أقصى 4: أول إرسال + 3 إعادات).');
+          }
+          if (sb) {
+            sb.disabled = (n <= 0);
+            sb.setAttribute('aria-disabled', n <= 0 ? 'true' : 'false');
+            if (n <= 0) sb.setAttribute('data-otp-exhausted', '1');
+            else sb.removeAttribute('data-otp-exhausted');
+          }
+        }
+        throw new Error((data && data.error) ? data.error : 'تعذر تنفيذ العملية');
+      }
+      showMsg(data.message || 'تمت العملية بنجاح.', true);
+      if (btn) btn.disabled = false;
+      if (data.action === 'send' && typeof data.otp_sends_remaining === 'number') {
+        var h2 = document.getElementById('deliver-send-hint');
+        var sb2 = document.getElementById('sendOtpBtn');
+        var n2 = data.otp_sends_remaining;
+        if (h2) {
+          h2.textContent = n2 <= 0
+            ? 'استُنفدت محاولات الإرسال لهذه البوليصة في الجلسة (4 كحد أقصى).'
+            : ('متبقٍ ' + n2 + ' إرسال لهذه الجلسة (حد أقصى 4: أول إرسال + 3 إعادات).');
+        }
+        if (sb2) {
+          sb2.disabled = (n2 <= 0);
+          sb2.setAttribute('aria-disabled', n2 <= 0 ? 'true' : 'false');
+          if (n2 <= 0) sb2.setAttribute('data-otp-exhausted', '1');
+          else sb2.removeAttribute('data-otp-exhausted');
+        }
+      }
+      if (data.redirect_url) setTimeout(function () { window.location.href = data.redirect_url; }, 500);
+    })
+    .catch(function (err) {
+      showMsg((err && err.message) ? err.message : 'تعذر تنفيذ العملية.', false);
+      if (btn && !(btn.id === 'sendOtpBtn' && btn.getAttribute('data-otp-exhausted') === '1')) btn.disabled = false;
+    });
+  }
+  if (sendForm) {
+    sendForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      ajaxSubmit(sendForm);
+    });
+  }
+  if (confirmForm) {
+    confirmForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var v = (hidden && hidden.value) ? hidden.value.replace(/\D/g, '') : '';
+      if (v.length !== 6) {
+        showMsg('أدخل الرمز كاملاً (6 أرقام).', false);
+        var b = confirmForm.querySelector('.otp-box');
+        if (b) b.focus();
+        return;
+      }
+      ajaxSubmit(confirmForm);
+    });
+  }
+});
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,137 @@
+{% extends "shipping/base_shipping.html" %}
+{% block title %}شحنة الطلب #{{ shipment.order.id }} | شركة السريع للشحن{% endblock %}
+{% block extra_css %}
+<style>
+  body.theme-dark .ship-detail-card {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.24);
+    box-shadow: 0 14px 28px rgba(2, 6, 23, 0.45);
+  }
+  body.theme-dark .ship-detail-label,
+  body.theme-dark .ship-detail-note {
+    color: #94a3b8 !important;
+  }
+  body.theme-dark .ship-detail-tracking { color: #7dd3fc !important; }
+  body.theme-dark .ship-detail-event,
+  body.theme-dark .ship-detail-address {
+    background: #111827 !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+  }
+  body.theme-dark .ship-detail-phone { color: #7dd3fc !important; }
+  body.theme-dark .ship-detail-delivered {
+    background: #052e2b !important;
+    border-color: #0f766e !important;
+  }
+  body.theme-dark .ship-detail-delivered h2,
+  body.theme-dark .ship-detail-delivered p {
+    color: #86efac !important;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom: 1.5rem;">
+  <h1 class="manage-page-title" style="margin:0;">🚚 شحنة الطلب #{{ shipment.order.id }}</h1>
+  <a class="btn btn-secondary" href="{% url 'shipping:shipments_list' %}">← رجوع</a>
+</div>
+
+<div class="manage-section ship-detail-card">
+  <h2>📋 معلومات الشحنة</h2>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+    <div>
+      <strong class="ship-detail-label" style="display:block; margin-bottom:0.4rem; color:#6c757d;">رقم التتبع:</strong>
+      <span class="ship-detail-tracking" style="font-family: monospace; font-weight:900; color:#2563eb;">{{ shipment.tracking_number }}</span>
+    </div>
+    <div>
+      <strong class="ship-detail-label" style="display:block; margin-bottom:0.4rem; color:#6c757d;">حالة الشحنة:</strong>
+      <span class="badge" id="sh-shipment-status-badge" style="background:#e0f2fe;color:#0369a1;">{{ shipment.get_status_display }}</span>
+    </div>
+    <div>
+      <strong class="ship-detail-label" style="display:block; margin-bottom:0.4rem; color:#6c757d;">آخر تحديث:</strong>
+      <span id="sh-shipment-updated">{{ shipment.updated_at|date:"Y-m-d H:i" }}</span>
+    </div>
+  </div>
+  {% if shipment.last_event %}
+  <div style="margin-top:1rem;">
+    <strong class="ship-detail-label" style="display:block; margin-bottom:0.4rem; color:#6c757d;">تفاصيل:</strong>
+    <div class="ship-detail-event" style="background:#f8f9fa;border-radius:10px;padding:0.85rem 1rem; white-space: pre-line;">{{ shipment.last_event }}</div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="manage-section ship-detail-card">
+  <h2>👤 معلومات العميل</h2>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+    <div><strong class="ship-detail-label" style="color:#6c757d; display:block; margin-bottom:0.4rem;">الاسم</strong>{{ shipment.order.customer_name }}</div>
+    <div><strong class="ship-detail-label" style="color:#6c757d; display:block; margin-bottom:0.4rem;">الجوال</strong><a class="ship-detail-phone" href="tel:{{ shipment.order.customer_phone }}" style="color:#2c5f4f; font-weight:800;">{{ shipment.order.customer_phone }}</a></div>
+    <div style="grid-column: 1 / -1;"><strong class="ship-detail-label" style="color:#6c757d; display:block; margin-bottom:0.4rem;">العنوان</strong><div class="ship-detail-address" style="background:#f8f9fa;border-radius:10px;padding:0.85rem 1rem; white-space: pre-line;">{{ shipment.order.address }}</div></div>
+  </div>
+</div>
+
+{% if shipment.status == 'delivered' %}
+<div class="manage-section ship-detail-delivered" style="background:#ecfdf5; border:1px solid #6ee7b7;">
+  <h2>✅ تم التسليم للعميل</h2>
+  <p style="margin:0; color:#065f46; font-weight:800;">
+    الحمد لله — اكتملت هذه الشحنة وتم توصيلها للعميل بنجاح — لا حاجة لتحديث الحالة عبر الباركود.
+  </p>
+</div>
+{% else %}
+<div class="manage-section ship-detail-card">
+  <h2>📷 تحديث الحالة عبر الباركود</h2>
+  <p class="ship-detail-note" style="margin-top:0; color:#64748b; font-weight:800;">
+    المسار متسلسل: أولاً استلام من المتجر، ثم تسليم للعميل (OTP) — صفحتان منفصلتان في «مسار البوليصة».
+  </p>
+  {% if shipment.status == 'created' %}
+  <a class="btn btn-primary" href="{% url 'shipping:scan_pickup' %}">📦 استلام من المتجر (مسح البوليصة)</a>
+  {% else %}
+  <a class="btn btn-primary" href="{% url 'shipping:scan_deliver' %}">✅ تسليم للعميل (مسح + OTP)</a>
+  <p class="ship-detail-note" style="margin:0.75rem 0 0; color:#64748b; font-weight:800; font-size:0.9rem;">
+    إذا لم تسجّل الاستلام بعد، استخدم <a href="{% url 'shipping:scan_pickup' %}" style="color:#2563eb;">استلام من المتجر</a> أولاً.
+  </p>
+  {% endif %}
+  <div style="margin-top:0.75rem;">
+    <a class="btn btn-secondary" href="{% url 'shipping:scan' %}">📷 كل مراحل البوليصة</a>
+  </div>
+</div>
+{% endif %}
+
+<script>
+(function () {
+  'use strict';
+  var pollUrl = "{% url 'shipping:shipment_detail_poll' shipment.pk %}";
+  var lastSig = "{{ shipment.status }}|{{ shipment.order.status }}|{{ shipment.updated_at|date:'c' }}";
+
+  function poll() {
+    if (document.hidden) return;
+    fetch(pollUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var sig = data.signature || '';
+        if (sig && sig !== lastSig) {
+          lastSig = sig;
+          var badge = document.getElementById('sh-shipment-status-badge');
+          if (badge && data.shipment_status_display) {
+            badge.textContent = data.shipment_status_display;
+          }
+          /* إذا اكتملت التسليم — أعد تحميل الصفحة لتحديث القسم الكامل */
+          if (data.is_delivered) {
+            window.location.reload();
+          }
+        }
+      })
+      .catch(function () {});
+  }
+
+  setInterval(poll, 8000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') poll();
+  });
+})();
+</script>
+{% endblock %}
+

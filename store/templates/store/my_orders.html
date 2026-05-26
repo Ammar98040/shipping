@@ -1,0 +1,84 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}طلباتي{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/my_orders.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="my-orders-page">
+    <h1 class="page-title">طلباتي</h1>
+    <p class="page-subtitle">متابعة حالة مشترياتك وإعادة الطلب أو التتبع</p>
+
+    <div class="shop-trust-strip my-orders-trust" role="presentation">
+        <span>📋 تفاصيل كل طلب</span>
+        <span>🔄 إعادة الطلب بضغطة</span>
+        <span>📦 تتبع الشحنة</span>
+    </div>
+    
+    {% if orders %}
+    <div class="orders-list">
+        {% for order in orders %}
+        <div class="order-card">
+            <div class="order-header">
+                <div class="order-number">
+                    <h3>طلب رقم #{{ order.id }}</h3>
+                    <span class="order-date">{{ order.created_at|date:"Y-m-d H:i" }}</span>
+                </div>
+                <div class="order-status status-{{ order.status }}">
+                    {{ order.get_status_display }}
+                </div>
+            </div>
+            
+            <div class="order-info">
+                <div class="info-row">
+                    <span class="label">الاسم:</span>
+                    <span class="value">{{ order.customer_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">الجوال:</span>
+                    <span class="value">{{ order.customer_phone }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">المجموع:</span>
+                    <span class="value">{{ order.total }} ر.س</span>
+                </div>
+            </div>
+            
+            <div class="order-items">
+                <h4>المنتجات</h4>
+                {% for item in order.items.all %}
+                <div class="order-item">
+                    <span class="item-name">{{ item.display_product_name }} × {{ item.quantity }}</span>
+                    <span class="item-price">{{ item.subtotal }} ر.س</span>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="order-actions">
+                <a href="{% url 'order_detail' order.id %}" class="btn-action btn-details">
+                    <span class="btn-icon">📋</span>
+                    تفاصيل الطلب
+                </a>
+                <a href="{% url 'reorder' order.id %}" class="btn-action btn-reorder">
+                    <span class="btn-icon">🔄</span>
+                    إعادة الطلب
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="store-empty-state empty-orders">
+        <p class="store-empty-state__title">لا طلبات حتى الآن</p>
+        <p class="store-empty-state__text">عندما تُكمل أي عملية شراء ستظهر حالتها وسجل التحديث هنا وبصفحة التتبع.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'wardrobe' %}" class="store-btn store-btn--primary">ابدأ من الدولاب</a>
+            <a href="{% url 'products_all' %}" class="store-btn store-btn--secondary">كل المنتجات</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

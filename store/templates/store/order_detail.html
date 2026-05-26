@@ -1,0 +1,264 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block body_class %} page-order-detail{% endblock %}
+{% block title %}تفاصيل الطلب #{{ order.id }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/my_orders.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/order_detail.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="my-orders-page order-detail-page">
+    <nav class="breadcrumb store-breadcrumb-nav order-detail-breadcrumb" aria-label="مسار التصفح">
+        <a href="{% url 'my_orders' %}">طلباتي</a>
+        <span class="shop-checkout-step-sep" aria-hidden="true">›</span>
+        <span class="breadcrumb-current">طلب #{{ order.id }}</span>
+    </nav>
+
+    <div class="store-quick-toolbar order-detail-toolbar" role="navigation" aria-label="اختصارات">
+        <a href="{% url 'my_orders' %}">← طلباتي</a>
+        <a href="{% url 'wardrobe' %}">متابعة التسوّق</a>
+        <a href="{% url 'support_chat' %}">💬 الدعم</a>
+        <a href="{% url 'order_track' %}">🔎 تتبّع عام</a>
+    </div>
+
+    <h1 class="page-title">تفاصيل الطلب</h1>
+    <p class="page-subtitle">طلب رقم #{{ order.id }} — متابعة الحالة والدفع والشحن في مكان واحد.</p>
+
+    <div class="shop-trust-strip my-orders-trust order-detail-trust" role="presentation">
+        <span>📋 ملخص كامل للطلب</span>
+        <span>🔄 إعادة الطلب بضغطة</span>
+        <span>📦 تتبع الشحنة</span>
+    </div>
+
+    <div class="order-card order-detail-card">
+        <div class="order-header">
+            <div class="order-number">
+                <h3>طلب رقم #{{ order.id }}</h3>
+                <span class="order-date">{{ order.created_at|date:"Y-m-d H:i" }}</span>
+            </div>
+            <div class="order-status status-{{ order.status }}" id="order-detail-status-badge">{{ order.get_status_display }}</div>
+        </div>
+
+        <div class="order-info order-detail-summary">
+            <div class="info-row">
+                <span class="label">حالة الدفع</span>
+                <span class="value"><span class="pay-badge pay-{{ order.payment_status }}" id="order-detail-payment-badge">{{ order.get_payment_status_display }}</span></span>
+            </div>
+            <div class="info-row">
+                <span class="label">طريقة الدفع</span>
+                <span class="value">{{ order.get_payment_method_display }}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">تاريخ الطلب</span>
+                <span class="value">{{ order.created_at|date:"Y-m-d" }}</span>
+            </div>
+            <div id="order-detail-shipment-slot">
+            {% if shipment %}
+            {% include 'store/partials/order_detail_shipment_row.html' with shipment=shipment %}
+            {% endif %}
+            </div>
+            <div class="info-row info-row--highlight">
+                <span class="label">المجموع الكلي</span>
+                <span class="value value--total">{{ order.total }} ر.س</span>
+            </div>
+        </div>
+
+        <div class="order-detail-section order-detail-section--progress" id="order-progress-section">
+            {% include 'store/partials/order_detail_progress.html' %}
+        </div>
+
+        <div class="order-detail-section order-detail-section--address">
+            <h4 class="order-detail-section__title">معلومات التوصيل</h4>
+            <div class="order-info order-info--compact">
+                <div class="info-row">
+                    <span class="label">الاسم</span>
+                    <span class="value">{{ order.customer_name }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">الجوال</span>
+                    <span class="value">{{ order.customer_phone }}</span>
+                </div>
+                <div class="info-row info-row--block">
+                    <span class="label">العنوان</span>
+                    <span class="value value--multiline">{{ order.address }}</span>
+                </div>
+                {% if order.notes %}
+                <div class="info-row info-row--block">
+                    <span class="label">ملاحظات</span>
+                    <span class="value value--multiline">{{ order.notes }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="order-items order-items--detail">
+            <h4>المنتجات ({{ order.items.count }})</h4>
+            {% for item in order.items.all %}
+            <div class="order-item order-item--detail">
+                <div class="order-item__main">
+                    {% if item.display_image_url %}
+                    {% if item.product_id %}
+                    <a href="{% url 'product' item.product_id %}" class="order-item__thumb">
+                        <img src="{{ item.display_image_url }}" alt="">
+                    </a>
+                    {% else %}
+                    <span class="order-item__thumb"><img src="{{ item.display_image_url }}" alt=""></span>
+                    {% endif %}
+                    {% else %}
+                    <span class="order-item__thumb order-item__thumb--ph">{{ item.display_product_name|slice:":1"|default:"?" }}</span>
+                    {% endif %}
+                    <div class="order-item__text">
+                        {% if item.product_id %}
+                        <a href="{% url 'product' item.product_id %}" class="order-item__name">{{ item.display_product_name }}</a>
+                        {% else %}
+                        <span class="order-item__name">{{ item.display_product_name }}</span>
+                        {% endif %}
+                        <span class="order-item__meta">{% if item.product and item.product.category %}{{ item.product.category.name_ar }} · {% endif %}الكمية {{ item.quantity }}</span>
+                    </div>
+                </div>
+                <span class="item-price">{{ item.subtotal }} ر.س</span>
+            </div>
+            {% endfor %}
+            <div class="order-detail-totals">
+                {% if order.delivery_fee %}
+                <div class="info-row"><span class="label">رسوم التوصيل</span><span class="value">{{ order.delivery_fee }} ر.س</span></div>
+                {% endif %}
+                <div class="info-row info-row--highlight"><span class="label">المجموع الفرعي</span><span class="value">{{ order.subtotal }} ر.س</span></div>
+            </div>
+        </div>
+
+        <div class="order-actions order-actions--detail">
+            {% if order.can_be_returned %}
+            <a href="{% url 'create_return' order.id %}" class="btn-action btn-action--danger">↩️ إرجاع الطلب</a>
+            {% endif %}
+            {% if order.can_be_cancelled %}
+            <form method="post" class="form-cancel-order" id="order-cancel-form">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="cancel">
+                <button type="submit" class="btn-cancel-inline" id="order-cancel-btn">❌ إلغاء الطلب</button>
+            </form>
+            {% endif %}
+            <a href="{% url 'reorder' order.id %}" class="btn-action btn-reorder"><span class="btn-icon">🔄</span> إعادة الطلب</a>
+        </div>
+    </div>
+</div>
+<script>
+(function () {
+    var form = document.getElementById('order-cancel-form');
+    if (!form) return;
+    var btn = document.getElementById('order-cancel-btn');
+    var statusBadge = document.getElementById('order-detail-status-badge');
+    var progressSection = document.getElementById('order-progress-section');
+
+    function showMsg(text, ok) {
+        var root = document.createElement('div');
+        root.style.cssText = 'padding:0.75rem 1rem;border-radius:10px;margin-bottom:1rem;font-weight:800;';
+        if (ok) {
+            root.style.background = '#ecfdf5';
+            root.style.color = '#065f46';
+            root.style.border = '1px solid #a7f3d0';
+        } else {
+            root.style.background = '#fff0f0';
+            root.style.color = '#dc2626';
+            root.style.border = '1px solid #fecaca';
+        }
+        root.textContent = text;
+        document.querySelector('.order-detail-page').prepend(root);
+        setTimeout(function () { root.remove(); }, 3500);
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!window.confirm('هل تريد إلغاء هذا الطلب؟')) return;
+        if (btn) btn.disabled = true;
+
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر الإلغاء');
+            if (statusBadge) {
+                statusBadge.textContent = data.status_display || 'ملغي';
+                statusBadge.className = 'order-status status-cancelled';
+            }
+            if (progressSection) {
+                progressSection.innerHTML =
+                    '<h4 class="order-detail-section__title">📊 مسار طلبك</h4>' +
+                    '<div class="order-cancel-banner" id="order-cancel-banner">' +
+                    '<span class="order-cancel-banner__icon" aria-hidden="true">❌</span>' +
+                    '<div><strong class="order-cancel-banner__title">هذا الطلب ملغي</strong></div>' +
+                    '</div>';
+            }
+            form.remove();
+            showMsg(data.message || 'تم إلغاء طلبك بنجاح.', true);
+            if (btn) btn.disabled = false;
+        })
+        .catch(function (err) {
+            if (btn) btn.disabled = false;
+            showMsg((err && err.message) ? err.message : 'تعذر تنفيذ العملية.', false);
+        });
+    });
+})();
+</script>
+<script>
+  (function () {
+    var pollUrl = "{% url 'order_detail_poll' order.id %}";
+    var lastSignature = "{{ sync_signature|escapejs }}";
+    var progressSection = document.getElementById('order-progress-section');
+    var statusBadge = document.getElementById('order-detail-status-badge');
+    var paymentBadge = document.getElementById('order-detail-payment-badge');
+    var shipmentSlot = document.getElementById('order-detail-shipment-slot');
+
+    function applySync(data) {
+      if (!data || !data.success) return;
+      var sig = data.signature || '';
+      if (!sig || sig === lastSignature) return;
+      lastSignature = sig;
+      if (progressSection && data.progress_html) {
+        progressSection.innerHTML = data.progress_html;
+      }
+      if (statusBadge && data.status_display) {
+        statusBadge.textContent = data.status_display;
+        statusBadge.className = 'order-status status-' + (data.status || '');
+      }
+      if (paymentBadge && data.payment_status_display) {
+        paymentBadge.textContent = data.payment_status_display;
+        paymentBadge.className = 'pay-badge pay-' + (data.payment_status || '');
+      }
+      if (shipmentSlot && data.shipment_slot_html !== undefined) {
+        shipmentSlot.innerHTML = data.shipment_slot_html;
+      }
+    }
+
+    function pollOnce() {
+      fetch(pollUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) return null;
+          return r.json();
+        })
+        .then(function (data) { applySync(data); })
+        .catch(function () {});
+    }
+
+    var POLL_MS = 8000;
+    setInterval(pollOnce, POLL_MS);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible') pollOnce();
+    });
+  })();
+</script>
+{% endblock %}
+

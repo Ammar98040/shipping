@@ -1,0 +1,122 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block manage_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h1 class="manage-page-title" style="margin-bottom: 0;">{{ icon }} {{ page_title }}</h1>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <a href="{% url 'manage:users_list' %}" class="btn btn-secondary">👥 جميع المستخدمين</a>
+        <a href="{% url 'manage:admins_list' %}" class="btn btn-primary">🛡️ المسؤولون</a>
+    </div>
+</div>
+
+<div class="manage-filters">
+    <form method="get" class="filters-form">
+        <div class="filter-group" style="flex: 2;">
+            <label for="search">بحث:</label>
+            <input type="text" name="search" id="search" placeholder="ابحث باسم المستخدم أو البريد أو الجوال..." value="{{ search_query }}" class="input filter-search">
+        </div>
+        <button type="submit" class="btn btn-primary btn-filter">🔍 بحث</button>
+        {% if search_query %}
+        <a href="{% url clear_url_name %}" class="btn btn-clear">مسح</a>
+        {% endif %}
+        <span class="results-count">📊 العدد: <strong>{{ users.paginator.count }}</strong></span>
+    </form>
+</div>
+
+<div class="manage-section">
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم المستخدم</th>
+                    <th>البريد</th>
+                    <th>الاسم</th>
+                    <th>الجوال</th>
+                    <th>الطلبات</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td><strong>{{ u.id }}</strong></td>
+                    <td><strong>{{ u.username }}</strong></td>
+                    <td>{{ u.email|default:"-" }}</td>
+                    <td>{{ u.get_full_name|default:"-" }}</td>
+                    <td>{{ u.profile.phone|default:"-" }}</td>
+                    <td>{{ u.orders_count }}</td>
+                    <td>{% if u.is_active %}<span class="badge badge-active">✓ نشط</span>{% else %}<span class="badge badge-inactive">✗ معطل</span>{% endif %}</td>
+                    <td>
+                        <a href="{% url 'manage:user_detail' u.id %}" class="btn btn-sm">👁️ عرض</a>
+                        <a href="{% url 'manage:user_profile_edit' u.id %}" class="btn btn-sm btn-secondary">✏️ تعديل</a>
+                        <form method="post" action="{% url 'manage:user_toggle_active' u.id %}" class="js-toggle-user-active-form" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm js-toggle-user-active-btn {% if u.is_active %}btn-danger{% else %}btn-success{% endif %}">
+                                {% if u.is_active %}🔒 تعطيل{% else %}✅ تفعيل{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty-msg">لا توجد حسابات في هذا القسم</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if users.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=users query_string=query_string %}
+{% endif %}
+<script>
+    (function () {
+        document.addEventListener('submit', function (e) {
+            var form = e.target.closest('form.js-toggle-user-active-form');
+            if (!form) return;
+            e.preventDefault();
+
+            var tr = form.closest('tr');
+            var btn = form.querySelector('.js-toggle-user-active-btn');
+            var badge = tr ? tr.querySelector('.badge') : null;
+            if (btn) btn.disabled = true;
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+                },
+                body: new FormData(form)
+            })
+                .then(function (r) {
+                    var ct = (r.headers.get('content-type') || '').toLowerCase();
+                    if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+                    return r.json();
+                })
+                .then(function (data) {
+                    if (!data || !data.success) throw new Error('toggle_failed');
+                    if (badge) {
+                        badge.classList.remove('badge-active', 'badge-inactive');
+                        badge.classList.add(data.badge_class || 'badge-inactive');
+                        badge.textContent = data.badge_text || '';
+                    }
+                    if (btn) {
+                        btn.textContent = data.button_text || '';
+                        btn.classList.remove('btn-danger', 'btn-success');
+                        btn.classList.add(data.button_class || 'btn-success');
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function () {
+                    if (btn) btn.disabled = false;
+                    showManageError('تعذر تنفيذ العملية. حاول مرة أخرى.');
+                });
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,425 @@
+/* صفحة الصنف - المنتجات معلقة على شماعات */
+
+.page-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+}
+
+.page-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color .2s;
+}
+
+.back-link:hover {
+    color: var(--accent-light);
+}
+
+.breadcrumb {
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.breadcrumb a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+/* عرض المنتجات */
+.products-display {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem 1.5rem;
+    padding: 0 0.5rem;
+}
+
+/* شماعة منتج واحد */
+.product-hanger {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+}
+
+.product-hanger:hover {
+    transform: translateY(-6px);
+}
+
+/* خطاف الشماعة */
+.hanger-hook {
+    width: 3px;
+    height: 20px;
+    background: linear-gradient(180deg, #ccc 0%, #999 100%);
+    margin: 0 auto 0;
+    border-radius: 2px 2px 0 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,.2);
+}
+
+/* عود الشماعة */
+.hanger-bar {
+    width: 60%;
+    height: 4px;
+    background: linear-gradient(90deg, #999 0%, #bbb 50%, #999 100%);
+    margin: 0 auto;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,.15);
+    position: relative;
+}
+
+.hanger-bar::before,
+.hanger-bar::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    background: #888;
+    border-radius: 50%;
+    transform: translateY(-50%);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.3);
+}
+
+.hanger-bar::before { left: 2px; }
+.hanger-bar::after { right: 2px; }
+
+/* المنتج المعلق */
+.product-item {
+    position: relative;
+    background: var(--card);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 
+        0 8px 24px rgba(0,0,0,.12),
+        0 2px 6px rgba(0,0,0,.08);
+    transition: box-shadow 0.3s ease;
+}
+
+.product-hanger:hover .product-item {
+    box-shadow: 
+        0 12px 32px rgba(0,0,0,.16),
+        0 4px 8px rgba(0,0,0,.1);
+}
+
+.product-image-wrap {
+    position: relative;
+    z-index: 1;
+    aspect-ratio: 1;
+    background: var(--bg);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.product-placeholder {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: .4;
+}
+
+.product-info {
+    padding: 0.75rem;
+    position: relative;
+    z-index: 1;
+}
+
+.product-name {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    color: var(--text);
+}
+
+.product-price-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.product-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* للمستقبل: نسبة الخصم بجانب السعر */
+.product-discount {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.12);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+}
+
+/* صف الأيقونات: مفضلة + تفاصيل + سلة (سطر واحد تحت السعر) */
+.product-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+    position: relative;
+    z-index: 2;
+}
+
+.product-cart-form {
+    display: inline-flex;
+    margin: 0;
+}
+
+.product-card-actions .product-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: none;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 1.15rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    transition: transform 0.2s, background 0.2s, color 0.2s;
+    position: relative;
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.product-card-actions .product-icon-btn .btn-icon {
+    line-height: 1;
+}
+
+/* المفضلة داخل صف الأيقونات */
+.product-card-actions .wishlist-btn {
+    color: #dc3545;
+}
+
+.product-card-actions .wishlist-btn:hover {
+    background: #dc3545;
+    color: #fff;
+    transform: scale(1.1);
+}
+
+/* المنتج في المفضلة - لون أحمر ثابت */
+.product-card-actions .wishlist-btn.active-wishlist {
+    background: #dc3545;
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(220, 53, 69, 0.4);
+}
+
+.product-card-actions .wishlist-btn.active-wishlist:hover {
+    background: #c82333;
+    transform: scale(1.05);
+}
+
+.product-btn-details {
+    color: var(--accent);
+}
+
+.product-btn-details:hover {
+    background: var(--accent);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.product-btn-cart {
+    color: var(--accent);
+}
+
+.product-btn-cart:hover:not(:disabled) {
+    background: var(--accent);
+    color: #fff;
+    transform: scale(1.1);
+}
+
+.product-btn-cart:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* المنتج في السلة - لون أخضر ثابت */
+.product-btn-cart.active-cart {
+    background: #28a745;
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(40, 167, 69, 0.4);
+}
+
+.product-btn-cart.active-cart:hover:not(:disabled) {
+    background: #218838;
+    transform: scale(1.05);
+}
+
+.product-card-actions .product-icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* طبقة الرابط للانتقال لصفحة المنتج */
+.product-item-link {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.empty-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+/* أنيميشن دخول المنتجات */
+.product-hanger {
+    animation: hangerSwing 0.6s ease-out backwards;
+}
+
+.product-hanger:nth-child(1) { animation-delay: 0.05s; }
+.product-hanger:nth-child(2) { animation-delay: 0.1s; }
+.product-hanger:nth-child(3) { animation-delay: 0.15s; }
+.product-hanger:nth-child(4) { animation-delay: 0.2s; }
+.product-hanger:nth-child(5) { animation-delay: 0.25s; }
+.product-hanger:nth-child(6) { animation-delay: 0.3s; }
+.product-hanger:nth-child(7) { animation-delay: 0.35s; }
+.product-hanger:nth-child(8) { animation-delay: 0.4s; }
+
+@keyframes hangerSwing {
+    0% {
+        opacity: 0;
+        transform: translateY(-30px) rotate(-5deg);
+    }
+    50% {
+        transform: translateY(5px) rotate(3deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0) rotate(0);
+    }
+}
+
+@media (min-width: 640px) {
+    .products-display {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .products-display {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2rem;
+    }
+    .product-name {
+        font-size: 1.05rem;
+    }
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    padding: 1rem;
+}
+
+.page-link {
+    padding: 0.5rem 1rem;
+    background: var(--card);
+    color: var(--accent);
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    box-shadow: var(--shadow);
+    transition: all 0.3s;
+}
+
+.page-link:hover {
+    background: var(--accent);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.page-info {
+    padding: 0.5rem 1rem;
+    background: var(--card);
+    border-radius: 6px;
+    font-weight: bold;
+    color: var(--text);
+    box-shadow: var(--shadow);
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .hanger-hook {
+    background: linear-gradient(180deg, #555 0%, #333 100%);
+}
+
+body.theme-dark .hanger-bar {
+    background: linear-gradient(90deg, #444 0%, #666 50%, #444 100%);
+}
+
+body.theme-dark .hanger-bar::before,
+body.theme-dark .hanger-bar::after {
+    background: #555;
+}
+
+body.theme-dark .product-card-actions .product-icon-btn {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-muted);
+}
+
+body.theme-dark .product-card-actions .wishlist-btn {
+    color: #f87171;
+}
+
+body.theme-dark .product-card-actions .wishlist-btn:hover {
+    background: #dc3545;
+    color: #fff;
+}
+
+body.theme-dark .product-card-actions .wishlist-btn.active-wishlist {
+    background: #dc3545;
+    color: #fff;
+}
+
+body.theme-dark .product-discount {
+    background: rgba(239,68,68,0.15);
+    color: #f87171;
+}
+
+body.theme-dark .product-btn-cart.active-cart {
+    background: #059669;
+}
+
+body.theme-dark .page-link:hover {
+    color: #0b1220;
+}

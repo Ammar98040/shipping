@@ -1,0 +1,85 @@
+{% extends "shipping/base_shipping.html" %}
+{% block title %}لوحة التحكم — مسؤول الشحن{% endblock %}
+
+{% block extra_css %}
+<style>
+  .mgr-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .mgr-stat { background: #fff; border-radius: 14px; padding: 1.25rem 1rem; text-align: center; border: 1px solid rgba(15,23,42,.1); box-shadow: 0 4px 14px rgba(15,23,42,.07); }
+  .mgr-stat-num { font-size: 2.4rem; font-weight: 900; color: #1d4ed8; line-height: 1; }
+  .mgr-stat-label { font-size: .88rem; color: #64748b; font-weight: 700; margin-top: .4rem; }
+  .mgr-stat--warn .mgr-stat-num { color: #b45309; }
+  .mgr-stat--danger .mgr-stat-num { color: #b91c1c; }
+  .mgr-stat--success .mgr-stat-num { color: #166534; }
+  .assign-form { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .assign-form select { border-radius: 9px; padding: .35rem .6rem; border: 1px solid #e2e8f0; font-size: .85rem; }
+  .assign-form button { padding: .35rem .7rem; border-radius: 9px; border: none; background: #1d4ed8; color: #fff; font-weight: 800; cursor: pointer; font-size: .85rem; }
+  .assign-form button:hover { background: #1e40af; }
+  body.theme-dark .mgr-stat { background: #0f172a; border-color: rgba(148,163,184,.22); }
+  body.theme-dark .mgr-stat-label { color: #94a3b8; }
+  body.theme-dark .assign-form select { background: #111827; color: #f8fafc; border-color: rgba(148,163,184,.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="manage-page-title">🚚 لوحة تحكم مسؤول الشحن</h1>
+
+<div class="mgr-stats">
+  <div class="mgr-stat mgr-stat--warn">
+    <div class="mgr-stat-num">{{ stats.unassigned }}</div>
+    <div class="mgr-stat-label">شحنات غير مسندة</div>
+  </div>
+  <div class="mgr-stat">
+    <div class="mgr-stat-num">{{ stats.in_progress }}</div>
+    <div class="mgr-stat-label">قيد التنفيذ</div>
+  </div>
+  <div class="mgr-stat mgr-stat--success">
+    <div class="mgr-stat-num">{{ stats.delivered_today }}</div>
+    <div class="mgr-stat-label">تم التسليم اليوم</div>
+  </div>
+  <div class="mgr-stat mgr-stat--danger">
+    <div class="mgr-stat-num">{{ stats.failed }}</div>
+    <div class="mgr-stat-label">تعثر</div>
+  </div>
+</div>
+
+<div class="manage-section">
+  <h2>آخر الشحنات النشطة</h2>
+  {% if recent_shipments %}
+  <div class="manage-table-container">
+    <table class="manage-table">
+      <thead>
+        <tr><th>رقم الطلب</th><th>رقم التتبع</th><th>الحالة</th><th>المندوب</th><th>إسناد</th></tr>
+      </thead>
+      <tbody>
+        {% for s in recent_shipments %}
+        <tr>
+          <td><a href="{% url 'shipping:shipment_detail' s.pk %}">#{{ s.order.id }}</a></td>
+          <td style="font-family:monospace; font-size:.88rem;">{{ s.tracking_number|default:"—" }}</td>
+          <td>{{ s.get_status_display }}</td>
+          <td>{{ s.courier.username|default:"—" }}</td>
+          <td>
+            <form method="post" action="{% url 'shipping:assign_shipment' s.pk %}" class="assign-form">
+              {% csrf_token %}
+              <select name="courier_id">
+                <option value="">— إلغاء —</option>
+                {% for courier in couriers %}
+                <option value="{{ courier.pk }}" {% if s.courier_id == courier.pk %}selected{% endif %}>{{ courier.username }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit">حفظ</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-msg">لا توجد شحنات نشطة حالياً.</p>
+  {% endif %}
+  <div style="margin-top:1rem;">
+    <a href="{% url 'shipping:manager_shipments' %}" class="btn btn-primary">عرض كل الشحنات</a>
+    <a href="{% url 'shipping:manager_couriers' %}" class="btn btn-secondary" style="margin-right:.6rem;">فريق التوصيل</a>
+  </div>
+</div>
+{% endblock %}

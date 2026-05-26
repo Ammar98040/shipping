@@ -1,0 +1,23 @@
+{# عمود موحّد: من (تاريخ + وقت) إلى (تاريخ + وقت) — يمرّر start_at و end_at #}
+<td class="cell-datetime-range">
+    <div class="manage-datetime-range">
+        <div class="manage-datetime-range__block">
+            <span class="manage-datetime-range__label">من</span>
+            {% if start_at %}
+            <span class="manage-datetime-range__date">{{ start_at|date:"Y/m/d" }}</span>
+            <span class="manage-datetime-range__time">{{ start_at|time:"H:i" }}</span>
+            {% else %}
+            <span class="manage-datetime-range__empty">—</span>
+            {% endif %}
+        </div>
+        <div class="manage-datetime-range__block">
+            <span class="manage-datetime-range__label">إلى</span>
+            {% if end_at %}
+            <span class="manage-datetime-range__date">{{ end_at|date:"Y/m/d" }}</span>
+            <span class="manage-datetime-range__time">{{ end_at|time:"H:i" }}</span>
+            {% else %}
+            <span class="manage-datetime-range__empty">—</span>
+            {% endif %}
+        </div>
+    </div>
+</td>

@@ -1,0 +1,200 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}مناديب المستودع{% endblock %}
+
+{% block manage_content %}
+<h1 class="manage-page-title">🧰 مناديب المستودع (تجهيز الطلبات)</h1>
+
+<div class="manage-filters">
+  <form method="get" class="filters-form">
+    <div class="filter-group" style="flex:2;">
+      <label>بحث:</label>
+      <input class="input filter-search" name="search" value="{{ search_query }}" placeholder="اسم المستخدم / البريد / الجوال">
+    </div>
+    <div class="filter-group">
+      <label>التوفر:</label>
+      <select class="input" name="availability">
+        <option value="" {% if not availability_filter %}selected{% endif %}>الكل</option>
+        <option value="available" {% if availability_filter == 'available' %}selected{% endif %}>متوفر</option>
+        <option value="unavailable" {% if availability_filter == 'unavailable' %}selected{% endif %}>غير متوفر</option>
+      </select>
+    </div>
+    <button class="btn btn-primary btn-filter" type="submit">🔍 بحث</button>
+    {% if search_query %}
+    <a href="{% url 'manage:packers_list' %}" class="btn btn-clear">مسح</a>
+    {% endif %}
+    <span class="results-count">النتائج: <strong>{{ packers.paginator.count }}</strong></span>
+  </form>
+</div>
+
+<div class="manage-section">
+  {% if packers %}
+  <div class="manage-table-container">
+    <table class="manage-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>اسم المستخدم</th>
+          <th>البريد</th>
+          <th>الجوال</th>
+          <th>الحالة</th>
+          <th>التوفر</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in packers %}
+        <tr data-portal-availability-user="{{ u.id }}" data-is-available="{% if u.profile.is_available %}1{% else %}0{% endif %}">
+          <td><strong>{{ u.id }}</strong></td>
+          <td><strong>{{ u.username }}</strong></td>
+          <td>{{ u.email|default:"-" }}</td>
+          <td>{{ u.profile.phone|default:"-" }}</td>
+          <td>
+            {% if u.is_active %}<span class="badge badge-active">نشط</span>{% else %}<span class="badge badge-inactive">معطل</span>{% endif %}
+          </td>
+          <td>
+            {% if u.profile.is_available %}
+            <span class="badge badge-active js-availability-badge">🟢 متوفر</span>
+            {% else %}
+            <span class="badge js-availability-badge" style="background:#fff1e6; color:#9a3412;">⚪ غير متوفر</span>
+            {% endif %}
+          </td>
+          <td>
+            <form method="post" action="{% url 'manage:user_toggle_availability' u.id %}" style="display:inline-block;" class="js-toggle-availability-form">
+              {% csrf_token %}
+              <input type="hidden" name="next" value="{{ request.get_full_path }}">
+              {% if u.profile.is_available %}
+              <input type="hidden" name="is_available" value="0">
+              <button class="btn btn-sm btn-secondary js-toggle-availability-btn" type="submit">إيقاف التوفر</button>
+              {% else %}
+              <input type="hidden" name="is_available" value="1">
+              <button class="btn btn-sm btn-primary js-toggle-availability-btn" type="submit">تفعيل التوفر</button>
+              {% endif %}
+            </form>
+            <a class="btn btn-sm" href="{% url 'manage:user_detail' u.id %}">👁️ عرض الحساب</a>
+            <a class="btn btn-sm btn-secondary" href="{% url 'manage:user_profile_edit' u.id %}">✏️ تعديل</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-msg">لا يوجد مناديب مستودع حالياً. قم بتحويل مستخدم إلى موظف تجهيز من صفحة المستخدم.</p>
+  {% endif %}
+</div>
+
+{% if packers.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=packers query_string=query_string %}
+{% endif %}
+<script>
+  (function () {
+    document.addEventListener('submit', function (e) {
+      var form = e.target.closest('form.js-toggle-availability-form');
+      if (!form) return;
+      e.preventDefault();
+
+      var tr = form.closest('tr');
+      var btn = form.querySelector('.js-toggle-availability-btn');
+      var badge = tr ? tr.querySelector('.js-availability-badge') : null;
+      if (btn) btn.disabled = true;
+
+      fetch(getFormActionUrl(form), {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+        },
+        body: new FormData(form)
+      })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) throw new Error('toggle_failed');
+        if (badge) {
+          if (data.is_available) {
+            badge.className = 'badge badge-active js-availability-badge';
+          } else {
+            badge.className = 'badge js-availability-badge';
+            badge.style.background = '#fff1e6';
+            badge.style.color = '#9a3412';
+          }
+          badge.textContent = data.badge_text || '';
+        }
+        if (btn) {
+          btn.textContent = data.button_text || '';
+          btn.classList.remove('btn-primary', 'btn-secondary');
+          btn.classList.add(data.button_class || 'btn-primary');
+          btn.disabled = false;
+        }
+        var hidden = form.querySelector('input[name="is_available"]');
+        if (hidden) hidden.value = data.is_available ? '0' : '1';
+        if (tr) tr.setAttribute('data-is-available', data.is_available ? '1' : '0');
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        showManageError('تعذر تنفيذ العملية. حاول مرة أخرى.');
+      });
+    });
+  })();
+
+  (function () {
+    var ids = [{% for u in packers %}{{ u.id }}{% if not forloop.last %},{% endif %}{% endfor %}];
+    if (!ids.length) return;
+    var liveUrl = "{% url 'manage:packers_availability_live' %}";
+
+    function applyRowFromServer(tr, info) {
+      if (!tr || !info) return;
+      var want = info.is_available ? '1' : '0';
+      if (tr.getAttribute('data-is-available') === want) return;
+      tr.setAttribute('data-is-available', want);
+      var badge = tr.querySelector('.js-availability-badge');
+      var form = tr.querySelector('form.js-toggle-availability-form');
+      var btn = form ? form.querySelector('.js-toggle-availability-btn') : null;
+      if (badge) {
+        if (info.is_available) {
+          badge.className = 'badge badge-active js-availability-badge';
+        } else {
+          badge.className = 'badge js-availability-badge';
+          badge.style.background = '#fff1e6';
+          badge.style.color = '#9a3412';
+        }
+        badge.textContent = info.badge_text || '';
+      }
+      if (btn && form) {
+        btn.textContent = info.button_text || '';
+        btn.classList.remove('btn-primary', 'btn-secondary');
+        btn.classList.add(info.button_class || 'btn-primary');
+        var hidden = form.querySelector('input[name="is_available"]');
+        if (hidden) hidden.value = info.is_available ? '0' : '1';
+      }
+    }
+
+    function poll() {
+      if (document.hidden) return;
+      fetch(liveUrl + '?ids=' + ids.join(','), {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+      })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) return null;
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data || !data.success || !data.users) return;
+          ids.forEach(function (id) {
+            var tr = document.querySelector('tr[data-portal-availability-user="' + id + '"]');
+            var info = data.users[String(id)];
+            if (tr && info) applyRowFromServer(tr, info);
+          });
+        })
+        .catch(function () {});
+    }
+    setInterval(poll, 4000);
+  })();
+</script>
+{% endblock %}
+

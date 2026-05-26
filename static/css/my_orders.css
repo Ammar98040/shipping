@@ -1,0 +1,309 @@
+/* صفحة طلباتي */
+.my-orders-page {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.my-orders-page .page-title {
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+}
+
+.my-orders-page .page-subtitle {
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.5;
+}
+
+.my-orders-trust.shop-trust-strip {
+    margin-bottom: 1.5rem !important;
+}
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.order-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-bottom: 2px solid #eee;
+}
+
+.order-number h3 {
+    margin: 0 0 0.25rem 0;
+    color: var(--text);
+    font-size: 1.2rem;
+}
+
+.order-date {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.order-status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+.status-pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-confirmed {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-processing {
+    background: #cfe2ff;
+    color: #084298;
+}
+
+.status-ready_to_ship {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-shipped {
+    background: #cce5ff;
+    color: #004085;
+}
+
+.status-delivered {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.order-info {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.info-row .label {
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.info-row .value {
+    color: var(--text);
+}
+
+.order-items {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+}
+
+.order-items h4 {
+    margin: 0 0 1rem 0;
+    color: var(--text);
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.order-item:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    color: var(--text);
+}
+
+.item-price {
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.order-actions {
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 0.75rem 1.25rem;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    font-size: 1.1rem;
+}
+
+.btn-details {
+    background: var(--accent);
+}
+
+.btn-details:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 95, 79, 0.35);
+}
+
+.btn-reorder {
+    background: #28a745;
+}
+
+.btn-reorder:hover {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.btn-track {
+    background: var(--accent);
+}
+
+.btn-track:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 95, 79, 0.3);
+}
+
+@media (max-width: 768px) {
+    .order-actions {
+        justify-content: center;
+    }
+    
+    .btn-action {
+        flex: 1;
+        min-width: 120px;
+        justify-content: center;
+    }
+}
+
+.empty-orders {
+    text-align: center;
+    padding: 3.5rem 2rem;
+    background: linear-gradient(180deg, var(--card) 0%, rgba(44, 95, 79, 0.05) 100%);
+    border-radius: var(--radius, 12px);
+    box-shadow: var(--shadow, 0 2px 12px rgba(0,0,0,.08));
+    border: 1px solid rgba(44, 95, 79, 0.12);
+}
+
+.empty-orders p {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.empty-orders .empty-hint {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    margin-bottom: 1.75rem;
+}
+
+.empty-orders .btn-browse {
+    display: inline-block;
+    padding: 0.9rem 1.75rem;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.empty-orders .btn-browse:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .order-status {
+        align-self: flex-start;
+    }
+}
+
+/* ===== ??? ????? ===== */
+body.theme-dark .order-card {
+    background: var(--card);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.4);
+}
+
+body.theme-dark .order-header {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.07);
+}
+
+body.theme-dark .order-items {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.07);
+}
+
+body.theme-dark .order-item {
+    border-color: rgba(255,255,255,0.07);
+}
+
+body.theme-dark .status-pending { background: rgba(133,100,4,0.25); color: #fde68a; }
+body.theme-dark .status-confirmed { background: rgba(12,84,96,0.3); color: #a5f3fc; }
+body.theme-dark .status-processing { background: rgba(8,66,152,0.3); color: #bfdbfe; }
+body.theme-dark .status-ready_to_ship { background: rgba(6,95,70,0.3); color: #6ee7b7; }
+body.theme-dark .status-shipped { background: rgba(0,64,133,0.3); color: #93c5fd; }
+body.theme-dark .status-delivered { background: rgba(21,87,36,0.3); color: #86efac; }
+body.theme-dark .status-cancelled { background: rgba(114,28,36,0.3); color: #fca5a5; }
+
+body.theme-dark .btn-reorder {
+    background: #059669;
+}
+
+body.theme-dark .btn-reorder:hover {
+    background: #047857;
+}

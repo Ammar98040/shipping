@@ -1,0 +1,39 @@
+<h4 class="order-detail-section__title">📊 مسار طلبك</h4>
+{% if order.status != 'cancelled' %}
+<div class="progress-track">
+    <div class="pt-step {% if order.status in 'confirmed processing ready_to_ship shipped delivered' %}done{% elif order.status == 'pending' %}active{% endif %}">
+        <div class="pt-dot">⏳</div>
+        <div class="pt-label">قيد الانتظار</div>
+    </div>
+    <div class="pt-step {% if order.status in 'processing ready_to_ship shipped delivered' %}done{% elif order.status == 'confirmed' %}active{% endif %}">
+        <div class="pt-dot">✅</div>
+        <div class="pt-label">تم التأكيد</div>
+    </div>
+    <div class="pt-step {% if order.status in 'ready_to_ship shipped delivered' %}done{% elif order.status == 'processing' %}active{% endif %}">
+        <div class="pt-dot">⚙️</div>
+        <div class="pt-label">قيد التجهيز</div>
+    </div>
+    <div class="pt-step {% if order.status in 'shipped delivered' %}done{% elif order.status == 'ready_to_ship' %}active{% endif %}">
+        <div class="pt-dot">📦</div>
+        <div class="pt-label">جاهز للشحن</div>
+    </div>
+    <div class="pt-step {% if order.status == 'delivered' %}done{% elif order.status == 'shipped' %}active{% endif %}">
+        <div class="pt-dot">🚚</div>
+        <div class="pt-label">تم الشحن</div>
+    </div>
+    <div class="pt-step {% if order.status == 'delivered' %}active{% endif %}">
+        <div class="pt-dot">🎉</div>
+        <div class="pt-label">تم التوصيل</div>
+    </div>
+</div>
+{% else %}
+<div class="order-cancel-banner" id="order-cancel-banner">
+    <span class="order-cancel-banner__icon" aria-hidden="true">❌</span>
+    <div>
+        <strong class="order-cancel-banner__title">هذا الطلب ملغي</strong>
+        {% if order.cancel_reason %}
+        <p class="order-cancel-banner__note">السبب: {{ order.get_cancel_reason_display }}{% if order.cancel_note %} — {{ order.cancel_note }}{% endif %}</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}

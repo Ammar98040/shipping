@@ -1,0 +1,200 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}العروض{% endblock %}
+
+{% block manage_content %}
+<h1 class="manage-page-title">🏷️ العروض</h1>
+
+<div class="manage-filters">
+    <form method="get" class="filters-form">
+        <div class="filter-group" style="min-width: 260px;">
+            <label for="search">بحث:</label>
+            <input type="text" name="search" id="search" class="input filter-search" value="{{ search_query }}" placeholder="ابحث بالاسم أو الوصف...">
+        </div>
+        <button type="submit" class="btn btn-primary btn-filter">بحث</button>
+        {% if search_query %}
+        <a href="{% url 'manage:promotion_list' %}" class="btn btn-clear">مسح</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="list-actions">
+    <a href="{% url 'manage:promotion_add' %}" class="btn btn-primary">➕ إضافة عرض</a>
+    <span class="results-count">📊 {{ items.paginator.count }} نتيجة</span>
+</div>
+
+<div class="manage-section">
+    {% if items %}
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الاسم</th>
+                    <th>نوع الخصم</th>
+                    <th>قيمة الخصم</th>
+                    <th>الحد الأدنى للكمية</th>
+                    <th>نطاق التطبيق</th>
+                    <th>عدد المستخدمين</th>
+                    <th>مباع من الخصم</th>
+                    <th>التفاصيل</th>
+                    <th>فترة العرض</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><strong>{{ forloop.counter }}</strong></td>
+                    <td><strong style="color:#2c5f4f;">{{ item.name }}</strong></td>
+                    <td>{{ item.discount_type }}</td>
+                    <td>{{ item.discount_value }} </td>
+                    <td>{{ item.min_quantity }}</td>
+                    <td>
+                        <span class="badge badge-compartment">{{ item.get_scope_display }}</span>
+                    </td>
+                    <td>{{ item.users_count|default:0 }}</td>
+                    <td>{{ item.sold_products_count|default:0 }}</td>
+                    <td>
+                        {% if item.scope == 'products' or item.scope == 'variants' %}
+                            <details style="text-align:right">
+                                <summary style="cursor:pointer; user-select:none;" class="btn btn-sm btn-primary">
+                                    عرض التفاصيل
+                                </summary>
+                                <div style="margin-top:.75rem; padding:.75rem; border:1px solid #e9ecef; border-radius:8px;">
+                                    {% if item.products.all %}
+                                        <div style="margin-bottom:.75rem;">
+                                            <strong style="display:block; margin-bottom:.25rem;">المنتجات</strong>
+                                            <ul style="margin:0; padding:0 1rem;">
+                                                {% for p in item.products.all %}
+                                                <li style="margin:.25rem 0;">
+                                                    {{ p.category.shelf.compartment.name_ar }} - {{ p.category.shelf.name_ar }} - {{ p.category.name_ar }} - {{ p.name_ar }}
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if item.variants.all %}
+                                        <div>
+                                            <strong style="display:block; margin-bottom:.25rem;">النسخ</strong>
+                                            <ul style="margin:0; padding:0 1rem;">
+                                                {% for v in item.variants.all %}
+                                                <li style="margin:.25rem 0;">
+                                                    {{ v.product.category.shelf.compartment.name_ar }} - {{ v.product.category.shelf.name_ar }} - {{ v.product.category.name_ar }} - {{ v.product.name_ar }}
+                                                    ({{ v.customer_variant_button_label }})
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                    {% endif %}
+
+                                    {% if not item.products.all and not item.variants.all %}
+                                        <div style="color:#6c757d;">لا توجد عناصر مختارة.</div>
+                                    {% endif %}
+                                </div>
+                            </details>
+                        {% else %}
+                            <span style="color:#6c757d;">—</span>
+                        {% endif %}
+                    </td>
+                    {% include "manage/includes/datetime_range_cell.html" with start_at=item.start_at end_at=item.end_at %}
+                    <td>
+                        {% if item.is_currently_active %}
+                            <span class="badge badge-active js-promo-status-badge">✓ نشط</span>
+                        {% else %}
+                            {% if item.is_active %}
+                                <span class="badge badge-inactive js-promo-status-badge">⏳ منتهي (التاريخ)</span>
+                            {% else %}
+                                <span class="badge badge-inactive js-promo-status-badge">✗ غير نشط</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'manage:promotion_edit' item.pk %}" class="btn btn-sm">✏️ تعديل</a>
+
+                        <form method="post" action="{% url 'manage:promotion_toggle_active' item.pk %}" style="display:inline;" class="js-toggle-active-form">
+                            {% csrf_token %}
+                            {% if item.is_active %}
+                                <button type="submit" class="btn btn-sm btn-danger js-toggle-active-btn">⛔ تعطيل</button>
+                            {% else %}
+                                <button type="submit" class="btn btn-sm btn-primary js-toggle-active-btn">✅ تفعيل</button>
+                            {% endif %}
+                        </form>
+
+                        <a href="{% url 'manage:promotion_delete' item.pk %}" class="btn btn-sm btn-danger">🗑️ حذف</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">لا توجد عروض.</p>
+    {% endif %}
+</div>
+
+{% if items.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=items query_string=query_string %}
+{% endif %}
+
+<script>
+    (function () {
+        document.addEventListener('submit', function (e) {
+            var form = e.target.closest('form.js-toggle-active-form');
+            if (!form) return;
+            e.preventDefault();
+
+            var tr = form.closest('tr');
+            if (!tr) return;
+
+            var btn = form.querySelector('button[type="submit"]');
+            var badge = tr.querySelector('.js-promo-status-badge');
+
+            if (btn) btn.disabled = true;
+
+            var fd = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+                },
+                body: fd
+            })
+                .then(function (r) {
+                    var ct = (r.headers.get('content-type') || '').toLowerCase();
+                    if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+                    return r.json();
+                })
+                .then(function (data) {
+                    if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'error');
+
+                    if (badge) {
+                        badge.classList.remove('badge-active', 'badge-inactive');
+                        badge.classList.add(data.badge_class || 'badge-inactive');
+                        badge.textContent = data.badge_text || '';
+                    }
+
+                    if (btn) {
+                        if (data.is_active) {
+                            btn.textContent = '⛔ تعطيل';
+                            btn.classList.remove('btn-primary');
+                            btn.classList.add('btn-danger');
+                        } else {
+                            btn.textContent = '✅ تفعيل';
+                            btn.classList.remove('btn-danger');
+                            btn.classList.add('btn-primary');
+                        }
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function () {
+                    if (btn) btn.disabled = false;
+                    showManageError('تعذر تنفيذ العملية. حاول مرة أخرى.');
+                });
+        });
+    })();
+</script>
+{% endblock %}
+

@@ -1,0 +1,88 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}اتصل بنا{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-static-pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}">الدولاب</a>
+    <span class="shop-checkout-step-sep" aria-hidden="true">›</span>
+    <span class="breadcrumb-current">اتصل بنا</span>
+</nav>
+<div class="page-contact store-page-shell">
+    <h1>📬 اتصل بنا</h1>
+    <p class="page-subtitle">أرسل استفسارك أو اقتراحك وسنتواصل معك في أقرب وقت.</p>
+    <div class="shop-trust-strip">
+        <span>🔒 بياناتك لا تُشارك</span>
+        <span>⏱️ رد خلال أيام العمل</span>
+    </div>
+
+    <p class="store-field-hint contact-channel-hint">للسؤال السريع أثناء التصفّح يمكنك فتح <a href="{% url 'support_chat' %}">محادثة الدعم</a>.</p>
+
+    <div class="static-card">
+        <form method="post" action="" id="contact-form">
+            {% csrf_token %}
+            {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <span class="form-error">{{ field.errors.0 }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <button type="submit" class="btn-submit-static" id="contact-submit-btn">إرسال الرسالة</button>
+            <div id="contact-inline-msg" style="display:none; margin-top:0.8rem; font-weight:800;"></div>
+        </form>
+    </div>
+
+    <a href="{% url 'wardrobe' %}" class="static-back">← العودة للدولاب</a>
+</div>
+<script>
+(function () {
+    var form = document.getElementById('contact-form');
+    var btn = document.getElementById('contact-submit-btn');
+    var msg = document.getElementById('contact-inline-msg');
+    if (!form || !btn || !msg) return;
+
+    function showMsg(text, ok) {
+        msg.style.display = 'block';
+        msg.style.color = ok ? '#065f46' : '#b91c1c';
+        msg.textContent = text;
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        btn.disabled = true;
+        msg.style.display = 'none';
+        fetch(form.action || window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر إرسال الرسالة');
+            showMsg(data.message || 'تم إرسال الرسالة بنجاح.', true);
+            form.reset();
+            btn.disabled = false;
+        })
+        .catch(function (err) {
+            showMsg((err && err.message) ? err.message : 'تعذر إرسال الرسالة.', false);
+            btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}
+

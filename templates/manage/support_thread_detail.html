@@ -1,0 +1,129 @@
+{% extends "manage/base_manage.html" %}
+{% load static %}
+{% block title %}محادثة #{{ thread.id }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/support_chat.css' %}?v=29">
+{% endblock %}
+
+{% block manage_content %}
+<div style="max-width:1100px; margin:0 auto; padding:0 1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin:1.25rem 0;">
+        <a class="btn btn-secondary btn-sm" href="{% url 'manage:support_portal' %}">← رجوع</a>
+        <div style="text-align:right;">
+            <div style="font-weight:900;">محادثة مع: {{ thread.customer_display }}</div>
+            <div id="manageSupportStatusLine" style="color:#6c757d; font-size:0.9rem;">
+                الحالة: <span id="manageSupportStatusDisplay">{{ thread.get_status_display }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div
+        id="manageSupportThreadApp"
+        data-poll-url="{% url 'manage:support_thread_messages_json' thread.id %}"
+        data-send-url="{% url 'manage:support_thread_send_json' thread.id %}"
+        data-end-url="{% url 'manage:support_thread_end_json' thread.id %}"
+        data-claim-url="{% url 'manage:support_thread_claim_json' thread.id %}"
+        data-mark-read-url="{% url 'manage:support_thread_mark_read_json' thread.id %}"
+        data-customer-label="{{ thread.customer_display }}"
+        data-staff-label="خدمة العملاء"
+        data-bot-label="المساعد الآلي"
+    >
+        <div class="support-chat-shell">
+            <div id="manageSupportClaimWrap" class="manage-support-claim-wrap" {% if not show_claim_btn %}hidden{% endif %} style="margin-bottom:0.75rem; display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center;">
+                <button type="button" id="manageSupportClaimBtn" class="btn btn-primary btn-sm">استلام المحادثة</button>
+                <span style="font-size:0.85rem; color:#64748b;">احجز هذه المحادثة لحسابك قبل إرسال أي رد.</span>
+            </div>
+            <div id="manageSupportBanner" class="support-banner"></div>
+            <div id="manageSupportMessages" class="support-messages">
+                {% for m in chat_messages %}
+                    {% if m.sender_type == 'customer' %}
+                        <div class="support-msg support-msg--customer">
+                            <div class="support-msg-sender">{{ thread.customer_display }}</div>
+                            <div class="support-msg-text">{{ m.text }}</div>
+                            <div class="support-msg-meta">{{ m.created_at|date:"H:i" }}</div>
+                        </div>
+                    {% elif m.sender_type == 'staff' %}
+                        <div class="support-msg support-msg--staff">
+                            <div class="support-msg-sender">خدمة العملاء</div>
+                            <div class="support-msg-text">{{ m.text }}</div>
+                            <div class="support-msg-meta">{{ m.created_at|date:"H:i" }}</div>
+                        </div>
+                    {% elif m.sender_type == 'system' and m.metadata and m.metadata.kind == 'support_bot' %}
+                        <div class="support-msg support-msg--bot">
+                            <div class="support-msg-sender">المساعد الآلي</div>
+                            <div class="support-msg-text">{{ m.text|linebreaksbr }}</div>
+                            <div class="support-msg-meta">{{ m.created_at|date:"H:i" }}</div>
+                        </div>
+                    {% endif %}
+                {% empty %}
+                    <div style="color:#6c757d; font-weight:700;">لا توجد رسائل.</div>
+                {% endfor %}
+            </div>
+            <div id="manageSupportEndNotice" class="support-end-notice" {% if not end_message_text %}hidden{% endif %}>
+                {{ end_message_text }}
+            </div>
+            <div class="support-input-area">
+                <div id="manageSupportPreviewBox" class="support-preview-box" hidden>
+                    <div class="support-preview-head">
+                        <div class="support-preview-title">معاينة قبل الإرسال</div>
+                        <button id="manageSupportPreviewClear" type="button" class="support-preview-clear">إزالة الكل</button>
+                    </div>
+                    <div id="manageSupportPreviewGrid" class="support-preview-grid"></div>
+                    <div id="manageSupportPreviewName" class="support-preview-name"></div>
+                </div>
+                <div class="support-compose-row">
+                    <div class="support-compose-main">
+                        <textarea
+                            id="manageSupportMessageInput"
+                            class="support-textarea support-textarea--compose"
+                            placeholder="اكتب رد الموظف هنا..."
+                            {% if not support_can_compose %}disabled{% endif %}
+                        ></textarea>
+                    </div>
+                    <div class="support-compose-side">
+                        <input id="manageSupportImageInput" class="support-file-input" type="file" name="image" accept="image/*" multiple hidden {% if not support_can_compose %}disabled{% endif %}>
+                        <label class="support-file-trigger" for="manageSupportImageInput">
+                            <span class="support-file-trigger__icon">🖼️</span>
+                            <span class="support-file-trigger__label">صورة</span>
+                        </label>
+                    </div>
+                    <div class="support-compose-send">
+                        <button id="manageSupportSendBtnMobile" class="support-send-mobile" type="button" {% if not support_can_compose %}disabled{% endif %} aria-label="إرسال">➜</button>
+                    </div>
+                </div>
+                <div class="support-row">
+                    <button id="manageSupportSendBtn" class="support-btn support-btn--desktop-send" type="button" {% if not support_can_compose %}disabled{% endif %}>إرسال</button>
+                    <button id="manageSupportEndBtn" class="support-secondary-btn" type="button" {% if not can_send %}style="display:none;"{% endif %}>إنهاء</button>
+                </div>
+                {% if thread.warning_sent_at %}
+                    <div style="color:#b45309; font-weight:900; text-align:center; margin-top:0.25rem;">
+                        تم إرسال تنبيه الإغلاق للعميل.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if audit_events %}
+    <div class="manage-section" style="margin-top:1.25rem; padding:1rem;">
+        <h2 style="margin-top:0; font-size:1.05rem;">سجل الإشراف</h2>
+        <ul style="list-style:none; padding:0; margin:0; font-size:0.92rem;">
+            {% for ev in audit_events %}
+            <li style="padding:0.45rem 0; border-bottom:1px solid rgba(0,0,0,0.06);">
+                <strong>{{ ev.created_at|date:"Y-m-d H:i:s" }}</strong>
+                — {{ ev.get_event_type_display }}
+                {% if ev.actor %}<span style="color:#64748b;">({{ ev.actor.username }})</span>{% endif %}
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/manage-support.js' %}?v=32"></script>
+{% endblock %}
+
+

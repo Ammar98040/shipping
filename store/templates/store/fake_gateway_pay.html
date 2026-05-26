@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}بوابة الدفع (محاكاة){% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<style>
+.pay-page { max-width: 720px; margin: 2.5rem auto; padding: 0 1rem; }
+.pay-env-banner {
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  text-align: center;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #78350f;
+  border: 1px solid #fbbf24;
+}
+.pay-card { background: #fff; border-radius: 18px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); padding: 2rem; border: 1px solid #e5e7eb; }
+.pay-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.pay-title { font-size: 1.5rem; font-weight: 900; margin: 0; }
+.pill { display: inline-block; padding: 0.35rem 0.9rem; border-radius: 20px; font-weight: 800; font-size: 0.85rem; background: #f0faf5; color: #2c5f4f; }
+.summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.25rem 0 1.75rem; }
+.box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1rem; }
+.label { font-size: 0.8rem; color: #6b7280; margin-bottom: 0.25rem; }
+.value { font-weight: 800; color: #111827; }
+.btn-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.25rem; }
+.btn-sim { flex: 1; min-width: 220px; padding: 0.9rem 1.2rem; border-radius: 12px; border: none; cursor: pointer; font-weight: 900; font-size: 1rem; }
+.btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+.btn-fail { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+.hint { background: #111827; color: #e5e7eb; border-radius: 12px; padding: 1rem 1.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-size: 0.85rem; margin-top: 1.5rem; direction: ltr; }
+.hint strong { color: #fbbf24; }
+
+.visa-field {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(229, 231, 235, 0.98);
+  border-radius: 14px;
+  padding: 0.85rem 0.9rem;
+  box-shadow:
+    0 18px 45px rgba(0,0,0,0.06),
+    inset 0 1px 0 rgba(255,255,255,0.95);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.visa-field:hover {
+  transform: translateY(-2px);
+  border-color: rgba(44, 95, 79, 0.28);
+  box-shadow:
+    0 28px 70px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.98);
+}
+
+.visa-field label {
+  display: block;
+  font-weight: 900;
+  color: #0f172a;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.visa-field input {
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  background: #fff;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  font-weight: 750;
+  letter-spacing: 0.2px;
+  outline: none;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.visa-field input:focus {
+  border-color: rgba(44, 95, 79, 0.95);
+  box-shadow: 0 0 0 4px rgba(44, 95, 79, 0.14);
+}
+
+.visa-hint {
+  margin-top: 0.35rem;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+@media (max-width: 560px) {
+  .summary { grid-template-columns: 1fr; }
+  form > div[style] { grid-template-columns: 1fr !important; }
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .pay-card {
+  background: var(--card);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+}
+
+body.theme-dark .pay-desc {
+  color: var(--text-muted);
+}
+
+body.theme-dark .pay-form-title {
+  color: var(--text);
+}
+
+body.theme-dark .pill {
+  background: rgba(45,212,191,0.12);
+  color: var(--accent);
+}
+
+body.theme-dark .box {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+}
+
+body.theme-dark .label {
+  color: var(--text-muted);
+}
+
+body.theme-dark .value {
+  color: var(--text);
+}
+
+body.theme-dark .visa-field {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 18px 45px rgba(0,0,0,0.25);
+}
+
+body.theme-dark .visa-field:hover {
+  border-color: rgba(45,212,191,0.3);
+  box-shadow: 0 28px 70px rgba(0,0,0,0.35);
+}
+
+body.theme-dark .visa-field label {
+  color: var(--text);
+}
+
+body.theme-dark .visa-field input {
+  background: var(--bg);
+  border-color: rgba(255,255,255,0.12);
+  color: var(--text);
+}
+
+body.theme-dark .visa-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(45,212,191,0.16);
+}
+
+body.theme-dark .visa-hint {
+  color: var(--text-muted);
+}
+
+body.theme-dark .hint {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+body.theme-dark .pay-env-banner {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fde68a;
+  border-color: rgba(251, 191, 36, 0.45);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pay-page">
+  <div class="pay-env-banner" role="status">
+    <strong>بيئة تجريبية:</strong> لن يُخصم أي مال حقيقي من بطاقة. هذه الصفحة للمطوّرين والاختبار فقط.
+  </div>
+  <div class="pay-card">
+    <div class="pay-header">
+      <h1 class="pay-title">💳 بوابة الدفع الوهمية</h1>
+      <span class="pill">محاكاة فقط</span>
+    </div>
+
+    <p style="margin:0 0 1rem 0;" class="pay-desc">
+      هذه صفحة اختبار لإكمال الدفع. اختر نجاح أو فشل لمتابعة سيناريو النظام.
+    </p>
+
+    <div class="summary">
+      <div class="box">
+        <div class="label">رقم الطلب</div>
+        <div class="value">#{{ order.id }}</div>
+      </div>
+      <div class="box">
+        <div class="label">المبلغ المطلوب</div>
+        <div class="value">{{ order.total }} ر.س</div>
+      </div>
+      <div class="box">
+        <div class="label">حالة الدفع الحالية</div>
+        <div class="value">{{ order.get_payment_status_display }}</div>
+      </div>
+      <div class="box">
+        <div class="label">محاولة الدفع</div>
+        <div class="value">#{{ attempt.id }} ({{ attempt.get_status_display }})</div>
+      </div>
+    </div>
+
+    <form method="post" action="{% url 'fake_gateway_callback' attempt.id %}">
+      {% csrf_token %}
+      <input type="hidden" name="reference" value="FAKE-REF-{{ attempt.id }}">
+
+      <div style="margin: 1.25rem 0 1rem;">
+        <div class="pay-form-title" style="font-weight:900;margin-bottom:0.65rem;">بيانات بطاقة فيزا (محاكاة)</div>
+
+        <div style="display:flex;flex-direction:column;gap:0.85rem;">
+          <!-- سطر 1: رقم البطاقة (كامل العرض) -->
+          <div class="visa-field">
+            <label for="card_number">رقم البطاقة</label>
+            <input
+              type="text"
+              id="card_number"
+              name="card_number"
+              placeholder="**** **** **** 2345"
+              dir="ltr"
+              inputmode="numeric"
+              autocomplete="cc-number"
+              maxlength="19"
+              required
+            />
+            <div class="visa-hint">يتم استخدامه فقط لمحاكاة إدخال البطاقة</div>
+          </div>
+
+          <!-- سطر 2: انتهاء البطاقة + CVV -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;">
+            <div class="visa-field">
+              <label for="card_expiry">انتهاء البطاقة</label>
+              <input
+                type="text"
+                id="card_expiry"
+                name="card_expiry"
+                placeholder="MM/YY"
+                dir="ltr"
+                inputmode="numeric"
+                autocomplete="cc-exp"
+                maxlength="5"
+                required
+              />
+              <div class="visa-hint">مثال: 09/28</div>
+            </div>
+
+            <div class="visa-field">
+              <label for="card_cvv">CVV</label>
+              <input
+                type="password"
+                id="card_cvv"
+                name="card_cvv"
+                placeholder="123"
+                dir="ltr"
+                inputmode="numeric"
+                autocomplete="cc-csc"
+                maxlength="3"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- سطر 3: اسم حامل البطاقة (كامل العرض) -->
+          <div class="visa-field">
+            <label for="card_holder_name">اسم حامل البطاقة</label>
+            <input
+              type="text"
+              id="card_holder_name"
+              name="card_holder_name"
+              placeholder="كما هو على البطاقة"
+              autocomplete="cc-name"
+              required
+            />
+          </div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-sim btn-success" type="submit" name="result" value="success"
+                onclick="return confirm('محاكاة: نجاح الدفع؟')">
+          ✅ نجاح الدفع
+        </button>
+        <button class="btn-sim btn-fail" type="submit" name="result" value="fail"
+                onclick="return confirm('محاكاة: فشل الدفع؟')">
+          ❌ فشل الدفع
+        </button>
+      </div>
+    </form>
+
+    <div class="hint">
+      <div><strong>ملاحظة:</strong> إشعارات البريد ستظهر في الـ Terminal (Console Email Backend).</div>
+      <div>بعد نجاح الدفع: سيتم تحويل الطلب تلقائياً إلى <strong>تم التأكيد</strong>.</div>
+      <div>بعد فشل الدفع: سيتم إلغاء الطلب تلقائياً وإرجاع المخزون.</div>
+    </div>
+
+    <script>
+      (function () {
+        var cardNumber = document.getElementById('card_number');
+        var cardExpiry = document.getElementById('card_expiry');
+        var cardCvv = document.getElementById('card_cvv');
+        var holder = document.getElementById('card_holder_name');
+
+        if (!cardNumber || !cardExpiry || !cardCvv || !holder) return;
+
+        function digitsOnly(v) {
+          return String(v || '').replace(/\D/g, '');
+        }
+
+        function formatCardNumber(v) {
+          var d = digitsOnly(v).slice(0, 16);
+          // تنسيق 4-4-4-4
+          return d.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+
+        cardNumber.addEventListener('input', function () {
+          var formatted = formatCardNumber(cardNumber.value);
+          cardNumber.value = formatted;
+        });
+
+        cardExpiry.addEventListener('input', function () {
+          var d = digitsOnly(cardExpiry.value).slice(0, 4);
+          var mm = '';
+          var yy = '';
+
+          if (d.length === 0) {
+            cardExpiry.value = '';
+            return;
+          }
+
+          if (d.length === 1) {
+            mm = '0' + d;
+            yy = '';
+            cardExpiry.value = mm + '/';
+            // ضع المؤشر بعد /
+            requestAnimationFrame(function () {
+              cardExpiry.setSelectionRange(3, 3);
+            });
+            return;
+          }
+
+          mm = d.slice(0, 2);
+          yy = d.slice(2);
+
+          if (yy.length === 0) {
+            cardExpiry.value = mm + '/';
+            requestAnimationFrame(function () {
+              cardExpiry.setSelectionRange(3, 3);
+            });
+            return;
+          }
+
+          cardExpiry.value = mm + '/' + yy;
+        });
+
+        cardCvv.addEventListener('input', function () {
+          cardCvv.value = digitsOnly(cardCvv.value).slice(0, 3);
+        });
+
+        var form = cardNumber.closest('form');
+        if (!form) return;
+
+        form.addEventListener('submit', function (e) {
+          var cn = digitsOnly(cardNumber.value);
+          var expDigits = digitsOnly(cardExpiry.value);
+          var cvv = digitsOnly(cardCvv.value);
+          var holderVal = (holder.value || '').trim();
+
+          // المحاكاة: نسمح فقط بـ 16 رقم لرقم البطاقة
+          if (cn.length !== 16) {
+            e.preventDefault();
+            alert('رقم البطاقة يجب أن يحتوي 16 رقم.');
+            return;
+          }
+
+          if (expDigits.length !== 4) {
+            e.preventDefault();
+            alert('انتهاء البطاقة يجب أن يكون بالشكل MM/YY (رقمان للشهر ورقمين للسنة).');
+            return;
+          }
+
+          var mm = parseInt(expDigits.slice(0, 2), 10);
+          if (!(mm >= 1 && mm <= 12)) {
+            e.preventDefault();
+            alert('الشهر في انتهاء البطاقة يجب أن يكون بين 01 و 12.');
+            return;
+          }
+
+          if (cvv.length !== 3) {
+            e.preventDefault();
+            alert('CVV يجب أن يحتوي 3 أرقام.');
+            return;
+          }
+
+          if (!holderVal) {
+            e.preventDefault();
+            alert('يرجى إدخال اسم حامل البطاقة.');
+            return;
+          }
+        });
+      })();
+    </script>
+  </div>
+</div>
+{% endblock %}
+

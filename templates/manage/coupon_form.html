@@ -1,0 +1,46 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}{{ title }}{% endblock %}
+
+{% block manage_content %}
+<h1 class="manage-page-title">📝 {{ title }}</h1>
+
+<div class="manage-section">
+    {% if used_users_count is not None %}
+    <div style="margin-bottom:1rem; padding:0.75rem 1rem; border-radius:12px; border:1px solid rgba(44,95,79,0.18); background:rgba(44,95,79,0.06);">
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <div><strong>المستخدمون المسموح لهم:</strong> {{ allowed_users }}</div>
+            <div><strong>المستخدمون الذين استخدموا:</strong> {{ used_users_count }}</div>
+            <div><strong>المتبقي:</strong> {{ remaining_users }}</div>
+        </div>
+        {% if allowed_users > 0 and used_users_count >= allowed_users %}
+            <div style="margin-top:0.6rem;">
+                <span class="badge badge-inactive">⛔ منتهي (اكتمل الحد)</span>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <form method="post" class="manage-form">
+        {% csrf_token %}
+
+        {% for field in form %}
+        <div class="form-group">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}
+                <small style="display:block; margin-top:0.25rem; color:#6c757d;">{{ field.help_text }}</small>
+            {% endif %}
+            {% if field.errors %}
+                <span class="form-error">{{ field.errors.0 }}</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 حفظ</button>
+            <a href="{% url 'manage:coupon_list' %}" class="btn btn-secondary">❌ إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+

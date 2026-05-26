@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}عناويني{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/addresses.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="addresses-page">
+    <div class="page-header">
+        <h1 class="page-title">عناويني</h1>
+        <a href="{% url 'address_add' %}" class="btn-add">+ إضافة عنوان جديد</a>
+    </div>
+    <p class="store-field-hint addresses-page-hint">العنوان الافتراضي يُقترَح تلقائياً عند الطلب؛ يمكنك تعديله أو إضافة عدة عناوين للتوصيل.</p>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if addresses %}
+    <div class="addresses-grid">
+        {% for address in addresses %}
+        <div class="address-card {% if address.is_default %}default-address{% endif %}">
+            <div class="address-header">
+                <h3>{{ address.title }}</h3>
+                {% if address.is_default %}
+                <span class="badge badge-default">افتراضي</span>
+                {% endif %}
+            </div>
+            
+            <div class="address-body">
+                <p class="address-name">{{ address.full_name }}</p>
+                <p class="address-phone">📱 {{ address.phone }}</p>
+                <p class="address-text">{{ address.full_address }}</p>
+                {% if address.additional_info %}
+                <p class="address-notes">ℹ️ {{ address.additional_info }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="address-actions">
+                {% if not address.is_default %}
+                <form method="post" action="{% url 'address_set_default' address.id %}" class="js-address-action-form" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-action btn-default">جعله افتراضي</button>
+                </form>
+                {% endif %}
+                <a href="{% url 'address_edit' address.id %}" class="btn-action btn-edit">تعديل</a>
+                <form method="post" action="{% url 'address_delete' address.id %}" class="js-address-action-form" style="display:inline;" data-confirm="هل أنت متأكد من حذف هذا العنوان؟">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-action btn-delete">حذف</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="store-empty-state empty-addresses">
+        <p class="store-empty-state__title">لا توجد عناوين بعد</p>
+        <p class="store-empty-state__text">أضف عنوان التوصيل مرة واحدة ليُعبأ تلقائياً عند الشراء أو من صفحة إتمام الطلب.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'address_add' %}" class="store-btn store-btn--primary">إضافة عنوان</a>
+            <a href="{% url 'profile_view' %}" class="store-btn store-btn--ghost">العودة للملف</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script>
+(function () {
+    var root = document.querySelector('.addresses-page');
+    if (!root) return;
+    function showMsg(text, ok) {
+        var msg = document.createElement('div');
+        msg.className = 'message';
+        msg.style.marginBottom = '0.75rem';
+        msg.style.background = ok ? '#f0faf5' : '#fff0f0';
+        msg.style.color = ok ? '#065f46' : '#dc2626';
+        msg.textContent = text;
+        root.prepend(msg);
+        setTimeout(function () { msg.remove(); }, 2500);
+    }
+    document.addEventListener('submit', function (e) {
+        var form = e.target.closest('form.js-address-action-form');
+        if (!form) return;
+        e.preventDefault();
+        var confirmMsg = form.getAttribute('data-confirm');
+        if (confirmMsg && !window.confirm(confirmMsg)) return;
+        var btn = form.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر تنفيذ العملية');
+            showMsg(data.message || 'تمت العملية بنجاح.', true);
+            if (btn) btn.disabled = false;
+            setTimeout(function () { window.location.reload(); }, 350);
+        })
+        .catch(function (err) {
+            showMsg((err && err.message) ? err.message : 'تعذر تنفيذ العملية.', false);
+            if (btn) btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}

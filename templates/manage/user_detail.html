@@ -1,0 +1,378 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}تفاصيل المستخدم - {{ user_profile.username }}{% endblock %}
+
+{% block manage_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <h1 class="manage-page-title">👤 تفاصيل المستخدم: {{ user_profile.username }}</h1>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        {% if not user_profile.is_superuser %}
+        <a href="{% url 'manage:user_profile_edit' user_profile.id %}" class="btn btn-primary">✏️ تعديل شامل</a>
+        {% endif %}
+        <a href="{% url 'manage:users_list' %}" class="btn btn-secondary">← رجوع للقائمة</a>
+    </div>
+</div>
+
+<div class="user-detail-container">
+    <div class="manage-section">
+        <h2>📋 معلومات الحساب</h2>
+        <div class="user-stats">
+            <div class="stat-box">
+                <div class="stat-label">اسم المستخدم</div>
+                <div class="stat-value" style="font-size: 1.2rem;">{{ user_profile.username }}</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">البريد الإلكتروني</div>
+                <div class="stat-value" style="font-size: 1.2rem;">{{ user_profile.email|default:"-" }}</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">الاسم الكامل</div>
+                <div class="stat-value" style="font-size: 1.2rem;">{{ user_profile.get_full_name|default:"-" }}</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">الحالة:</strong>
+                {% if user_profile.is_active %}
+                <span class="badge badge-active">✓ نشط</span>
+                {% else %}
+                <span class="badge badge-inactive">✗ معطل</span>
+                {% endif %}
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">الصلاحيات الحالية:</strong>
+                <span class="badge" style="background: #e9ecef; color: #495057;">👤 مستخدم عادي</span>
+                {% if account_type == 'courier' %}
+                <span class="badge" style="background: linear-gradient(135deg, #dbeafe, #bfdbfe); color: #1d4ed8;">🚚 مندوب شحن</span>
+                {% elif account_type == 'packer' %}
+                <span class="badge" style="background: linear-gradient(135deg, #fef3c7, #fde68a); color: #92400e;">🧰 مندوب تجهيز</span>
+                {% elif account_type == 'warehouse_manager' %}
+                <span class="badge" style="background: linear-gradient(135deg, #ecfdf5, #d1fae5); color: #065f46;">📦 مسؤول المستودع</span>
+                {% elif account_type == 'shipping_manager' %}
+                <span class="badge" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1e40af;">🚛 مسؤول الشحن</span>
+                {% elif account_type == 'customer_service' %}
+                <span class="badge" style="background: linear-gradient(135deg, #e0f2fe, #dbeafe); color: #075985;">💬 موظف خدمة العملاء</span>
+                {% elif account_type == 'customer_service_manager' %}
+                <span class="badge" style="background: linear-gradient(135deg, #dcfce7, #bbf7d0); color: #166534;">🧭 مسؤول خدمة العملاء</span>
+                {% elif user_profile.is_superuser %}
+                <span class="badge badge-admin">👑 مدير رئيسي</span>
+                {% elif user_profile.is_staff %}
+                <span class="badge badge-staff">🛡️ مسؤول</span>
+                {% endif %}
+                <span class="badge" id="user-role-current-badge" style="display:none; background:#e9ecef; color:#495057;"></span>
+                {% if account_type == 'courier' or account_type == 'packer' %}
+                {% if is_available %}
+                <span class="badge badge-active js-availability-badge">🟢 متوفر</span>
+                {% else %}
+                <span class="badge js-availability-badge" style="background:#fff1e6; color:#9a3412;">⚪ غير متوفر</span>
+                {% endif %}
+                {% endif %}
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">تاريخ التسجيل:</strong>
+                <span>{{ user_profile.date_joined|date:"Y-m-d H:i" }}</span>
+            </div>
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">آخر تسجيل دخول:</strong>
+                <span>{{ user_profile.last_login|date:"Y-m-d H:i"|default:"-" }}</span>
+            </div>
+            {% if account_type == 'courier' or account_type == 'packer' %}
+            <div>
+                <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">إدارة التوفر:</strong>
+                <form method="post" action="{% url 'manage:user_toggle_availability' user_profile.id %}" style="display:flex; gap:0.5rem; flex-wrap:wrap;" class="js-toggle-availability-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    {% if is_available %}
+                    <input type="hidden" name="is_available" value="0">
+                    <button type="submit" class="btn btn-secondary btn-sm js-toggle-availability-btn">إيقاف التوفر</button>
+                    {% else %}
+                    <input type="hidden" name="is_available" value="1">
+                    <button type="submit" class="btn btn-primary btn-sm js-toggle-availability-btn">تفعيل التوفر</button>
+                    {% endif %}
+                </form>
+                {% if availability_updated_at %}
+                <small id="availability-updated-at" style="color:#6c757d; display:block; margin-top:0.35rem;">آخر تحديث: {{ availability_updated_at|date:"Y-m-d H:i" }}</small>
+                {% else %}
+                <small id="availability-updated-at" style="color:#6c757d; display:block; margin-top:0.35rem;"></small>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not user_profile.is_superuser or request.user.is_superuser %}
+    <div class="manage-section" style="border: 2px solid #dee2e6;">
+        <h2>⚙️ تغيير نوع الحساب</h2>
+        <p style="color: #6c757d; margin-bottom: 1.5rem;">
+            تغيير نوع الحساب يحدد البوابة المناسبة عند تسجيل الدخول (المتجر، المستودع، الشحن، أو لوحة الإدارة حسب الدور).
+        </p>
+        <form method="post" id="user-change-role-form" action="{% url 'manage:user_detail' user_profile.id %}">
+            {% csrf_token %}
+            <input type="hidden" name="manage_user_action" value="change_role">
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if not user_profile.is_superuser and not user_profile.is_staff and account_type == 'regular' %}border-color: #2c5f4f; background: #f0faf5;{% endif %}">
+                    <input type="radio" name="role" value="regular" {% if not user_profile.is_superuser and not user_profile.is_staff and account_type == 'regular' %}checked{% endif %}>
+                    👤 مستخدم عادي
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if user_profile.is_staff and not user_profile.is_superuser and account_type == 'regular' %}border-color: #6f42c1; background: #f5f0ff;{% endif %}">
+                    <input type="radio" name="role" value="staff" {% if user_profile.is_staff and not user_profile.is_superuser and account_type == 'regular' %}checked{% endif %}>
+                    🛡️ مسؤول (Staff)
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if account_type == 'courier' %}border-color: #2563eb; background: #eff6ff;{% endif %}">
+                    <input type="radio" name="role" value="courier" {% if account_type == 'courier' %}checked{% endif %}>
+                    🚚 مندوب شحن
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if account_type == 'packer' %}border-color: #ca8a04; background: #fffbeb;{% endif %}">
+                    <input type="radio" name="role" value="packer" {% if account_type == 'packer' %}checked{% endif %}>
+                    🧰 موظف تجهيز
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if account_type == 'warehouse_manager' %}border-color: #059669; background: #ecfdf5;{% endif %}">
+                    <input type="radio" name="role" value="warehouse_manager" {% if account_type == 'warehouse_manager' %}checked{% endif %}>
+                    📦 مسؤول المستودع
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if account_type == 'shipping_manager' %}border-color: #1d4ed8; background: #eff6ff;{% endif %}">
+                    <input type="radio" name="role" value="shipping_manager" {% if account_type == 'shipping_manager' %}checked{% endif %}>
+                    🚛 مسؤول الشحن
+                </label>
+                {% if request.user.is_superuser %}
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if account_type == 'customer_service' %}border-color: #0ea5e9; background: #e0f2fe;{% endif %}">
+                    <input type="radio" name="role" value="customer_service" {% if account_type == 'customer_service' %}checked{% endif %}>
+                    💬 موظف خدمة العملاء
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if account_type == 'customer_service_manager' %}border-color: #16a34a; background: #dcfce7;{% endif %}">
+                    <input type="radio" name="role" value="customer_service_manager" {% if account_type == 'customer_service_manager' %}checked{% endif %}>
+                    🧭 مسؤول خدمة العملاء
+                </label>
+                {% endif %}
+                {% if request.user.is_superuser %}
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.75rem 1.25rem; border: 2px solid #dee2e6; border-radius: 8px; {% if user_profile.is_superuser %}border-color: #ffc107; background: #fffbf0;{% endif %}">
+                    <input type="radio" name="role" value="superuser" {% if user_profile.is_superuser %}checked{% endif %}>
+                    👑 مدير رئيسي
+                </label>
+                {% endif %}
+                <button type="submit" class="btn btn-primary" id="user-change-role-btn">
+                    💾 حفظ التغيير
+                </button>
+            </div>
+        </form>
+        <div id="user-change-role-msg" style="display:none; margin-top:0.75rem; font-weight:800;"></div>
+    </div>
+    {% endif %}
+
+    <div class="manage-section">
+        <h2>🧾 بيانات الملف الشخصي الكاملة</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1rem;">
+            <div><strong>اسم المستخدم:</strong> {{ user_profile.username }}</div>
+            <div><strong>البريد:</strong> {{ user_profile.email|default:"-" }}</div>
+            <div><strong>الاسم الأول:</strong> {{ user_profile.first_name|default:"-" }}</div>
+            <div><strong>اسم العائلة:</strong> {{ user_profile.last_name|default:"-" }}</div>
+            <div><strong>رقم الجوال:</strong> {{ profile_obj.phone|default:"-" }}</div>
+            <div><strong>تاريخ الميلاد:</strong> {{ profile_obj.birth_date|date:"Y-m-d"|default:"-" }}</div>
+            <div><strong>تاريخ التسجيل:</strong> {{ user_profile.date_joined|date:"Y-m-d H:i" }}</div>
+            <div><strong>آخر تسجيل دخول:</strong> {{ user_profile.last_login|date:"Y-m-d H:i"|default:"-" }}</div>
+        </div>
+        {% if profile_obj.avatar %}
+        <div style="margin-top:1rem;">
+            <strong>الصورة الشخصية:</strong><br>
+            <img src="{{ profile_obj.avatar.url }}" alt="{{ user_profile.username }}" style="width:88px; height:88px; object-fit:cover; border-radius:10px; border:1px solid #e5e7eb;">
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="manage-section">
+        <h2>📍 العناوين المسجلة</h2>
+        {% if addresses %}
+        <div style="display:grid; gap:0.75rem;">
+            {% for addr in addresses %}
+            <div style="padding:0.85rem 1rem; border:1px solid #e5e7eb; border-radius:10px;">
+                <strong>{{ addr.title|default:"عنوان" }}</strong>
+                {% if addr.is_default %}<span class="badge badge-active" style="margin-right:0.5rem;">افتراضي</span>{% endif %}
+                <div style="margin-top:0.35rem; color:#4b5563;">
+                    {{ addr.full_name }} - {{ addr.phone }}<br>
+                    {{ addr.city }}{% if addr.district %}، {{ addr.district }}{% endif %}{% if addr.street %}، {{ addr.street }}{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-msg">لا توجد عناوين مسجلة لهذا الحساب.</p>
+        {% endif %}
+    </div>
+
+    <div class="manage-section">
+        <h2>📊 الإحصائيات</h2>
+        <div class="user-stats">
+            <div class="stat-box">
+                <div class="stat-value">{{ stats.total_orders }}</div>
+                <div class="stat-label">🛒 إجمالي الطلبات</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value">{{ stats.wishlist_count }}</div>
+                <div class="stat-label">❤️ المفضلات</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" style="color: #2c5f4f;">{{ stats.total_spent }} ر.س</div>
+                <div class="stat-label">💰 إجمالي الإنفاق</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="manage-section">
+        <h2>📦 آخر الطلبات ({{ stats.total_orders }})</h2>
+        {% if recent_orders %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for order in recent_orders %}
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                <div>
+                    <strong>طلب #{{ order.id }}</strong>
+                    <span style="margin-right: 1rem; color: #6c757d;">{{ order.created_at|date:"Y-m-d" }}</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                {% if order.status == 'pending' %}
+                <span class="badge" style="background: #fff3cd; color: #856404;">⏳ {{ order.get_status_display }}</span>
+                {% elif order.status == 'confirmed' %}
+                <span class="badge" style="background: #cfe2ff; color: #084298;">⚙️ {{ order.get_status_display }}</span>
+                {% elif order.status == 'shipped' %}
+                <span class="badge" style="background: #d1e7dd; color: #0f5132;">🚚 {{ order.get_status_display }}</span>
+                {% elif order.status == 'delivered' %}
+                <span class="badge badge-active">✅ {{ order.get_status_display }}</span>
+                {% else %}
+                <span class="badge badge-inactive">❌ {{ order.get_status_display }}</span>
+                {% endif %}
+                    <strong style="color: #2c5f4f;">{{ order.total }} ر.س</strong>
+                    <a href="{% url 'manage:order_detail' order.id %}" class="btn btn-xs">👁️ عرض</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-msg">لا توجد طلبات</p>
+        {% endif %}
+    </div>
+
+    <div class="manage-section">
+        <h2>❤️ المفضلات ({{ stats.wishlist_count }})</h2>
+        {% if wishlist_items %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+            {% for item in wishlist_items %}
+            <div style="padding: 1rem; background: #f8f9fa; border-radius: 8px; display: flex; flex-direction: column; gap: 0.5rem;">
+                <strong>{{ item.product.name_ar }}</strong>
+                <span style="color: #2c5f4f; font-weight: 600;">{{ item.product.price }} ر.س</span>
+                <span style="color: #6c757d; font-size: 0.85rem;">أضيف: {{ item.added_at|date:"Y-m-d" }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-msg">لا توجد مفضلات</p>
+        {% endif %}
+    </div>
+</div>
+<script>
+  (function () {
+    document.addEventListener('submit', function (e) {
+      var form = e.target.closest('form.js-toggle-availability-form');
+      if (!form) return;
+      e.preventDefault();
+
+      var btn = form.querySelector('.js-toggle-availability-btn');
+      var badge = document.querySelector('.js-availability-badge');
+      var updatedAt = document.getElementById('availability-updated-at');
+      if (btn) btn.disabled = true;
+
+      fetch(getFormActionUrl(form), {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+        },
+        body: new FormData(form)
+      })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) throw new Error('toggle_failed');
+
+        if (badge) {
+          if (data.is_available) {
+            badge.className = 'badge badge-active js-availability-badge';
+          } else {
+            badge.className = 'badge js-availability-badge';
+            badge.style.background = '#fff1e6';
+            badge.style.color = '#9a3412';
+          }
+          badge.textContent = data.badge_text || '';
+        }
+        if (btn) {
+          btn.textContent = data.button_text || '';
+          btn.classList.remove('btn-primary', 'btn-secondary');
+          btn.classList.add(data.button_class || 'btn-primary');
+          btn.disabled = false;
+        }
+        if (updatedAt) {
+          updatedAt.textContent = data.availability_updated_at ? ('آخر تحديث: ' + data.availability_updated_at) : '';
+        }
+
+        var hidden = form.querySelector('input[name="is_available"]');
+        if (hidden) hidden.value = data.is_available ? '0' : '1';
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        showManageError('تعذر تنفيذ العملية. حاول مرة أخرى.');
+      });
+    });
+  })();
+</script>
+<script>
+  (function () {
+    var form = document.getElementById('user-change-role-form');
+    if (!form) return;
+    var btn = document.getElementById('user-change-role-btn');
+    var msg = document.getElementById('user-change-role-msg');
+    var roleBadge = document.getElementById('user-role-current-badge');
+
+    function showMsg(text, isOk) {
+      if (!msg) return;
+      msg.style.display = 'block';
+      msg.style.color = isOk ? '#065f46' : '#991b1b';
+      msg.textContent = text;
+      setTimeout(function () { msg.style.display = 'none'; }, 3000);
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (!window.confirm('هل أنت متأكد من تغيير نوع الحساب؟')) return;
+      if (btn) btn.disabled = true;
+
+      fetch(getFormActionUrl(form), {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+        },
+        body: new FormData(form)
+      })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'failed');
+        if (roleBadge) {
+          roleBadge.style.display = 'inline-block';
+          roleBadge.textContent = data.role_display || 'تم التحديث';
+        }
+        showMsg(data.message || 'تم حفظ التغيير.', true);
+        if (btn) btn.disabled = false;
+      })
+      .catch(function (err) {
+        showMsg((err && err.message && err.message !== 'failed') ? err.message : 'تعذر حفظ التغيير. حاول مرة أخرى.', false);
+        if (btn) btn.disabled = false;
+      });
+    });
+  })();
+</script>
+{% endblock %}

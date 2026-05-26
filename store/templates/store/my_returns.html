@@ -1,0 +1,101 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}مرتجعاتي{% endblock %}
+{% block body_class %} page-returns{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/my_returns.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="returns-page">
+    <div class="returns-header">
+        <h1 class="returns-title">
+            <span>🔄</span>
+            مرتجعاتي
+        </h1>
+        <a href="{% url 'my_orders' %}" class="btn-back">← العودة للطلبات</a>
+    </div>
+
+    {% if messages %}
+    <div class="messages-container" style="margin-bottom: 2rem;">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}" style="padding: 1rem; border-radius: 10px; margin-bottom: 0.5rem; text-align: center;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if returns %}
+    <div class="returns-grid">
+        {% for return in returns %}
+        <div class="return-card">
+            <div class="return-header">
+                <div class="return-header-left">
+                    <div class="return-number">#{{ return.id }}</div>
+                    <div class="return-date">📅 {{ return.created_at|date:"Y-m-d" }}</div>
+                </div>
+
+                <span class="return-status-badge status-{{ return.status }}">
+                    {% if return.status == 'pending' or return.status == 'requested' %}⏳
+                    {% elif return.status == 'reviewing' %}🔍
+                    {% elif return.status == 'approved' %}✅
+                    {% elif return.status == 'rejected' %}❌
+                    {% elif return.status == 'received' %}📦
+                    {% elif return.status == 'completed' %}🎉
+                    {% endif %}
+                    {{ return.get_status_display }}
+                </span>
+            </div>
+
+            <div class="return-body">
+                <div class="return-info-grid">
+                    <div class="info-box">
+                        <span class="info-label">الطلب الأصلي</span>
+                        <span class="info-value">
+                            <a href="{% url 'order_detail' return.order.id %}" class="info-link">#{{ return.order.id }}</a>
+                        </span>
+                    </div>
+                    <div class="info-box">
+                        <span class="info-label">عدد القطع</span>
+                        <span class="info-value">{{ return.total_items }} قطعة</span>
+                    </div>
+                </div>
+
+                <div class="return-reason">
+                    <div class="reason-label">🔍 سبب الإرجاع</div>
+                    <div class="reason-text">{{ return.get_reason_display }}</div>
+                </div>
+
+                <div class="return-meta-row">
+                    <span class="return-meta-label">آخر تحديث</span>
+                    <span class="return-meta-value">{{ return.updated_at|date:"Y-m-d H:i" }}</span>
+                </div>
+
+                <div class="return-footer">
+                    <div class="refund-amount">
+                        <span class="refund-label">مبلغ الاسترجاع</span>
+                        <span class="refund-value">{{ return.refund_amount }} ر.س</span>
+                    </div>
+                    <a href="{% url 'return_detail' return.id %}" class="btn-view-details">
+                        <span aria-hidden="true">👁️</span>
+                        عرض التفاصيل
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="store-empty-state returns-empty">
+        <p class="store-empty-state__title">لا مرتجعات مسجلة</p>
+        <p class="store-empty-state__text">تُنشأ طلبات الإرجاع من صفحة تفاصيل الطلب عند توفر سياسات الإرجاع المطبّقة على شرائك.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'my_orders' %}" class="store-btn store-btn--primary">طلباتي</a>
+            <a href="{% url 'support_chat' %}" class="store-btn store-btn--ghost">استفسار</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

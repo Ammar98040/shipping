@@ -1,0 +1,118 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}نظرة شاملة{% endblock %}
+{% block manage_content %}
+<h1 class="manage-page-title">🗂️ نظرة شاملة - الهيكل الكامل</h1>
+<p class="overview-subtitle">هيكل المتجر بالكامل: الخانات → الرفوف → الأصناف → المنتجات</p>
+
+<div class="overview-container">
+    <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem;">
+        <button onclick="expandAll()" class="btn btn-sm btn-success">➕ فتح الكل</button>
+        <button onclick="collapseAll()" class="btn btn-sm btn-secondary">➖ طي الكل</button>
+    </div>
+
+    {% for comp_data in data %}
+    <div class="overview-section">
+        <div class="overview-header" onclick="toggleSection(this)">
+            <span class="overview-toggle">▼</span>
+            <span class="overview-title">📦 {{ comp_data.compartment.name_ar }}</span>
+            <span class="overview-count">{{ comp_data.shelves|length }} رف</span>
+            <a href="{% url 'manage:compartment_edit' comp_data.compartment.pk %}" class="btn btn-xs" onclick="event.stopPropagation()">✏️ تعديل</a>
+        </div>
+        
+        <div class="overview-items">
+            {% for shelf_data in comp_data.shelves %}
+            <div class="overview-subsection">
+                <div class="overview-subheader" onclick="toggleSection(this)">
+                    <span class="overview-toggle">▼</span>
+                    <span class="overview-title">🗄️ {{ shelf_data.shelf.name_ar }}</span>
+                    <span class="overview-count">{{ shelf_data.categories|length }} صنف</span>
+                    <a href="{% url 'manage:shelf_edit' shelf_data.shelf.pk %}" class="btn btn-xs" onclick="event.stopPropagation()">✏️ تعديل</a>
+                </div>
+                
+                <div class="overview-items">
+                    {% for cat_data in shelf_data.categories %}
+                    <div class="overview-subsection">
+                        <div class="overview-subheader" onclick="toggleSection(this)">
+                            <span class="overview-toggle">▼</span>
+                            <span class="overview-title">📁 {{ cat_data.category.name_ar }}</span>
+                            <span class="overview-count">{{ cat_data.product_count }} منتج</span>
+                            <a href="{% url 'manage:category_edit' cat_data.category.pk %}" class="btn btn-xs" onclick="event.stopPropagation()">✏️ تعديل</a>
+                        </div>
+                        
+                        <div class="overview-items">
+                            {% if cat_data.products %}
+                            <div class="products-list">
+                                {% for prod in cat_data.products %}
+                                <div class="overview-item">
+                                    <span class="overview-item-name">👕 {{ prod.name_ar }}</span>
+                                    <div class="overview-item-links">
+                                        <span style="color: #2c5f4f; font-weight: 600; margin-left: 1rem;">{{ prod.price }} ر.س</span>
+                                        <span style="color: #6c757d; margin-left: 1rem;">المخزون: {{ prod.stock }}</span>
+                                        <a href="{% url 'manage:product_edit' prod.pk %}" class="btn btn-xs">✏️ تعديل</a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                {% if cat_data.product_count > 5 %}
+                                <div class="overview-item" style="background: #e9ecef;">
+                                    <a href="{% url 'manage:product_list' %}?category={{ cat_data.category.id }}" style="color: #2c5f4f; font-weight: 600;">
+                                        ... والمزيد ({{ cat_data.product_count|add:"-5" }} منتج إضافي) →
+                                    </a>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% else %}
+                            <p class="empty-msg">لا توجد منتجات في هذا الصنف</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% empty %}
+    <p class="empty-msg">لا توجد بيانات. <a href="{% url 'manage:compartment_add' %}">إضافة خانة أولاً</a></p>
+    {% endfor %}
+</div>
+
+<script>
+function toggleSection(header) {
+    const section = header.parentElement;
+    const content = section.querySelector(':scope > .overview-items');
+    const icon = header.querySelector('.overview-toggle');
+    
+    if (!content) return;
+    
+    if (section.classList.contains('collapsed')) {
+        section.classList.remove('collapsed');
+        content.style.display = 'block';
+        icon.textContent = '▼';
+    } else {
+        section.classList.add('collapsed');
+        content.style.display = 'none';
+        icon.textContent = '◀';
+    }
+}
+
+function expandAll() {
+    document.querySelectorAll('.overview-section, .overview-subsection').forEach(s => {
+        s.classList.remove('collapsed');
+        const content = s.querySelector(':scope > .overview-items');
+        const icon = s.querySelector('.overview-toggle');
+        if (content) content.style.display = 'block';
+        if (icon) icon.textContent = '▼';
+    });
+}
+
+function collapseAll() {
+    document.querySelectorAll('.overview-section, .overview-subsection').forEach(s => {
+        s.classList.add('collapsed');
+        const content = s.querySelector(':scope > .overview-items');
+        const icon = s.querySelector('.overview-toggle');
+        if (content) content.style.display = 'none';
+        if (icon) icon.textContent = '◀';
+    });
+}
+</script>
+{% endblock %}

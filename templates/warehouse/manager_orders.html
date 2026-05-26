@@ -1,0 +1,89 @@
+{% extends "warehouse/base_warehouse.html" %}
+{% block title %}إدارة الطلبات — مسؤول المستودع{% endblock %}
+
+{% block extra_css %}
+<style>
+  .assign-form { display: flex; gap: .45rem; flex-wrap: wrap; }
+  .assign-form select { border-radius: 9px; padding: .32rem .55rem; border: 1px solid #e2e8f0; font-size: .84rem; }
+  .assign-form button { padding: .32rem .65rem; border-radius: 9px; border: none; background: #0f766e; color: #fff; font-weight: 800; cursor: pointer; font-size: .84rem; }
+  .assign-form button:hover { background: #0d9488; }
+  body.theme-dark .assign-form select { background: #111827; color: #f8fafc; border-color: rgba(148,163,184,.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; margin-bottom:1rem;">
+  <h1 class="manage-page-title" style="margin:0;">📋 إدارة الطلبات</h1>
+  <a href="{% url 'warehouse:manager_dashboard' %}" class="btn btn-secondary">← لوحة التحكم</a>
+</div>
+
+<div class="manage-filters">
+  <form method="get" class="filters-form">
+    <div class="filter-group">
+      <label>الحالة:</label>
+      <details class="ship-filter">
+        <summary>{{ status_filter|default:"الكل" }} ▾</summary>
+        <div class="ship-filter-menu">
+          <a href="?{% if packer_filter %}packer={{ packer_filter }}{% endif %}">الكل</a>
+          {% for val, lbl in status_choices %}
+          <a href="?status={{ val }}{% if packer_filter %}&packer={{ packer_filter }}{% endif %}">{{ lbl }}</a>
+          {% endfor %}
+        </div>
+      </details>
+    </div>
+    <div class="filter-group">
+      <label>المجهّز:</label>
+      <details class="ship-filter">
+        <summary>{% if packer_filter == 'unassigned' %}غير مسندة{% elif packer_filter %}{{ packer_filter }}{% else %}الكل{% endif %} ▾</summary>
+        <div class="ship-filter-menu">
+          <a href="?{% if status_filter %}status={{ status_filter }}{% endif %}">الكل</a>
+          <a href="?packer=unassigned{% if status_filter %}&status={{ status_filter }}{% endif %}">غير مسندة</a>
+          {% for packer in packers %}
+          <a href="?packer={{ packer.pk }}{% if status_filter %}&status={{ status_filter }}{% endif %}">{{ packer.username }}</a>
+          {% endfor %}
+        </div>
+      </details>
+    </div>
+    <span class="results-count">النتائج: <strong>{{ orders.paginator.count }}</strong></span>
+  </form>
+</div>
+
+<div class="manage-section">
+  {% if orders %}
+  <div class="manage-table-container">
+    <table class="manage-table">
+      <thead>
+        <tr><th>رقم الطلب</th><th>العميل</th><th>الحالة</th><th>المجهّز الحالي</th><th>إسناد لـ</th></tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr>
+          <td><a href="{% url 'warehouse:order_detail' order.pk %}">#{{ order.id }}</a></td>
+          <td>{{ order.customer_name }}</td>
+          <td>{{ order.get_status_display }}</td>
+          <td>{{ order.packer.username|default:"—" }}</td>
+          <td>
+            <form method="post" action="{% url 'warehouse:assign_order' order.pk %}" class="assign-form">
+              {% csrf_token %}
+              <select name="packer_id">
+                <option value="">— إلغاء —</option>
+                {% for packer in packers %}
+                <option value="{{ packer.pk }}" {% if order.packer_id == packer.pk %}selected{% endif %}>{{ packer.username }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit">حفظ</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if orders.has_other_pages %}
+  {% include "manage/pagination_include.html" with page_obj=orders query_string=query_string %}
+  {% endif %}
+  {% else %}
+  <p class="empty-msg">لا توجد طلبات.</p>
+  {% endif %}
+</div>
+{% endblock %}

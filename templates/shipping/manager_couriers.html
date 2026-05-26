@@ -1,0 +1,44 @@
+{% extends "shipping/base_shipping.html" %}
+{% block title %}فريق التوصيل — مسؤول الشحن{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.75rem; margin-bottom:1rem;">
+  <h1 class="manage-page-title" style="margin:0;">🧑‍✈️ فريق التوصيل</h1>
+  <a href="{% url 'shipping:manager_dashboard' %}" class="btn btn-secondary">← لوحة التحكم</a>
+</div>
+
+<div class="manage-section">
+  {% if couriers_data %}
+  <div class="manage-table-container">
+    <table class="manage-table">
+      <thead>
+        <tr>
+          <th>المندوب</th>
+          <th>حالة التوفر</th>
+          <th>شحنات نشطة</th>
+          <th>تسليمات اليوم</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in couriers_data %}
+        <tr>
+          <td><strong>{{ item.user.username }}</strong>{% if item.user.get_full_name %}<br><span style="color:#64748b; font-size:.85rem;">{{ item.user.get_full_name }}</span>{% endif %}</td>
+          <td>
+            {% if item.profile.is_available %}
+            <span class="badge badge-active">🟢 متوفر</span>
+            {% else %}
+            <span class="badge badge-inactive">⚪ غير متوفر</span>
+            {% endif %}
+          </td>
+          <td><strong>{{ item.active }}</strong></td>
+          <td><strong>{{ item.delivered_today }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-msg">لا يوجد مناديب شحن مسجلون.</p>
+  {% endif %}
+</div>
+{% endblock %}

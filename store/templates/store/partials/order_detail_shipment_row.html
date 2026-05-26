@@ -1,0 +1,4 @@
+<div class="info-row">
+    <span class="label">الشحن</span>
+    <span class="value">🚚 {{ shipment.get_status_display }}{% if shipment.tracking_number %} <span class="order-detail-tracking">{{ shipment.tracking_number }}</span>{% endif %}</span>
+</div>

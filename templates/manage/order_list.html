@@ -1,0 +1,258 @@
+{% extends "manage/base_manage.html" %}
+{% load manage_seen_tags %}
+{% block title %}الطلبات{% endblock %}
+
+{% block extra_css %}
+<style>
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 0.85rem; margin-bottom: 1.5rem; }
+.stat-mini { background: #fff; border: 2px solid #e2e8f0; border-radius: 12px; padding: 0.9rem 1rem; text-align: center; text-decoration: none; color: inherit; transition: all 0.2s; cursor: pointer; }
+.stat-mini:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); border-color: #2c5f4f; }
+.stat-mini.active { border-color: #2c5f4f; background: #f0faf5; }
+.stat-mini .sn { font-size: 1.6rem; font-weight: 800; display: block; color: #1a1a1a; }
+.stat-mini .sl { font-size: 0.72rem; color: #6c757d; margin-top: 0.2rem; display: block; }
+.stat-mini.revenue { background: linear-gradient(135deg, #f0faf5, #d1fae5); border-color: #2c5f4f; }
+.stat-mini.revenue .sn { color: #065f46; }
+.stat-mini.alert { border-color: #f59e0b; }
+.revenue-panel {
+  grid-column: 1 / -1;
+  background: #fff;
+  border: 2px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1rem 1.15rem;
+  margin-bottom: 0.25rem;
+}
+.revenue-panel h2 {
+  margin: 0 0 0.75rem 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+.rb-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 0.92rem;
+}
+.rb-row:last-child { border-bottom: none; }
+.rb-row .rb-label { color: #475569; }
+.rb-row .rb-val { font-weight: 800; color: #0f172a; direction: ltr; unicode-bidi: isolate; }
+.rb-row.rb-minus .rb-val { color: #b45309; }
+.rb-row.rb-total {
+  margin-top: 0.35rem;
+  padding-top: 0.65rem;
+  border-top: 2px solid #2c5f4f;
+  border-bottom: none;
+  font-size: 1.05rem;
+}
+.rb-row.rb-total .rb-val { color: #065f46; font-size: 1.25rem; }
+.stat-mini.alert .sn { color: #92400e; }
+
+.badge-status { display: inline-block; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; white-space: nowrap; }
+.bs-pending    { background:#fff3cd; color:#92400e; }
+.bs-confirmed  { background:#dbeafe; color:#1e40af; }
+.bs-processing { background:#ede9fe; color:#5b21b6; }
+.bs-ready      { background:#e0f2fe; color:#0369a1; }
+.bs-shipped    { background:#d1fae5; color:#065f46; }
+.bs-delivered  { background:#d1fae5; color:#065f46; }
+.bs-cancelled  { background:#fee2e2; color:#991b1b; }
+
+.bp-pending   { background:#fff3cd; color:#92400e; }
+.bp-paid      { background:#d1fae5; color:#065f46; }
+.bp-failed    { background:#fee2e2; color:#991b1b; }
+.bp-refunded  { background:#dbeafe; color:#1e40af; }
+.bp-cancelled { background:#f1f5f9; color:#475569; }
+
+.ct-registered { background:#d1fae5; color:#065f46; border-radius:20px; padding:0.15rem 0.5rem; font-size:0.72rem; font-weight:700; }
+.ct-guest      { background:#e0e7ff; color:#3730a3; border-radius:20px; padding:0.15rem 0.5rem; font-size:0.72rem; font-weight:700; }
+</style>
+{% endblock %}
+
+{% block manage_content %}
+<h1 class="manage-page-title">🛒 الطلبات</h1>
+
+<div class="stats-grid">
+    <a href="{% url 'manage:order_list' %}" class="stat-mini {% if not current_status and not current_pay_status and not current_customer_type %}active{% endif %}">
+        <span class="sn">{{ stats.all }}</span><span class="sl">📦 جميع الطلبات</span>
+    </a>
+    <a href="{% url 'manage:order_list' %}?status=pending" class="stat-mini {% if current_status == 'pending' %}active{% endif %}">
+        <span class="sn">{{ stats.pending }}</span><span class="sl">⏳ قيد الانتظار</span>
+    </a>
+    <a href="{% url 'manage:order_list' %}?status=confirmed" class="stat-mini {% if current_status == 'confirmed' %}active{% endif %}">
+        <span class="sn">{{ stats.confirmed }}</span><span class="sl">✅ تم التأكيد</span>
+    </a>
+    <a href="{% url 'manage:order_list' %}?status=processing" class="stat-mini {% if current_status == 'processing' %}active{% endif %}">
+        <span class="sn">{{ stats.processing }}</span><span class="sl">⚙️ قيد التجهيز</span>
+    </a>
+    <a href="{% url 'manage:order_list' %}?status=shipped" class="stat-mini {% if current_status == 'shipped' %}active{% endif %}">
+        <span class="sn">{{ stats.shipped }}</span><span class="sl">🚚 تم الشحن</span>
+    </a>
+    <a href="{% url 'manage:order_list' %}?status=delivered" class="stat-mini {% if current_status == 'delivered' %}active{% endif %}">
+        <span class="sn">{{ stats.delivered }}</span><span class="sl">🎉 تم التوصيل</span>
+    </a>
+    <a href="{% url 'manage:order_list' %}?status=cancelled" class="stat-mini {% if current_status == 'cancelled' %}active{% endif %}">
+        <span class="sn">{{ stats.cancelled }}</span><span class="sl">❌ ملغي</span>
+    </a>
+    <a href="{% url 'manage:order_list' %}?customer_type=guest" class="stat-mini {% if current_customer_type == 'guest' %}active{% endif %}">
+        <span class="sn">{{ stats.guests }}</span><span class="sl">👤 طلبات ضيوف</span>
+    </a>
+    {% if stats.unpaid_gateway > 0 %}
+    <a href="{% url 'manage:order_list' %}?pay_status=pending" class="stat-mini alert {% if current_pay_status == 'pending' %}active{% endif %}">
+        <span class="sn">{{ stats.unpaid_gateway }}</span><span class="sl">💳 دفع معلق</span>
+    </a>
+    {% endif %}
+</div>
+
+{% if can_view_revenue_panel %}
+<div class="revenue-panel">
+    <h2>💰 الإيرادات (طلبات تم التوصيل فقط)</h2>
+    <div class="rb-row">
+        <span class="rb-label">💳 بطاقة (فيزا / مدى)</span>
+        <span class="rb-val">{{ stats.revenue_gateway }} ر.س</span>
+    </div>
+    <div class="rb-row">
+        <span class="rb-label">💵 كاش عند الاستلام</span>
+        <span class="rb-val">{{ stats.revenue_cash }} ر.س</span>
+    </div>
+    <div class="rb-row">
+        <span class="rb-label">➕ جمع الفيزا + الكاش</span>
+        <span class="rb-val">{{ stats.revenue_gross }} ر.س</span>
+    </div>
+    {% if stats.refunds_total != '0' %}
+    <div class="rb-row rb-minus">
+        <span class="rb-label">↩️ مرتجعات (خصم)</span>
+        <span class="rb-val">− {{ stats.refunds_total }} ر.س</span>
+    </div>
+    {% endif %}
+    <div class="rb-row rb-total">
+        <span class="rb-label">📊 الإيرادات الصافية</span>
+        <span class="rb-val">{{ stats.revenue_net }} ر.س</span>
+    </div>
+</div>
+{% endif %}
+
+<div class="manage-filters">
+    <form method="get" class="filters-form" style="flex-wrap: wrap; gap: 0.75rem;">
+        <div class="filter-group">
+            <label>بحث:</label>
+            <input type="text" name="search" value="{{ search_query }}" placeholder="رقم الطلب / الاسم / الجوال" class="input filter-search" style="min-width:200px;">
+        </div>
+        <div class="filter-group">
+            <label>حالة الطلب:</label>
+            <select name="status" class="input filter-select" onchange="this.form.submit()">
+                <option value="">الكل</option>
+                {% for val, lbl in status_choices %}
+                <option value="{{ val }}" {% if current_status == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>حالة الدفع:</label>
+            <select name="pay_status" class="input filter-select" onchange="this.form.submit()">
+                <option value="">الكل</option>
+                {% for val, lbl in pay_status_choices %}
+                <option value="{{ val }}" {% if current_pay_status == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label>نوع العميل:</label>
+            <select name="customer_type" class="input filter-select" onchange="this.form.submit()">
+                <option value="">الكل</option>
+                {% for val, lbl in customer_type_choices %}
+                <option value="{{ val }}" {% if current_customer_type == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-filter">🔍 بحث</button>
+        {% if current_status or current_pay_status or current_customer_type or search_query %}
+        <a href="{% url 'manage:order_list' %}" class="btn btn-clear">✕ مسح</a>
+        {% endif %}
+        <span class="results-count">📊 النتائج: <strong>{{ items.paginator.count }}</strong></span>
+    </form>
+</div>
+
+<div class="manage-section">
+    {% if items %}
+    <div style="display:flex; justify-content:flex-end; margin-bottom:0.65rem;">
+        <button type="button" class="btn btn-secondary btn-sm manage-mark-visible-btn" data-manage-mark-visible=".manage-table-container">✔️ تعيين الظاهر كمقروء</button>
+    </div>
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>رقم الطلب</th>
+                    <th>العميل</th>
+                    <th>النوع</th>
+                    <th>الجوال</th>
+                    <th>المبلغ</th>
+                    <th>حالة الطلب</th>
+                    <th>حالة الدفع</th>
+                    <th>التاريخ</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in items %}
+                {% manage_row_state request.user order "order" as order_state %}
+                <tr class="{% if order_state == 'new' %}manage-row--new{% elif order_state == 'updated' %}manage-row--updated{% endif %}" data-manage-row-key="order:{{ order.id }}">
+                    <td>
+                        {% if order_state == 'new' %}<span class="manage-row-new-dot" title="طلب جديد"></span>{% elif order_state == 'updated' %}<span class="manage-row-new-dot" title="تغيير حالة/دفع"></span>{% endif %}
+                        <strong style="color:#2c5f4f;">#{{ order.id }}</strong>
+                    </td>
+                    <td>
+                        {{ order.customer_name }}
+                        {% if order.user %}<br><small style="color:#94a3b8;">{{ order.user.username }}</small>{% endif %}
+                    </td>
+                    <td>
+                        {% if order.customer_type == 'guest' %}
+                        <span class="ct-guest">👤 ضيف</span>
+                        {% else %}
+                        <span class="ct-registered">✅ مسجل</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="tel:{{ order.customer_phone }}" style="color:#2c5f4f;">{{ order.customer_phone }}</a></td>
+                    <td><strong style="color:#2c5f4f;">{{ order.total }} ر.س</strong></td>
+                    <td>
+                        <span class="badge-status
+                            {% if order.status == 'pending' %}bs-pending
+                            {% elif order.status == 'confirmed' %}bs-confirmed
+                            {% elif order.status == 'processing' %}bs-processing
+                            {% elif order.status == 'ready_to_ship' %}bs-ready
+                            {% elif order.status == 'shipped' %}bs-shipped
+                            {% elif order.status == 'delivered' %}bs-delivered
+                            {% else %}bs-cancelled{% endif %}">
+                            {% if order.status == 'pending' %}⏳{% elif order.status == 'confirmed' %}✅{% elif order.status == 'processing' %}⚙️{% elif order.status == 'ready_to_ship' %}📦{% elif order.status == 'shipped' %}🚚{% elif order.status == 'delivered' %}🎉{% else %}❌{% endif %}
+                            {{ order.get_status_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge-status
+                            {% if order.payment_status == 'paid' %}bp-paid
+                            {% elif order.payment_status == 'failed' %}bp-failed
+                            {% elif order.payment_status == 'refunded' or order.payment_status == 'partially_refunded' %}bp-refunded
+                            {% elif order.payment_status == 'cancelled' %}bp-cancelled
+                            {% else %}bp-pending{% endif %}">
+                            {{ order.get_payment_status_display }}
+                        </span>
+                    </td>
+                    <td style="font-size:0.82rem;color:#6c757d;">{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                    <td style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                        <a href="{% url 'manage:order_detail' order.pk %}" class="btn btn-sm">👁️ عرض</a>
+                        <a href="{% url 'manage:order_detail' order.pk %}#customer-basic-edit" class="btn btn-sm btn-secondary">✏️ تعديل مباشر</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">لا توجد طلبات تطابق الفلتر.</p>
+    {% endif %}
+</div>
+{% if items.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=items query_string=query_string %}
+{% endif %}
+{% endblock %}

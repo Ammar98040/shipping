@@ -1,0 +1,44 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}عن المتجر{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-static-pages.css' %}">
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}">الدولاب</a>
+    <span class="shop-checkout-step-sep" aria-hidden="true">›</span>
+    <span class="breadcrumb-current">عن دولابك</span>
+</nav>
+<div class="page-static store-page-shell store-page-shell--wide">
+    <div class="static-card page-static-inner">
+        <h1>🪔 عن دولابك</h1>
+        <p class="page-subtitle">متجرك الإلكتروني بتجربة مختلفة — تسوّق كما تفتح دولابك.</p>
+        <div class="shop-trust-strip">
+            <span>🇸🇦 عربي بالكامل</span>
+            <span>📱 مناسب للجوال</span>
+        </div>
+        <p class="lead">تكمل ما ينقص دولابك من مكان واحد، بتجربة واضحة ومريحة.</p>
+
+        <h2>فكرتنا</h2>
+        <p>دولابك ليس مجرد متجر عادي. صممناه ليشبه دولابك الحقيقي: خانات للملابس، الشنط، الأحذية والإكسسوارات. كل خانة تفتح على رفوف وأصناف، والمنتجات معلقة كما على الشماعات. الهدف أن تجد ما تحتاجه بسهولة وأن تشعر أنك «تكمل دولابك» وليس فقط تشتري.</p>
+
+        <h2>ما نقدمه</h2>
+        <ul>
+            <li>منتجات متنوعة في خانات منظمة (ملابس، شنط، أحذية، إكسسوارات)</li>
+            <li>تجربة تصفح تفاعلية بتصميم ثلاثي الأبعاد</li>
+            <li>سلة شراء وتتبع للطلبات مع أو بدون حساب</li>
+            <li>حساب شخصي، عناوين محفوظة، مفضلات وتقييمات</li>
+            <li>دعم كامل للغة العربية وتصميم مناسب للجوال</li>
+        </ul>
+
+        <h2>التواصل</h2>
+        <p>نسعد بتواصلك. للاستفسارات أو الاقتراحات استخدم <a href="{% url 'contact' %}">صفحة اتصل بنا</a>.</p>
+
+        <a href="{% url 'wardrobe' %}" class="btn-wardrobe">← العودة للدولاب</a>
+    </div>
+</div>
+{% endblock %}
+

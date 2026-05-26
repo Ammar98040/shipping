@@ -1,0 +1,93 @@
+{% extends "manage/base_manage.html" %}
+{% load static %}
+{% load manage_seen_tags %}
+
+{% block title %}الرئيسية{% endblock %}
+
+{% block manage_content %}
+<h1 class="manage-page-title">🏠 لوحة التحكم</h1>
+
+<div class="manage-stats">
+    <a href="{% url 'manage:compartment_list' %}" class="manage-stat-card">
+        <span class="manage-stat-number">{{ stats.compartments }}</span>
+        <span class="manage-stat-label">📦 الخانات</span>
+    </a>
+    <a href="{% url 'manage:shelf_list' %}" class="manage-stat-card">
+        <span class="manage-stat-number">{{ stats.shelves }}</span>
+        <span class="manage-stat-label">🗄️ الرفوف</span>
+    </a>
+    <a href="{% url 'manage:category_list' %}" class="manage-stat-card">
+        <span class="manage-stat-number">{{ stats.categories }}</span>
+        <span class="manage-stat-label">📁 الأصناف</span>
+    </a>
+    <a href="{% url 'manage:product_list' %}" class="manage-stat-card">
+        <span class="manage-stat-number">{{ stats.products }}</span>
+        <span class="manage-stat-label">👕 المنتجات</span>
+    </a>
+    <a href="{% url 'manage:order_list' %}" class="manage-stat-card">
+        <span class="manage-stat-number">{{ stats.orders }}</span>
+        <span class="manage-stat-label">🛒 الطلبات</span>
+    </a>
+    <div class="manage-stat-card highlight">
+        <span class="manage-stat-number">{{ stats.orders_pending }}</span>
+        <span class="manage-stat-label">⏳ طلبات قيد الانتظار</span>
+    </div>
+</div>
+
+<section class="manage-section">
+    <h2>📋 أحدث الطلبات</h2>
+    {% if recent_orders %}
+    <div style="display:flex; justify-content:flex-end; margin-bottom:0.65rem;">
+        <button type="button" class="btn btn-secondary btn-sm manage-mark-visible-btn" data-manage-mark-visible=".manage-table-container">✔️ تعيين الظاهر كمقروء</button>
+    </div>
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>رقم الطلب</th>
+                    <th>العميل</th>
+                    <th>الجوال</th>
+                    <th>المبلغ</th>
+                    <th>الحالة</th>
+                    <th>التاريخ</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recent_orders %}
+                {% manage_row_state request.user order "order" as order_state %}
+                <tr class="{% if order_state == 'new' %}manage-row--new{% elif order_state == 'updated' %}manage-row--updated{% endif %}" data-manage-row-key="order:{{ order.id }}">
+                    <td>
+                        {% if order_state == 'new' %}<span class="manage-row-new-dot" title="طلب جديد"></span>{% elif order_state == 'updated' %}<span class="manage-row-new-dot" title="تحديث حالة الطلب"></span>{% endif %}
+                        <strong>#{{ order.id }}</strong>
+                    </td>
+                    <td>{{ order.customer_name }}</td>
+                    <td>{{ order.customer_phone }}</td>
+                    <td><strong>{{ order.total }} ر.س</strong></td>
+                    <td>
+                    {% if order.status == 'pending' %}
+                    <span class="badge" style="background: #fff3cd; color: #856404;">⏳ {{ order.get_status_display }}</span>
+                    {% elif order.status == 'confirmed' %}
+                    <span class="badge" style="background: #cfe2ff; color: #084298;">⚙️ {{ order.get_status_display }}</span>
+                    {% elif order.status == 'shipped' %}
+                    <span class="badge" style="background: #d1e7dd; color: #0f5132;">🚚 {{ order.get_status_display }}</span>
+                    {% elif order.status == 'delivered' %}
+                    <span class="badge badge-active">✅ {{ order.get_status_display }}</span>
+                    {% else %}
+                    <span class="badge badge-inactive">❌ {{ order.get_status_display }}</span>
+                    {% endif %}
+                    </td>
+                    <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'manage:order_detail' order.pk %}" class="btn btn-sm">👁️ عرض</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">لا توجد طلبات بعد.</p>
+    {% endif %}
+</section>
+{% endblock %}

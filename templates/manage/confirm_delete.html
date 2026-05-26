@@ -1,0 +1,14 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}تأكيد الحذف{% endblock %}
+{% block manage_content %}
+<div class="manage-section confirm-delete">
+    <h1 class="manage-page-title">⚠️ تأكيد الحذف</h1>
+    <p style="font-size: 1.1rem; margin: 2rem 0;">هل أنت متأكد من حذف «<strong>{{ name }}</strong>»؟</p>
+    <p style="color: #dc3545; margin-bottom: 2rem;">هذا الإجراء لا يمكن التراجع عنه!</p>
+    <form method="post" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">🗑️ نعم، احذف</button>
+    </form>
+    <a href="{% url back_url %}" class="btn btn-secondary">❌ إلغاء</a>
+</div>
+{% endblock %}

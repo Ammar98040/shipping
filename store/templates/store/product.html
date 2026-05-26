@@ -1,0 +1,570 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% load store_tags %}
+{% block title %}{{ product.name_ar }}{% endblock %}
+{% block body_class %} page-product{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/product3d.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/reviews.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="product-page-shell">
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}">الدولاب</a>
+    <span aria-hidden="true">›</span>
+    <a href="{% url 'compartment' product.category.shelf.compartment_id %}">{{ product.category.shelf.compartment.name_ar }}</a>
+    <span aria-hidden="true">›</span>
+    <a href="{% url 'shelf' product.category.shelf_id %}">{{ product.category.shelf.name_ar }}</a>
+    <span aria-hidden="true">›</span>
+    <a href="{% url 'category' product.category_id %}">{{ product.category.name_ar }}</a>
+    <span aria-hidden="true">›</span>
+    <span class="breadcrumb-current">{{ product.name_ar }}</span>
+</nav>
+
+<div class="store-quick-toolbar" role="navigation" aria-label="اختصارات">
+    <a href="{% url 'category' product.category_id %}">← العودة للصنف</a>
+    <a href="{% url 'cart_view' %}">🛒 سلة التسوق</a>
+    <a href="{% url 'checkout' %}">📋 إتمام الطلب</a>
+</div>
+
+<p class="shop-trust-strip product-page-trust" role="status">
+    <span>شحن موثوق</span>
+    <span>دفع آمن</span>
+    <span>دعم المرتجعات</span>
+</p>
+
+<div class="product-showcase">
+    <div class="product-card-3d">
+        <div class="product-image-section">
+            <div class="image-frame">
+                {% if selected_main_image %}
+                <img src="{{ selected_main_image }}" alt="{{ product.name_ar }}" class="product-main-img store-media-fill" id="product-main-image">
+                {% else %}
+                <div class="image-placeholder">{{ product.name_ar|slice:":1" }}</div>
+                {% endif %}
+            </div>
+            <div class="variant-gallery" id="variant-gallery">
+                {% if product_gallery_items %}
+                    {% for img in product_gallery_items %}
+                    <button type="button" class="variant-thumb {% if forloop.first %}is-active{% endif %}"
+                            data-image-url="{{ img.url }}"
+                            data-gallery-image-id="{{ img.id }}"
+                            data-gallery-title="{{ img.title }}"
+                            data-gallery-price-original="{{ img.price_original }}"
+                            data-gallery-price-final="{{ img.price_final }}"
+                            data-gallery-has-offer="{{ img.has_offer_discount|yesno:"1,0" }}"
+                            data-gallery-discount-label="{{ img.discount_label|default_if_none:'' }}"
+                            data-gallery-stock="{{ img.stock }}"
+                            data-gallery-code="{{ img.code }}">
+                        <img src="{{ img.url }}" alt="{{ product.name_ar }}" class="store-media-fill">
+                    </button>
+                    {% endfor %}
+                {% elif product.image %}
+                    <button type="button" class="variant-thumb is-active"
+                            data-image-url="{{ product.image.url }}"
+                            data-gallery-image-id=""
+                            data-gallery-title="{{ product.name_ar }}"
+                            data-gallery-price-original="{{ page_price_original }}"
+                            data-gallery-price-final="{{ page_price_discounted }}"
+                            data-gallery-has-offer="{{ page_has_offer_discount|yesno:"1,0" }}"
+                            data-gallery-discount-label="{{ page_offer_discount_label|default_if_none:'' }}"
+                            data-gallery-stock="{{ page_stock }}">
+                        <img src="{{ product.image.url }}" alt="{{ product.name_ar }}" class="store-media-fill">
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="product-details-section">
+            <p class="product-category-eyebrow">{{ product.category.name_ar }}</p>
+            <h1 class="product-title" id="product-title">{{ product.name_ar }}</h1>
+            <div class="product-price-box">
+                <span class="price-amount product-price--original" id="product-price-original" {% if not page_has_offer_discount %}style="display:none"{% endif %}>{{ page_price_original }}</span>
+                <span class="price-currency" id="product-price-original-currency" {% if not page_has_offer_discount %}style="display:none"{% endif %}>ر.س</span>
+
+                <span class="price-amount product-price--discount" id="product-price-amount">
+                    {% if page_has_offer_discount %}{{ page_price_discounted }}{% else %}{{ page_price_original }}{% endif %}
+                </span>
+                <span class="price-currency">ر.س</span>
+
+                <span class="product-discount-badge" id="product-offer-discount-badge" style="margin-inline-start:0.5rem; {% if not page_has_offer_discount or not page_offer_discount_label %}display:none{% endif %}">
+                    {{ page_offer_discount_label }}
+                </span>
+            </div>
+            
+            {% if product.description_ar %}
+            <div class="product-description">
+                <h3><span class="product-section-icon" aria-hidden="true">✦</span> الوصف</h3>
+                <p>{{ product.description_ar }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="product-stock">
+                <span class="stock-label">المتوفر:</span>
+                <span class="stock-value {% if page_stock > 10 %}stock-good{% elif page_stock > 0 %}stock-low{% else %}stock-out{% endif %}" id="product-stock-value">
+                    {{ page_stock }} قطعة
+                </span>
+            </div>
+
+            <ul class="product-mini-trust" aria-label="ميزات مختصرة">
+                <li>توصيل موثوق</li>
+                <li>سياسات إرجاع واضحة</li>
+                <li>دعم عملاء متاح من الصفحة</li>
+            </ul>
+
+            {% if show_variant_picker %}
+            <div class="product-variant-section">
+                <h3 class="product-variant-heading"><span class="product-section-icon" aria-hidden="true">◉</span> اللون</h3>
+                <div class="product-variant-swatches" role="radiogroup" aria-label="اللون">
+                    {% for v in variant_options %}
+                    <button type="button"
+                            class="variant-btn product-variant-swatch {% if selected_variant and selected_variant.id == v.id %}is-selected{% endif %}{% if not v.color_hex %} product-variant-swatch--no-hex{% endif %}"
+                            data-variant-id="{{ v.id }}"
+                            data-price-original="{{ v.price_original }}"
+                            data-price-final="{{ v.price_final }}"
+                            data-has-offer="{{ v.has_offer_discount|yesno:"1,0" }}"
+                            data-discount-label="{{ v.discount_label|default_if_none:'' }}"
+                            data-stock="{{ v.stock }}"
+                            data-primary-image="{{ v.primary_image }}"
+                            data-label="{{ v.label }}"
+                            title="{{ v.label }}"
+                            aria-label="{{ v.label }}"
+                            aria-pressed="{% if selected_variant and selected_variant.id == v.id %}true{% else %}false{% endif %}">
+                        <span class="product-variant-swatch__dot{% if not v.color_hex %} product-variant-swatch__dot--placeholder{% endif %}"{% if v.color_hex %} {{ v.color_hex|variant_swatch_style_attr }}{% endif %}>
+                            {% if not v.color_hex %}<span class="product-variant-swatch__initial">{{ v.label|slice:":1" }}</span>{% endif %}
+                        </span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="product-buttons">
+                <div class="product-buy-bar">
+                {% if page_stock > 0 %}
+                    <form method="post" action="{% url 'cart_add' product.id %}" class="product-actions">
+                    {% csrf_token %}
+                    <input type="hidden" name="variant_id" id="variant-id-input" value="{% if selected_variant %}{{ selected_variant.id }}{% endif %}">
+                    <input type="hidden" name="selected_gallery_image_id" id="selected-gallery-image-id-input" value="{% if product_gallery_items %}{{ product_gallery_items.0.id }}{% endif %}">
+                    <div class="quantity-selector">
+                        <label for="quantity">الكمية:</label>
+                        <input type="number" name="quantity" id="quantity" value="1" min="1" max="{{ page_stock }}" required>
+                    </div>
+                    <button type="button" class="btn-add-cart btn-add-to-cart-ajax" data-product-id="{{ product.id }}" data-variant-id="{% if selected_variant %}{{ selected_variant.id }}{% endif %}"><span class="btn-add-cart__icon" aria-hidden="true">🛒</span> إضافة للسلة</button>
+                </form>
+                {% else %}
+                <div class="product-actions">
+                    <button class="btn-add-cart" disabled>غير متوفر</button>
+                </div>
+                {% endif %}
+                </div>
+                
+                <div class="product-buttons__secondary">
+                {% if user.is_authenticated %}
+                <button type="button" class="btn-wishlist btn-wishlist-ajax" data-product-id="{{ product.id }}">المفضلات</button>
+                {% else %}
+                <a href="{% url 'user_login' %}?next={{ request.path }}" class="btn-product-outline">تسجيل الدخول للمفضلات</a>
+                {% endif %}
+                <button type="button" class="btn-product-outline" id="btn-copy-product-link" data-link="{{ product_share_url }}">نسخ رابط المنتج</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="reviews-section reviews-section--product">
+    <div class="reviews-header">
+        <h2>التقييمات والمراجعات</h2>
+        <div class="rating-summary">
+            {% if product.reviews_count > 0 %}
+            <span class="avg-rating">{{ product.average_rating }} ★</span>
+            <span class="reviews-count">({{ product.reviews_count }} تقييم)</span>
+            {% else %}
+            <span class="no-reviews">لا توجد تقييمات بعد</span>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if user.is_authenticated %}
+    <div class="add-review-section">
+        <h3>{% if user_review %}تعديل تقييمك{% else %}أضف تقييمك{% endif %}</h3>
+        <form method="post" action="{% url 'review_add' product.id %}" class="review-form" id="product-review-form">
+            {% csrf_token %}
+            <div class="rating-input">
+                <label>التقييم:</label>
+                <div class="stars-input">
+                    {% for i in "12345" %}
+                    <input type="radio" name="rating" value="{{ forloop.counter }}" id="star{{ forloop.counter }}" {% if user_review and user_review.rating == forloop.counter %}checked{% endif %} required>
+                    <label for="star{{ forloop.counter }}" class="star-label">★</label>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="comment-input">
+                <label for="comment">تعليقك:</label>
+                <textarea name="comment" id="comment" rows="4" placeholder="اكتب تجربتك مع المنتج...">{% if user_review %}{{ user_review.comment }}{% endif %}</textarea>
+            </div>
+            <button type="submit" class="btn-submit-review">{% if user_review %}تحديث التقييم{% else %}إضافة التقييم{% endif %}</button>
+            <div id="review-inline-msg" style="display:none; margin-top:0.7rem; font-weight:800;"></div>
+        </form>
+    </div>
+    {% else %}
+    <div class="login-prompt">
+        <p>يجب تسجيل الدخول لإضافة تقييم</p>
+        <a href="{% url 'user_login' %}?next={{ request.path }}" class="btn-login">تسجيل الدخول</a>
+    </div>
+    {% endif %}
+    
+    {% if reviews %}
+    <div class="reviews-list">
+        <h3>جميع التقييمات ({{ reviews.count }})</h3>
+        {% for review in reviews %}
+        <div class="review-item">
+            <div class="review-header">
+                <div class="reviewer-info">
+                    <strong>{{ review.user.username }}</strong>
+                    <span class="review-date">{{ review.created_at|date:"Y-m-d" }}</span>
+                </div>
+                <div class="review-rating">
+                    {% for i in "12345" %}
+                    <span class="star {% if forloop.counter <= review.rating %}filled{% endif %}">★</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% if review.comment %}
+            <p class="review-comment">{{ review.comment }}</p>
+            {% endif %}
+            {% if user.is_authenticated and review.user == user %}
+            <form method="post" action="{% url 'review_delete' review.id %}" class="js-review-delete-form" style="display:inline;" data-confirm="حذف تقييمك؟">
+                {% csrf_token %}
+                <button type="submit" class="btn-delete-review">حذف</button>
+            </form>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/navigation3d.js' %}"></script>
+<script>
+(function () {
+  var btn = document.getElementById('btn-copy-product-link');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    var link = btn.getAttribute('data-link') || window.location.href;
+    function ok() {
+      btn.textContent = 'تم النسخ';
+      setTimeout(function () { btn.textContent = 'نسخ رابط المنتج'; }, 1800);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(link).then(ok).catch(function () {});
+      return;
+    }
+    var ta = document.createElement('textarea');
+    ta.value = link;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); ok(); } catch (e) {}
+    document.body.removeChild(ta);
+  });
+})();
+
+(function () {
+  var reviewsList = document.querySelector('.reviews-list');
+  if (!reviewsList) return;
+  function showMsg(text, ok) {
+    var msg = document.getElementById('review-inline-msg');
+    if (!msg) return;
+    msg.style.display = 'block';
+    msg.style.color = ok ? '#065f46' : '#b91c1c';
+    msg.textContent = text;
+  }
+  document.addEventListener('submit', function (e) {
+    var form = e.target.closest('form.js-review-delete-form');
+    if (!form) return;
+    e.preventDefault();
+    var confirmMsg = form.getAttribute('data-confirm');
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر حذف التقييم');
+      var reviewItem = form.closest('.review-item');
+      if (reviewItem) reviewItem.remove();
+      showMsg(data.message || 'تم حذف التقييم.', true);
+      if (btn) btn.disabled = false;
+    })
+    .catch(function (err) {
+      showMsg((err && err.message) ? err.message : 'تعذر حذف التقييم.', false);
+      if (btn) btn.disabled = false;
+    });
+  });
+})();
+
+(function () {
+  var form = document.getElementById('product-review-form');
+  if (!form) return;
+  var msg = document.getElementById('review-inline-msg');
+  var submitBtn = form.querySelector('.btn-submit-review');
+  function showMsg(text, ok) {
+    if (!msg) return;
+    msg.style.display = 'block';
+    msg.style.color = ok ? '#065f46' : '#b91c1c';
+    msg.textContent = text;
+  }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (submitBtn) submitBtn.disabled = true;
+    if (msg) msg.style.display = 'none';
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر حفظ التقييم');
+      showMsg(data.message || 'تم حفظ التقييم بنجاح.', true);
+      if (submitBtn) submitBtn.disabled = false;
+    })
+    .catch(function (err) {
+      showMsg((err && err.message) ? err.message : 'تعذر حفظ التقييم.', false);
+      if (submitBtn) submitBtn.disabled = false;
+    });
+  });
+})();
+
+(function () {
+  var variantButtons = document.querySelectorAll('.variant-btn');
+  var titleEl = document.getElementById('product-title');
+        var priceEl = document.getElementById('product-price-amount');
+        var originalEl = document.getElementById('product-price-original');
+        var originalCurrencyEl = document.getElementById('product-price-original-currency');
+  var stockEl = document.getElementById('product-stock-value');
+  var mainImg = document.getElementById('product-main-image');
+  var gallery = document.getElementById('variant-gallery');
+  var selectedGalleryImageInput = document.getElementById('selected-gallery-image-id-input');
+  var qtyInput = document.getElementById('quantity');
+  var variantInput = document.getElementById('variant-id-input');
+  var ajaxBtn = document.querySelector('.btn-add-to-cart-ajax');
+
+  function setState(btn) {
+    var id = btn.getAttribute('data-variant-id') || '';
+        var priceOriginal = btn.getAttribute('data-price-original') || '';
+        var priceFinal = btn.getAttribute('data-price-final') || '';
+        var hasOffer = (btn.getAttribute('data-has-offer') || '') === '1';
+        var discountLabel = btn.getAttribute('data-discount-label') || '';
+    var stock = parseInt(btn.getAttribute('data-stock') || '0', 10);
+    var primaryImage = btn.getAttribute('data-primary-image') || '';
+    if (variantInput) variantInput.value = id;
+    if (ajaxBtn) ajaxBtn.setAttribute('data-variant-id', id);
+    if (selectedGalleryImageInput) selectedGalleryImageInput.value = '';
+    if (id && window.history && window.history.replaceState) {
+      var u = new URL(window.location.href);
+      u.searchParams.set('v', id);
+      window.history.replaceState({}, '', u.toString());
+    }
+    if (originalEl) {
+        originalEl.style.display = hasOffer ? '' : 'none';
+        originalEl.textContent = priceOriginal;
+    }
+    if (originalCurrencyEl) {
+        originalCurrencyEl.style.display = hasOffer ? '' : 'none';
+    }
+    if (priceEl) {
+        priceEl.textContent = hasOffer ? (priceFinal || priceOriginal) : priceOriginal;
+    }
+    var badgeEl = document.getElementById('product-offer-discount-badge');
+    if (badgeEl) {
+        if (hasOffer && discountLabel) {
+            badgeEl.style.display = '';
+            badgeEl.textContent = discountLabel;
+        } else {
+            badgeEl.style.display = 'none';
+            badgeEl.textContent = '';
+        }
+    }
+    if (stockEl) {
+      stockEl.textContent = stock + ' قطعة';
+      stockEl.classList.remove('stock-good', 'stock-low', 'stock-out');
+      stockEl.classList.add(stock > 10 ? 'stock-good' : (stock > 0 ? 'stock-low' : 'stock-out'));
+    }
+    if (qtyInput) {
+      qtyInput.max = String(Math.max(1, stock));
+      if (parseInt(qtyInput.value || '1', 10) > stock) qtyInput.value = String(Math.max(1, stock));
+    }
+    variantButtons.forEach(function (b) {
+      b.classList.remove('btn-primary');
+      b.classList.add('btn-secondary');
+    });
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-primary');
+    if (mainImg && primaryImage) mainImg.src = primaryImage;
+  }
+
+  variantButtons.forEach(function (btn) {
+    btn.addEventListener('click', function () { setState(btn); });
+  });
+
+  if (gallery) {
+    gallery.querySelectorAll('.variant-thumb').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var url = btn.getAttribute('data-image-url');
+        var gid = btn.getAttribute('data-gallery-image-id') || '';
+        var gtitle = btn.getAttribute('data-gallery-title') || '';
+        var gpriceOriginal = btn.getAttribute('data-gallery-price-original') || '';
+        var gpriceFinal = btn.getAttribute('data-gallery-price-final') || '';
+        var ghasOffer = (btn.getAttribute('data-gallery-has-offer') || '') === '1';
+        var gdiscountLabel = btn.getAttribute('data-gallery-discount-label') || '';
+        var gstock = parseInt(btn.getAttribute('data-gallery-stock') || '0', 10);
+        if (mainImg && url) mainImg.src = url;
+        if (selectedGalleryImageInput) selectedGalleryImageInput.value = gid;
+        if (variantInput) variantInput.value = '';
+        if (ajaxBtn) ajaxBtn.setAttribute('data-variant-id', '');
+        if (gtitle && titleEl) titleEl.textContent = gtitle;
+        if (originalEl) {
+          originalEl.style.display = ghasOffer ? '' : 'none';
+          originalEl.textContent = gpriceOriginal;
+        }
+        if (priceEl) {
+          priceEl.textContent = ghasOffer ? (gpriceFinal || gpriceOriginal) : gpriceOriginal;
+        }
+        var badgeEl2 = document.getElementById('product-offer-discount-badge');
+        if (badgeEl2) {
+          if (ghasOffer && gdiscountLabel) {
+            badgeEl2.style.display = '';
+            badgeEl2.textContent = gdiscountLabel;
+          } else {
+            badgeEl2.style.display = 'none';
+            badgeEl2.textContent = '';
+          }
+        }
+        if (stockEl) {
+          stockEl.textContent = gstock + ' قطعة';
+          stockEl.classList.remove('stock-good', 'stock-low', 'stock-out');
+          stockEl.classList.add(gstock > 10 ? 'stock-good' : (gstock > 0 ? 'stock-low' : 'stock-out'));
+        }
+        if (qtyInput) {
+          qtyInput.max = String(Math.max(1, gstock));
+          if (parseInt(qtyInput.value || '1', 10) > gstock) qtyInput.value = String(Math.max(1, gstock));
+        }
+        variantButtons.forEach(function (b) {
+          b.classList.remove('is-selected');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        gallery.querySelectorAll('.variant-thumb').forEach(function (b) { b.classList.remove('is-active'); });
+        btn.classList.add('is-active');
+      });
+    });
+  }
+})();
+</script>
+
+<script>
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+
+    var frame = document.querySelector('.image-frame');
+    var mainImg = document.getElementById('product-main-image');
+    if (!frame || !mainImg) return;
+
+    // تجنّب الحركة على الأجهزة الخشنة (coarse) إن رغبت لاحقاً
+    var coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+    var maxRot = coarse ? 6 : 10;
+
+    var raf = 0;
+    var target = { x: 0, y: 0 };
+
+    function applyTilt() {
+      raf = 0;
+      var rect = mainImg.getBoundingClientRect();
+      if (!rect || rect.width === 0) return;
+
+      var cx = rect.left + rect.width / 2;
+      var cy = rect.top + rect.height / 2;
+      var dx = target.x - cx;
+      var dy = target.y - cy;
+
+      var pctX = dx / (rect.width / 2);
+      var pctY = dy / (rect.height / 2);
+
+      // درجة دوران خفيفة لتعطي إحساس 3D حي بدون مبالغة
+      var rotY = pctX * maxRot;
+      var rotX = -pctY * maxRot;
+
+      mainImg.style.transition = 'transform 80ms linear';
+      mainImg.style.transform = 'perspective(900px) rotateX(' + rotX.toFixed(2) + 'deg) rotateY(' + rotY.toFixed(2) + 'deg) translateZ(0) scale(1.02)';
+    }
+
+    function schedule(x, y) {
+      target.x = x;
+      target.y = y;
+      if (raf) return;
+      raf = window.requestAnimationFrame(applyTilt);
+    }
+
+    // Mouse / Pointer
+    frame.addEventListener('pointermove', function (e) {
+      if (coarse) return;
+      schedule(e.clientX, e.clientY);
+    });
+
+    frame.addEventListener('pointerleave', function () {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+      mainImg.style.transition = 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)';
+      mainImg.style.transform = 'translateZ(0) scale(1)';
+    });
+
+    // Touch
+    frame.addEventListener('touchstart', function (e) {
+      if (!e.touches || !e.touches.length) return;
+      if (!coarse) return;
+      var t = e.touches[0];
+      schedule(t.clientX, t.clientY);
+    }, { passive: true });
+
+    frame.addEventListener('touchmove', function (e) {
+      if (!e.touches || !e.touches.length) return;
+      if (!coarse) return;
+      var t = e.touches[0];
+      schedule(t.clientX, t.clientY);
+    }, { passive: true });
+
+    frame.addEventListener('touchend', function () {
+      if (!coarse) return;
+      mainImg.style.transition = 'transform 250ms cubic-bezier(0.4, 0, 0.2, 1)';
+      mainImg.style.transform = 'translateZ(0) scale(1)';
+    });
+  })();
+</script>
+{% endblock %}
+

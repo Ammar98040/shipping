@@ -1,0 +1,202 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}دولابك{% endblock %} | دولابك</title>
+    {% load static %}
+    <link rel="icon" type="image/svg+xml" href="{% static 'favicon.svg' %}">
+    <link rel="shortcut icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/store-premium-motion.css' %}">
+    <link rel="stylesheet" href="{% static 'css/toast.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="dir-rtl{% block body_class %}{% endblock %}">
+    <header class="site-header">
+        <div class="header-inner">
+            <div class="header-top">
+                <a href="{% url 'wardrobe' %}" class="logo" aria-label="دولابك - الرئيسية">
+                    <span class="logo-mark" aria-hidden="true">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L4 9v2h16V9l-8-6z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 11v11h12V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 22v-6h6v6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span class="logo-text">دولابك</span>
+                </a>
+
+                <div class="header-actions">
+                    <div class="quick-nav-dropdown">
+                        {% if user.is_authenticated %}
+                        <button type="button" class="user-menu-btn quick-nav-btn" id="quickNavBtn" aria-expanded="false" aria-haspopup="true" aria-controls="quickNavMenu" title="قائمة الحساب">
+                            <span class="user-avatar-icon" aria-hidden="true">
+                                {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="" class="user-avatar-photo">
+                                {% else %}
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 21v-1a7 7 0 0114 0v1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                                {% endif %}
+                            </span>
+                            <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                            <svg class="user-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </button>
+                        {% else %}
+                        <button type="button" class="header-icon-btn quick-nav-btn" id="quickNavBtn" aria-expanded="false" aria-haspopup="true" aria-controls="quickNavMenu" title="القائمة">
+                            <svg class="header-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        {% endif %}
+                        <div class="quick-nav-menu" id="quickNavMenu" role="menu">
+                            {% if user.is_authenticated %}
+                            <a href="{% url 'profile_view' %}" class="quick-nav-link" role="menuitem">👤 ملفي الشخصي</a>
+                            <a href="{% url 'products_all' %}" class="quick-nav-link" role="menuitem">🛍️ كل المنتجات</a>
+                            <a href="{% url 'my_orders' %}" class="quick-nav-link" role="menuitem">📦 طلباتي</a>
+                            <a href="{% url 'wishlist_view' %}" class="quick-nav-link" role="menuitem">❤️ المفضلة</a>
+                            <a href="{% url 'support_chat' %}" class="quick-nav-link" role="menuitem">💬 خدمة العملاء</a>
+                            <button type="button" class="quick-nav-link quick-nav-link--button" id="themeToggle" role="menuitem" aria-pressed="false">🌙 مود الليل</button>
+                            <hr class="quick-nav-sep">
+                            <a href="{% url 'user_logout' %}" class="quick-nav-link quick-nav-link--danger" role="menuitem">🚪 تسجيل الخروج</a>
+                            {% else %}
+                            <a href="{% url 'user_login' %}" class="quick-nav-link" role="menuitem">🔑 تسجيل الدخول</a>
+                            <a href="{% url 'user_register' %}" class="quick-nav-link" role="menuitem">✨ إنشاء حساب</a>
+                            <a href="{% url 'products_all' %}" class="quick-nav-link" role="menuitem">🛍️ كل المنتجات</a>
+                            <a href="{% url 'order_track' %}" class="quick-nav-link" role="menuitem">🔎 تتبع الطلب</a>
+                            <a href="{% url 'support_chat' %}" class="quick-nav-link" role="menuitem">💬 خدمة العملاء</a>
+                            <button type="button" class="quick-nav-link quick-nav-link--button" id="themeToggle" role="menuitem" aria-pressed="false">🌙 مود الليل</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <a href="{% url 'wishlist_view' %}" class="header-icon-btn wishlist-link" title="المفضلة" aria-label="المفضلة">
+                        <svg class="header-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M12 21s-7-4.9-9.2-9.6C-.4 8.9 1 5 4.9 5c2.4 0 4 1.7 5.1 3.5C11 6.7 12.7 5 15.1 5 19 5 20.4 8.9 21.2 11.4 17 16.1 12 21 12 21z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        {% if wishlist_count > 0 %}
+                        <span class="header-badge wishlist-badge">{{ wishlist_count }}</span>
+                        {% endif %}
+                    </a>
+
+                    <a href="{% url 'cart_view' %}" class="header-icon-btn cart-link" title="السلة" aria-label="السلة">
+                        <svg class="header-svg" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12L4 4H1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="20" r="1.5" fill="currentColor"/><circle cx="18" cy="20" r="1.5" fill="currentColor"/></svg>
+                        {% if cart_items_count > 0 %}
+                        <span class="header-badge cart-badge">{{ cart_items_count }}</span>
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+
+            <div class="header-search-row">
+                <form method="get" action="{% url 'search' %}" class="search-form search-form--integrated" role="search">
+                    <label class="sr-only" for="header-search-q">{% if request.GET.q %}تعديل البحث{% else %}ابحث عن منتج{% endif %}</label>
+                    <input id="header-search-q" type="search" name="q" placeholder="بحث بالاسم أو الرقم أو لصق رابط المنتج — اختصار / للتركيز" class="search-input" value="{{ request.GET.q }}" autocomplete="off" enterkeyhint="search">
+                    <button type="submit" class="search-btn" title="بحث" aria-label="بحث">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <p>دولابك — أكمل دولابك</p>
+        <nav class="footer-links">
+            <a href="{% url 'products_all' %}">كل المنتجات</a>
+            <a href="{% url 'order_track' %}">تتبع الطلب</a>
+            <a href="{% url 'support_chat' %}">خدمة العملاء</a>
+            <a href="{% url 'about' %}">عن المتجر</a>
+            <a href="{% url 'contact' %}">اتصل بنا</a>
+        </nav>
+    </footer>
+
+    <script src="{% static 'js/base.js' %}?v=20"></script>
+    <script src="{% static 'js/store-premium-motion.js' %}" defer></script>
+    <script src="{% static 'js/cart-wishlist.js' %}?v=23"></script>
+    <script>
+    // القائمة المنسدلة السريعة
+    (function () {
+        var btn = document.getElementById('quickNavBtn');
+        var menu = document.getElementById('quickNavMenu');
+        if (!btn || !menu) return;
+
+        function setOpen(open) {
+            menu.style.display = open ? 'flex' : 'none';
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+
+        btn.addEventListener('click', function (event) {
+            event.stopPropagation();
+            var open = menu.style.display === 'flex';
+            setOpen(!open);
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!menu.contains(event.target) && event.target !== btn) {
+                setOpen(false);
+            }
+        });
+    })();
+
+    // مود الليل والنهار (للواجهة العامة/العملاء فقط)
+    (function () {
+        var btn = document.getElementById('themeToggle');
+        if (!btn) return;
+
+        var STORAGE_KEY = 'shop_theme_mode';
+
+        function getPreferredMode() {
+            try {
+                var stored = localStorage.getItem(STORAGE_KEY);
+                if (stored === 'dark' || stored === 'light') return stored;
+            } catch (e) {}
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                return 'dark';
+            }
+            return 'light';
+        }
+
+        function applyMode(mode) {
+            var dark = mode === 'dark';
+            document.body.classList.toggle('theme-dark', dark);
+            btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+            btn.textContent = dark ? '☀️ مود النهار' : '🌙 مود الليل';
+            try {
+                localStorage.setItem(STORAGE_KEY, mode);
+            } catch (e2) {}
+        }
+
+        var initial = getPreferredMode();
+        applyMode(initial);
+
+        btn.addEventListener('click', function () {
+            var next = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+            applyMode(next);
+        });
+    })();
+
+    // تركيز حقل البحث من لوحة المفاتيح: مفتاح / (لا يفعّل داخل حقول أو مناطق editable)
+    (function () {
+        var input = document.getElementById('header-search-q');
+        if (!input) return;
+
+        document.addEventListener('keydown', function (e) {
+            if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+            if (e.key !== '/' || e.repeat) return;
+            var t = e.target;
+            var tag = t && t.nodeName;
+            var editable =
+                tag === 'INPUT' ||
+                tag === 'TEXTAREA' ||
+                tag === 'SELECT' ||
+                (t && (t.isContentEditable === true));
+            if (editable) return;
+
+            e.preventDefault();
+            input.focus();
+            try { input.select(); } catch (err) {}
+        });
+    })();
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

@@ -1,0 +1,58 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ shelf.name_ar }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/shelf3d.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}">الدولاب</a>
+    <span aria-hidden="true">›</span>
+    <a href="{% url 'compartment' shelf.compartment_id %}">{{ shelf.compartment.name_ar }}</a>
+    <span aria-hidden="true">›</span>
+    <span class="breadcrumb-current">{{ shelf.name_ar }}</span>
+</nav>
+
+<div class="page-header">
+    <a href="{% url 'compartment' shelf.compartment_id %}" class="back-link">← رجوع</a>
+    <h1 class="page-title">{{ shelf.name_ar }}</h1>
+    <p class="page-subtitle">اختر صنفاً</p>
+    <p class="shelf-products-all-link"><a href="{% url 'products_all' %}" class="back-link shelf-all-products">كل المنتجات في قائمة واحدة ←</a></p>
+</div>
+
+<div class="shelf-view">
+    <div class="shelf-board"></div>
+    <div class="categories-on-shelf">
+        {% for cat in categories %}
+        <a href="{% url 'category' cat.id %}" class="category-box">
+            <div class="box-3d">
+                <div class="box-front">
+                    {% if cat.image %}
+                    <img src="{{ cat.image.url }}" alt="{{ cat.name_ar }}">
+                    {% else %}
+                    <span class="box-icon">{{ cat.name_ar|slice:":1" }}</span>
+                    {% endif %}
+                </div>
+                <div class="box-top"></div>
+                <div class="box-side-right"></div>
+                <div class="box-label">{{ cat.name_ar }}</div>
+            </div>
+        </a>
+    {% empty %}
+    <div class="store-empty-state">
+        <p class="store-empty-state__title">لا توجد أصناف على هذا الرف</p>
+        <p class="store-empty-state__text">جرّب رفاً آخر أو تصفّح كل المنتجات من قائمة واحدة.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'compartment' shelf.compartment_id %}" class="store-btn store-btn--secondary">رجوع للخانة</a>
+            <a href="{% url 'products_all' %}" class="store-btn store-btn--primary">كل المنتجات</a>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/navigation3d.js' %}"></script>{% endblock %}
+

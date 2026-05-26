@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}خدمة العملاء{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/support_chat.css' %}?v=31">
+{% endblock %}
+
+{% block content %}
+<section class="support-page">
+    <div class="support-title">
+        <h1>💬 خدمة العملاء</h1>
+        <p class="support-title-sub">تواصل مباشر مع فريقنا للطلبات، الشحن، المرتجعات، وأي استفسار.</p>
+        <p class="support-title-note">رسائلك تظهر في فقاعات بمحاذاة مختلفة حسب المرسل؛ ابقِ في الصفحة حتى يظهر رد الوكيل.</p>
+    </div>
+    <!-- يساعد على تفعيل CSRF cookie لعمليات POST عبر fetch -->
+    <form method="post" style="display:none;">
+        {% csrf_token %}
+    </form>
+
+    {% if guest_needs_phone %}
+    <div class="support-phone-card">
+        <h2 class="support-phone-title">للبدء تحتاج إدخال رقم الجوال</h2>
+        <p class="support-phone-subtitle">سيتم استخدامه لربط محادثتك مع ممثل خدمة العملاء.</p>
+        <form method="post" style="margin-top:1rem;">
+            {% csrf_token %}
+            <input
+                class="support-phone-input"
+                type="tel"
+                name="guest_phone"
+                placeholder="مثال: 05xxxxxxxx"
+                maxlength="20"
+                inputmode="tel"
+                autocomplete="tel"
+                required
+            />
+            <button class="support-btn" type="submit">ابدأ المحادثة</button>
+        </form>
+    </div>
+    {% else %}
+    <div
+        id="supportChatApp"
+        data-poll-url="{% url 'support_poll' %}"
+        data-send-url="{% url 'support_send' %}"
+        data-end-url="{% url 'support_end' %}"
+        data-initial-status="{% if thread %}{{ thread.status }}{% endif %}"
+        data-is-guest="{% if user.is_authenticated %}0{% else %}1{% endif %}"
+        data-viewer-label="{{ viewer_label }}"
+        data-staff-label="خدمة العملاء"
+        data-bot-label="المساعد الآلي"
+    >
+        <div class="support-chat-shell">
+            <div class="support-chat-head">
+                <div class="support-chat-head__icon">💬</div>
+                <div class="support-chat-head__meta">
+                    <div class="support-chat-head__title">الدردشة المباشرة</div>
+                    <div id="supportBanner" class="support-banner"></div>
+                </div>
+            </div>
+            <div id="supportMessages" class="support-messages">
+                <div class="support-loading-text">يتم تحميل المحادثة...</div>
+            </div>
+            <div id="supportEndNotice" class="support-end-notice" {% if not end_message_text %}hidden{% endif %}>
+                {{ end_message_text }}
+            </div>
+            {% if not user.is_authenticated %}
+            <div
+                id="supportNewChatWrap"
+                class="support-new-chat-wrap"
+                hidden
+            >
+                <a href="{% url 'support_new_conversation' %}" class="support-btn support-btn--new-conversation">محادثة جديدة</a>
+                <p class="support-new-chat-hint">ابدأ من جديد بإدخال رقم الجوال — استخدم <strong>الرقم المطابق لطلبك</strong> (الجديد إذا غيّرته على الطلب).</p>
+            </div>
+            {% endif %}
+            <div class="support-input-area">
+                <div id="supportPreviewBox" class="support-preview-box" hidden>
+                    <div class="support-preview-head">
+                        <div class="support-preview-title">معاينة قبل الإرسال</div>
+                        <button id="supportPreviewClear" type="button" class="support-preview-clear">إزالة الكل</button>
+                    </div>
+                    <div id="supportPreviewGrid" class="support-preview-grid"></div>
+                    <div id="supportPreviewName" class="support-preview-name"></div>
+                </div>
+                <div class="support-compose-row">
+                    <div class="support-compose-main">
+                        <textarea id="supportMessageInput" class="support-textarea support-textarea--compose" placeholder="اكتب رسالتك هنا..."></textarea>
+                    </div>
+                    <div class="support-compose-side">
+                        <input id="supportImageInput" class="support-file-input" type="file" name="image" accept="image/*" multiple hidden>
+                        <label class="support-file-trigger" for="supportImageInput">
+                            <span class="support-file-trigger__icon">🖼️</span>
+                            <span class="support-file-trigger__label">صورة</span>
+                        </label>
+                    </div>
+                    <div class="support-compose-send">
+                        <button id="supportSendBtnMobile" class="support-send-mobile" type="button" aria-label="إرسال">➜</button>
+                    </div>
+                </div>
+                <div class="support-input-hint">
+                    المساعد الآلي يرد فورًا على الخيارات الشائعة، ويمكنك التحدث مع ممثل عند الحاجة.
+                </div>
+                <div class="support-row">
+                    <button id="supportSendBtn" class="support-btn support-btn--desktop-send" type="button">إرسال</button>
+                    <button id="supportEndBtn" class="support-secondary-btn" type="button">إنهاء</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/support_chat.js' %}?v=34"></script>
+{% endblock %}
+
+

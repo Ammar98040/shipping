@@ -1,0 +1,117 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}شحنة الطلب #{{ shipment.order.id }}{% endblock %}
+
+{% block manage_content %}
+<div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom: 1.5rem;">
+  <h1 class="manage-page-title" style="margin:0;">🚚 شحنة الطلب #{{ shipment.order.id }}</h1>
+  <a href="{% url 'manage:shipments_list_manage' %}" class="btn btn-secondary">← رجوع</a>
+</div>
+
+<div class="manage-section">
+  <h2>📋 معلومات الشحنة</h2>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+    <div>
+      <strong style="display:block; margin-bottom:0.4rem; color:#6c757d;">رقم التتبع:</strong>
+      <span style="font-family: monospace; font-weight:900; color:#2c5f4f;">{{ shipment.tracking_number|default:"-" }}</span>
+    </div>
+    <div>
+      <strong style="display:block; margin-bottom:0.4rem; color:#6c757d;">الحالة:</strong>
+      <span class="badge" style="background:#e0f2fe;color:#0369a1;">{{ shipment.get_status_display }}</span>
+    </div>
+    <div>
+      <strong style="display:block; margin-bottom:0.4rem; color:#6c757d;">آخر تحديث:</strong>
+      <span id="shipment-updated-at">{{ shipment.updated_at|date:"Y-m-d H:i" }}</span>
+    </div>
+    <div>
+      <strong style="display:block; margin-bottom:0.4rem; color:#6c757d;">المندوب:</strong>
+      <span id="shipment-courier-display">
+        {% if shipment.courier %}<strong>{{ shipment.courier.username }}</strong>{% else %}<span class="badge badge-inactive">غير مسند</span>{% endif %}
+      </span>
+    </div>
+  </div>
+  {% if shipment.last_event %}
+  <div style="margin-top:1rem;">
+    <strong style="display:block; margin-bottom:0.4rem; color:#6c757d;">آخر حدث:</strong>
+    <div style="background:#f8f9fa;border-radius:10px;padding:0.85rem 1rem; white-space: pre-line;">{{ shipment.last_event }}</div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="manage-section">
+  <h2>👤 معلومات العميل</h2>
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+    <div><strong style="color:#6c757d; display:block; margin-bottom:0.4rem;">الاسم</strong>{{ shipment.order.customer_name }}</div>
+    <div><strong style="color:#6c757d; display:block; margin-bottom:0.4rem;">الجوال</strong><a href="tel:{{ shipment.order.customer_phone }}" style="color:#2c5f4f; font-weight:800;">{{ shipment.order.customer_phone }}</a></div>
+    <div style="grid-column: 1 / -1;"><strong style="color:#6c757d; display:block; margin-bottom:0.4rem;">العنوان</strong><div style="background:#f8f9fa;border-radius:10px;padding:0.85rem 1rem; white-space: pre-line;">{{ shipment.order.address }}</div></div>
+  </div>
+  <div style="margin-top: 1rem;">
+    <a class="btn btn-primary" href="{% url 'manage:order_detail' shipment.order.id %}">📦 فتح الطلب</a>
+  </div>
+</div>
+
+<div class="manage-section">
+  <h2>🧑‍✈️ إسناد مندوب</h2>
+  <form method="post" style="display:flex; gap:0.75rem; flex-wrap:wrap; align-items:flex-end;" id="shipment-assign-form">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="assign">
+    <div style="min-width:260px;">
+      <label>المندوب</label>
+      <select name="courier_id" class="input" id="shipment-courier-select">
+        <option value="">غير مسند</option>
+        {% for c in couriers %}
+        <option value="{{ c.id }}" {% if shipment.courier and shipment.courier.id == c.id %}selected{% endif %}>{{ c.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary" id="shipment-assign-btn">💾 حفظ</button>
+  </form>
+  <div style="margin-top:0.75rem; color:#6c757d; font-size:0.9rem;">
+    المندوب سيشاهد هذه الشحنة داخل بوابة الشحن `/shipping/`.
+  </div>
+</div>
+<script>
+  (function () {
+    var form = document.getElementById('shipment-assign-form');
+    if (!form) return;
+    var btn = document.getElementById('shipment-assign-btn');
+    var courierDisplay = document.getElementById('shipment-courier-display');
+    var updatedAt = document.getElementById('shipment-updated-at');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (btn) btn.disabled = true;
+
+      fetch(getFormActionUrl(form), {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+        },
+        body: new FormData(form)
+      })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) throw new Error('assign_failed');
+        if (courierDisplay) {
+          if (data.courier_username) {
+            courierDisplay.innerHTML = '<strong>' + data.courier_username + '</strong>';
+          } else {
+            courierDisplay.innerHTML = '<span class="badge badge-inactive">غير مسند</span>';
+          }
+        }
+        if (updatedAt && data.updated_at) updatedAt.textContent = data.updated_at;
+        if (btn) btn.disabled = false;
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        showManageError('تعذر تحديث إسناد المندوب. حاول مرة أخرى.');
+      });
+    });
+  })();
+</script>
+{% endblock %}
+

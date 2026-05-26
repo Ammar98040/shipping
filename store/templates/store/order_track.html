@@ -1,0 +1,638 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}تتبع الطلب{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/order.css' %}">
+<style>
+.track-page { max-width: 920px; margin: 2rem auto; padding: 0 1rem; }
+.track-hero {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.2rem 1rem;
+  background: radial-gradient(circle at 30% 20%, rgba(44,95,79,0.15), transparent 55%), #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(15,23,42,0.07);
+}
+.track-hero h1 { font-size: 2rem; font-weight: 900; color: #0f172a; margin: 0 0 0.35rem; letter-spacing: -0.02em; }
+.track-hero p { color: #64748b; margin: 0; }
+
+.track-form-intro {
+  margin-bottom: 1rem;
+  text-align: right;
+  line-height: 1.6;
+}
+
+.track-form-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fafdfc 100%);
+  border: 1px solid #dbe5ea;
+  border-radius: 18px;
+  padding: 1.15rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
+}
+.track-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  align-items: end;
+}
+.track-form .form-group { min-width: 0; }
+.track-form label { display: block; font-weight: 700; margin-bottom: 0.45rem; color: #334155; font-size: 0.9rem; }
+.track-form input { width: 100%; padding: 0.84rem 1rem; border: 2px solid #dbe5ea; border-radius: 12px; font-size: 0.95rem; outline: none; transition: all 0.2s; background: #fff; }
+.track-form input:focus { border-color: #2c5f4f; box-shadow: 0 0 0 4px rgba(44,95,79,0.12); }
+.btn-track-submit {
+  background: linear-gradient(135deg, #2c5f4f, #3d7a66);
+  color: #fff; border: none; border-radius: 12px; padding: 0.84rem 1.4rem;
+  font-size: 1rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 48px;
+  min-width: 128px;
+}
+.btn-track-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 18px rgba(44,95,79,0.28); }
+
+.track-result {
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid #dbe5ea;
+  overflow: hidden;
+  box-shadow: 0 12px 30px rgba(15,23,42,0.09);
+}
+.track-result-header {
+  background: linear-gradient(125deg, #214f42 0%, #2c5f4f 35%, #3d7a66 100%);
+  color: #fff;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+.track-result-header h2 { margin: 0; font-size: 1.22rem; font-weight: 900; }
+.track-status-badge {
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 999px;
+  padding: 0.45rem 0.95rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.progress-track {
+  display: flex;
+  align-items: flex-start;
+  padding: 1.25rem 1.25rem 1rem;
+  gap: 0;
+  overflow-x: auto;
+  background: #f8fbfd;
+  border-bottom: 1px solid #e2e8f0;
+}
+.pt-step { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 72px; position: relative; }
+.pt-step:not(:last-child)::after { content: ''; position: absolute; top: 18px; left: calc(50% + 18px); width: calc(100% - 36px); height: 3px; background: #d6e2e8; z-index: 0; border-radius: 999px; }
+.pt-step.done:not(:last-child)::after { background: #2c5f4f; }
+.pt-dot { width: 36px; height: 36px; border-radius: 50%; border: 3px solid #d6e2e8; background: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.88rem; z-index: 1; position: relative; }
+.pt-step.done .pt-dot { background: #2c5f4f; border-color: #2c5f4f; color: #fff; }
+.pt-step.active .pt-dot { background: #f59e0b; border-color: #f59e0b; color: #fff; box-shadow: 0 0 0 6px rgba(245,158,11,0.16); }
+.pt-step.cancelled .pt-dot { background: #ef4444; border-color: #ef4444; color: #fff; }
+.pt-label { font-size: 0.68rem; margin-top: 0.35rem; text-align: center; color: #94a3b8; font-weight: 700; }
+.pt-step.done .pt-label { color: #2c5f4f; }
+.pt-step.active .pt-label { color: #b45309; }
+.pt-step.cancelled .pt-label { color: #b91c1c; }
+
+.track-body { padding: 1.35rem 1.35rem 1rem; }
+.track-info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 0.8rem; margin-bottom: 1.1rem; }
+.ti-box { background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 12px; padding: 0.8rem 0.9rem; border: 1px solid #e2e8f0; }
+.ti-box .ti-label { font-size: 0.73rem; color: #64748b; margin-bottom: 0.25rem; font-weight: 700; }
+.ti-box .ti-value { font-weight: 800; font-size: 0.92rem; color: #0f172a; }
+
+.track-products-title, .track-history-title { font-size: 1rem; margin: 1.15rem 0 0.65rem; color: #1e293b; font-weight: 900; }
+.track-product-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+  padding: 0.7rem 0.35rem; border-bottom: 1px solid #edf2f7;
+}
+.track-product-meta { display: flex; align-items: center; gap: 0.75rem; }
+.track-product-img { width: 42px; height: 42px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0; }
+.track-product-fallback { width:42px; height:42px; border-radius:10px; background:#e2f3ed; display:flex; align-items:center; justify-content:center; font-weight:800; color:#2c5f4f; border:1px solid #cfe8dd; }
+.track-product-name { font-weight: 700; font-size: 0.9rem; color: #111827; }
+.track-product-qty { font-size: 0.78rem; color: #64748b; }
+.track-product-price { color:#2c5f4f; font-weight:800; white-space:nowrap; }
+
+.oh-list { list-style: none; padding: 0; margin: 0; border-inline-start: 3px solid #d9e4ec; padding-inline-start: 1rem; }
+.oh-item { position: relative; margin-bottom: 0.85rem; }
+.oh-item::before { content: ''; position: absolute; inset-inline-start: -1.42rem; top: 5px; width: 10px; height: 10px; border-radius: 50%; background: #2c5f4f; border: 2px solid #fff; box-shadow: 0 0 0 2px #d9e4ec; }
+.oh-item.auto::before { background: #2563eb; }
+.oh-time { font-size: 0.72rem; color: #94a3b8; font-weight: 700; }
+.oh-text { font-size: 0.87rem; color: #334155; font-weight: 700; }
+.oh-note { font-size: 0.8rem; color: #64748b; }
+
+.track-actions { padding: 0 1.35rem 1.25rem; display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.btn-share {
+  background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #065f46;
+  border: 1px solid #22c55e;
+  border-radius: 12px;
+  padding: 0.62rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+.btn-share:hover { filter: brightness(0.98); }
+
+.track-cancelled {
+  padding: 1rem 1.25rem;
+  background: #fff5f5;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  border-top: 1px solid #fecaca;
+  border-bottom: 1px solid #fecaca;
+}
+
+/* Dark mode overrides for inline track page styles */
+body.theme-dark .track-hero {
+  background: radial-gradient(circle at 30% 20%, rgba(45,212,191,0.15), transparent 55%), var(--card);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35);
+}
+body.theme-dark .track-hero h1 { color: var(--text); }
+body.theme-dark .track-hero p { color: var(--text-muted); }
+
+body.theme-dark .track-form-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+}
+body.theme-dark .track-form label { color: var(--text); }
+body.theme-dark .track-form input {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.12);
+  color: var(--text);
+}
+body.theme-dark .track-form input::placeholder { color: var(--text-muted); }
+body.theme-dark .track-form input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(45,212,191,0.16);
+}
+
+body.theme-dark .track-result {
+  background: var(--card);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.42);
+}
+body.theme-dark .progress-track {
+  background: rgba(255,255,255,0.03);
+  border-bottom-color: rgba(255,255,255,0.08);
+}
+body.theme-dark .pt-step:not(:last-child)::after { background: rgba(255,255,255,0.12); }
+body.theme-dark .pt-step.done:not(:last-child)::after { background: var(--accent); }
+body.theme-dark .pt-dot { border-color: rgba(255,255,255,0.16); background: var(--bg); color: var(--text-muted); }
+body.theme-dark .pt-step.done .pt-dot { background: var(--accent-dark); border-color: var(--accent-dark); color: #fff; }
+body.theme-dark .pt-label { color: var(--text-muted); }
+body.theme-dark .pt-step.done .pt-label { color: var(--accent); }
+
+body.theme-dark .ti-box {
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.1);
+}
+body.theme-dark .ti-box .ti-label { color: var(--text-muted); }
+body.theme-dark .ti-box .ti-value { color: var(--text); }
+body.theme-dark .track-products-title,
+body.theme-dark .track-history-title,
+body.theme-dark .track-product-name,
+body.theme-dark .oh-text { color: var(--text); }
+body.theme-dark .track-product-qty,
+body.theme-dark .oh-note,
+body.theme-dark .oh-time { color: var(--text-muted); }
+body.theme-dark .track-product-row { border-bottom-color: rgba(255,255,255,0.08); }
+body.theme-dark .track-product-img { border-color: rgba(255,255,255,0.12); }
+body.theme-dark .track-product-fallback {
+  background: rgba(45,212,191,0.12);
+  border-color: rgba(45,212,191,0.25);
+  color: var(--accent);
+}
+body.theme-dark .track-product-price { color: var(--accent); }
+body.theme-dark .oh-list { border-inline-start-color: rgba(255,255,255,0.16); }
+body.theme-dark .oh-item::before {
+  border-color: var(--bg);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.16);
+}
+body.theme-dark .btn-share {
+  background: rgba(45,212,191,0.12);
+  color: var(--accent);
+  border-color: rgba(45,212,191,0.3);
+}
+body.theme-dark .track-cancelled {
+  background: rgba(239,68,68,0.1);
+  border-color: rgba(239,68,68,0.22);
+}
+body.theme-dark .track-cancelled p { color: var(--text-muted) !important; }
+
+/* رسائل الجانجو */
+.track-msg-error   { background:#fff0f0; color:#dc3545; padding:0.75rem 1rem; border-radius:10px; margin-bottom:0.5rem; }
+.track-msg-success { background:#f0faf5; color:#2c5f4f; padding:0.75rem 1rem; border-radius:10px; margin-bottom:0.5rem; }
+body.theme-dark .track-msg-error   { background:rgba(239,68,68,0.12);   color:#fca5a5; }
+body.theme-dark .track-msg-success { background:rgba(45,212,191,0.1);   color:var(--accent); }
+
+/* الطلب الملغي — نصوص */
+.track-cancelled-title  { color: #ef4444; }
+.track-cancelled-reason { margin: 0.2rem 0 0; color: #6c757d; font-size: 0.85rem; }
+body.theme-dark .track-cancelled-title  { color: #f87171; }
+body.theme-dark .track-cancelled-reason { color: var(--text-muted); }
+
+/* رقم التتبع في خانة الشحن */
+.track-tracking-number { margin-top:0.35rem; font-size:0.78rem; color:#94a3b8; font-family:monospace; }
+body.theme-dark .track-tracking-number { color: var(--text-muted); }
+
+/* بطاقة المجموع الكلي */
+.ti-box--total { border: 2px solid #2c5f4f !important; }
+.ti-box--total .ti-value { color: #2c5f4f; font-size: 1.05rem; }
+body.theme-dark .ti-box--total { border-color: var(--accent) !important; }
+body.theme-dark .ti-box--total .ti-value { color: var(--accent); }
+
+/* ردود الفعل على النسخ */
+.track-copy-feedback { display:none; margin-top:0.6rem; color:#059669; font-weight:800; font-size:0.9rem; }
+body.theme-dark .track-copy-feedback { color: var(--accent); }
+
+/* رسالة نموذج التتبع */
+#order-track-inline-msg.msg-ok  { color: #065f46; }
+#order-track-inline-msg.msg-err { color: #b91c1c; }
+body.theme-dark #order-track-inline-msg.msg-ok  { color: var(--accent); }
+body.theme-dark #order-track-inline-msg.msg-err { color: #f87171; }
+
+@media (max-width: 720px) {
+  .track-page { margin-top: 1.2rem; }
+  .track-hero { padding: 1rem 0.7rem; }
+  .track-hero h1 { font-size: 1.6rem; }
+  .track-form-card { padding: 1rem 0.9rem; border-radius: 16px; }
+  .track-form {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+    align-items: stretch;
+  }
+  .track-form label { margin-bottom: 0.35rem; }
+  .btn-track-submit {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0.15rem;
+  }
+  .track-result-header { padding: 1rem; }
+  .track-body { padding: 1rem; }
+  .track-actions { padding: 0 1rem 1rem; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}">الدولاب</a>
+    <span class="shop-checkout-step-sep" aria-hidden="true">›</span>
+    <span class="breadcrumb-current">تتبع الطلب</span>
+</nav>
+<div class="track-page">
+    <div class="track-hero">
+        <h1>📦 تتبع طلبك</h1>
+        <p>أدخل رقم الطلب ورقم الجوال للاطلاع على آخر تحديثات طلبك</p>
+    </div>
+    <div class="shop-trust-strip">
+        <span>🔒 بياناتك محمية</span>
+        <span>📋 تحديث فوري للحالة</span>
+        <span>💬 نساعدك عند الحاجة</span>
+    </div>
+
+    {% if messages %}
+    <div class="messages" style="margin-bottom: 1.5rem;">
+        {% for message in messages %}
+        <div class="message {{ message.tags }} {% if 'error' in message.tags %}track-msg-error{% else %}track-msg-success{% endif %}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if not order %}
+    <div class="track-form-card">
+        <p class="store-field-hint track-form-intro">رقم الطلب يظهر في صفحة التأكيد أو في رسالتك بعد الشراء. أدخل <strong>نفس رقم الجوال</strong> المستخدم في الطلب (مثلاً بصيغة 05xxxxxxxx).</p>
+        <form method="post" class="track-form" id="order-track-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="order_id">رقم الطلب</label>
+                <input type="number" id="order_id" name="order_id" inputmode="numeric" placeholder="مثال: 123" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">رقم الجوال</label>
+                <input type="tel" id="phone" name="phone" dir="ltr" inputmode="tel" placeholder="05xxxxxxxx" required>
+            </div>
+            <button type="submit" class="btn-track-submit">🔎 تتبع الآن</button>
+            <div id="order-track-inline-msg" style="display:none; margin-top:0.7rem; font-weight:800;"></div>
+        </form>
+    </div>
+    {% else %}
+    <div class="store-quick-toolbar" style="margin-bottom: 1rem;">
+        <a href="{% url 'order_track' %}">← بحث جديد</a>
+        <a href="{% url 'wardrobe' %}">متابعة التسوّق</a>
+    </div>
+    {% endif %}
+
+    {% if order %}
+    <div class="track-result" id="track-result-root">
+        <div class="track-result-header">
+            <h2>طلب #{{ order.id }}</h2>
+            <span class="track-status-badge" id="track-status-badge">
+                {% if order.status == 'pending' %}⏳{% elif order.status == 'confirmed' %}✅{% elif order.status == 'processing' %}⚙️{% elif order.status == 'ready_to_ship' %}📦{% elif order.status == 'shipped' %}🚚{% elif order.status == 'delivered' %}🎉{% else %}❌{% endif %}
+                {{ order.get_status_display }}
+            </span>
+        </div>
+
+        <div id="track-progress-wrap">
+        {% if order.status != 'cancelled' %}
+        <div class="progress-track" id="track-progress">
+            <div class="pt-step {% if order.status in 'confirmed processing ready_to_ship shipped delivered' %}done{% elif order.status == 'pending' %}active{% endif %}">
+                <div class="pt-dot">⏳</div><div class="pt-label">قيد الانتظار</div>
+            </div>
+            <div class="pt-step {% if order.status in 'processing ready_to_ship shipped delivered' %}done{% elif order.status == 'confirmed' %}active{% endif %}">
+                <div class="pt-dot">✅</div><div class="pt-label">تم التأكيد</div>
+            </div>
+            <div class="pt-step {% if order.status in 'ready_to_ship shipped delivered' %}done{% elif order.status == 'processing' %}active{% endif %}">
+                <div class="pt-dot">⚙️</div><div class="pt-label">قيد التجهيز</div>
+            </div>
+            <div class="pt-step {% if order.status in 'shipped delivered' %}done{% elif order.status == 'ready_to_ship' %}active{% endif %}">
+                <div class="pt-dot">📦</div><div class="pt-label">جاهز للشحن</div>
+            </div>
+            <div class="pt-step {% if order.status == 'delivered' %}done{% elif order.status == 'shipped' %}active{% endif %}">
+                <div class="pt-dot">🚚</div><div class="pt-label">تم الشحن</div>
+            </div>
+            <div class="pt-step {% if order.status == 'delivered' %}active{% endif %}">
+                <div class="pt-dot">🎉</div><div class="pt-label">تم التوصيل</div>
+            </div>
+        </div>
+        {% else %}
+        <div class="track-cancelled" id="track-cancelled-section">
+            <span style="font-size: 1.85rem;">❌</span>
+            <div>
+                <strong class="track-cancelled-title">هذا الطلب ملغي</strong>
+                {% if order.cancel_reason %}<p class="track-cancelled-reason" id="track-cancel-reason">السبب: {{ order.get_cancel_reason_display }}</p>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+        </div>
+
+        <div class="track-body">
+            <div class="track-info-grid">
+                <div class="ti-box">
+                    <div class="ti-label">تاريخ الطلب</div>
+                    <div class="ti-value">{{ order.created_at|date:"Y-m-d" }}</div>
+                </div>
+                <div class="ti-box">
+                    <div class="ti-label">طريقة الدفع</div>
+                    <div class="ti-value">{% if order.payment_method == 'cash_on_delivery' %}💵 الدفع عند الاستلام{% else %}💳 بطاقة{% endif %}</div>
+                </div>
+                <div class="ti-box">
+                    <div class="ti-label">حالة الدفع</div>
+                    <div class="ti-value" id="track-payment-value">{{ order.get_payment_status_display }}</div>
+                </div>
+                {% if shipment %}
+                <div class="ti-box" id="track-shipment-box">
+                    <div class="ti-label">حالة الشحن</div>
+                    <div class="ti-value" id="track-shipment-value">🚚 {{ shipment.get_status_display }}</div>
+                    {% if shipment.tracking_number %}
+                    <div class="track-tracking-number">{{ shipment.tracking_number }}</div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="ti-box" id="track-shipment-box" style="display:none">
+                    <div class="ti-label">حالة الشحن</div>
+                    <div class="ti-value" id="track-shipment-value"></div>
+                </div>
+                {% endif %}
+                <div class="ti-box ti-box--total">
+                    <div class="ti-label">المجموع الكلي</div>
+                    <div class="ti-value">{{ order.total }} ر.س</div>
+                </div>
+            </div>
+
+            <h3 class="track-products-title">المنتجات ({{ order.items.count }})</h3>
+            {% for item in order.items.all %}
+            <div class="track-product-row">
+                <div class="track-product-meta">
+                    {% if item.display_image_url %}
+                    <img src="{{ item.display_image_url }}" alt="{{ item.display_product_name }}" class="track-product-img">
+                    {% else %}
+                    <div class="track-product-fallback">{{ item.display_product_name|slice:":1"|default:"?" }}</div>
+                    {% endif %}
+                    <div>
+                        <div class="track-product-name">{{ item.display_product_name }}</div>
+                        <div class="track-product-qty">كمية: {{ item.quantity }}</div>
+                    </div>
+                </div>
+                <strong class="track-product-price">{{ item.subtotal }} ر.س</strong>
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="track-actions">
+            <button
+                type="button"
+                id="btn-copy-direct-tracking"
+                class="btn-share"
+                data-copy-url="{% url 'order_track' %}?token={{ order.tracking_token|urlencode }}"
+            >
+                🔗 نسخ رابط التتبع المباشر
+            </button>
+            <div id="copy-direct-tracking-feedback" class="track-copy-feedback">
+                تم نسخ رابط التتبع المباشر
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script>
+  (function () {
+    var form = document.getElementById('order-track-form');
+    if (!form) return;
+    var btn = form.querySelector('.btn-track-submit');
+    var msg = document.getElementById('order-track-inline-msg');
+    function showMsg(text, ok) {
+      if (!msg) return;
+      msg.style.display = 'block';
+      msg.className = ok ? 'msg-ok' : 'msg-err';
+      msg.textContent = text;
+    }
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (btn) btn.disabled = true;
+      if (msg) msg.style.display = 'none';
+      fetch(form.action || window.location.href, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+        },
+        body: new FormData(form)
+      })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر العثور على الطلب');
+        showMsg('تم العثور على الطلب، جارٍ الفتح...', true);
+        if (data.redirect_url) window.location.href = data.redirect_url;
+        if (btn) btn.disabled = false;
+      })
+      .catch(function (err) {
+        showMsg((err && err.message) ? err.message : 'تعذر العثور على الطلب.', false);
+        if (btn) btn.disabled = false;
+      });
+    });
+  })();
+
+  (function () {
+    const btn = document.getElementById('btn-copy-direct-tracking');
+    const feedback = document.getElementById('copy-direct-tracking-feedback');
+    if (!btn) return;
+
+    const url = btn.getAttribute('data-copy-url') || '';
+    const showOk = function () {
+      if (!feedback) return;
+      feedback.style.display = 'block';
+      setTimeout(function () {
+        feedback.style.display = 'none';
+      }, 2500);
+    };
+
+    btn.addEventListener('click', function () {
+      const text = (url || '').trim();
+      if (!text) return;
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(showOk).catch(function () {
+          // fallback
+          try {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            ta.remove();
+            showOk();
+          } catch (e) {}
+        });
+      } else {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          ta.remove();
+          showOk();
+        } catch (e) {}
+      }
+    });
+  })();
+</script>
+{% if order %}
+<script>
+(function () {
+  'use strict';
+  var pollUrl = "{% url 'order_track_poll' %}?token={{ order.tracking_token|urlencode }}";
+  var lastSignature = "{{ order.status|default:'' }}|{{ order.payment_status|default:'' }}|{% if shipment %}{{ shipment.status|default:'' }}|{{ order.updated_at|date:'c' }}|{{ shipment.updated_at|date:'c' }}{% else %}|{{ order.updated_at|date:'c' }}|{% endif %}";
+
+  /* ترتيب الخطوات كما في النموذج (مُفهرس) */
+  var STEPS = ['pending', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'];
+
+  function applyTrackUpdate(data) {
+    /* شارة الحالة */
+    var badge = document.getElementById('track-status-badge');
+    if (badge) {
+      badge.textContent = (data.status_icon || '') + ' ' + (data.status_display || '');
+    }
+
+    var progressWrap = document.getElementById('track-progress-wrap');
+
+    if (data.is_cancelled) {
+      /* عرض قسم الإلغاء وإخفاء مسار التقدم */
+      if (progressWrap) {
+        var cancelSection = document.getElementById('track-cancelled-section');
+        var progressSection = document.getElementById('track-progress');
+        if (progressSection) progressSection.style.display = 'none';
+        if (!cancelSection) {
+          progressWrap.innerHTML =
+            '<div class="track-cancelled" id="track-cancelled-section">' +
+            '<span style="font-size:1.85rem;">❌</span>' +
+            '<div><strong class="track-cancelled-title">هذا الطلب ملغي</strong>' +
+            (data.cancel_reason_display ? '<p class="track-cancelled-reason">السبب: ' + data.cancel_reason_display + '</p>' : '') +
+            '</div></div>';
+        }
+      }
+    } else {
+      /* تحديث خطوات مسار التقدم */
+      var progress = document.getElementById('track-progress');
+      if (!progress && progressWrap) {
+        /* المستخدم كان مُلغياً في أول تحميل → أعد بناء مسار التقدم */
+        progressWrap.innerHTML =
+          '<div class="progress-track" id="track-progress">' +
+          STEPS.map(function (code, i) {
+            var meta = data.steps_meta && data.steps_meta[i];
+            var icon = meta ? meta.icon : '';
+            var label = meta ? meta.label : code;
+            return '<div class="pt-step" data-step="' + code + '"><div class="pt-dot">' + icon + '</div><div class="pt-label">' + label + '</div></div>';
+          }).join('') +
+          '</div>';
+        progress = document.getElementById('track-progress');
+      }
+      if (progress) {
+        var currentIdx = STEPS.indexOf(data.status);
+        var stepEls = progress.querySelectorAll('.pt-step');
+        stepEls.forEach(function (el, i) {
+          el.classList.remove('done', 'active');
+          if (i < currentIdx) el.classList.add('done');
+          else if (i === currentIdx) el.classList.add('active');
+        });
+      }
+    }
+
+    /* حالة الدفع */
+    var payEl = document.getElementById('track-payment-value');
+    if (payEl && data.payment_status_display) {
+      payEl.textContent = data.payment_status_display;
+    }
+
+    /* حالة الشحن */
+    var shipBox = document.getElementById('track-shipment-box');
+    var shipVal = document.getElementById('track-shipment-value');
+    if (data.has_shipment && data.shipment_status_display) {
+      if (shipBox) shipBox.style.display = '';
+      if (shipVal) shipVal.textContent = '🚚 ' + data.shipment_status_display;
+    }
+  }
+
+  function poll() {
+    if (document.hidden) return;
+    fetch(pollUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var sig = data.signature || '';
+        if (sig && sig !== lastSignature) {
+          lastSignature = sig;
+          applyTrackUpdate(data);
+        }
+      })
+      .catch(function () {});
+  }
+
+  setInterval(poll, 8000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') poll();
+  });
+})();
+</script>
+{% endif %}
+{% endblock %}
+

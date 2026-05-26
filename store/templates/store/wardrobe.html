@@ -1,0 +1,90 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}الدولاب{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/wardrobe3d.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/wardrobe-enhancements.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<section class="wardrobe-page">
+    <div class="wardrobe-hero-text">
+        <p class="wardrobe-tagline">اختر خانة من دولابك</p>
+        <div class="shop-trust-strip" role="presentation">
+            <span>🚚 توصيل للمنزل</span>
+            <span>✓ منتجات مختارة</span>
+            <span>🛒 سلة وسداد آمن</span>
+        </div>
+    </div>
+
+    <div class="wardrobe-container">
+        <div class="wardrobe-3d">
+            <div class="wardrobe-crown">
+                <span class="wardrobe-title">دولابك</span>
+            </div>
+
+            <div class="wardrobe-body">
+                <div class="wardrobe-side wardrobe-side-right"></div>
+                <div class="wardrobe-side wardrobe-side-left"></div>
+                
+                <div class="wardrobe-back"></div>
+
+                <div class="compartments-wrapper">
+                    {% if compartments %}
+                    {% for comp in compartments %}
+                    <div class="compartment-slot compartment-slot-{{ forloop.counter }}" data-compartment-id="{{ comp.id }}">
+                        <a href="{% url 'compartment' comp.id %}" class="compartment-door-link" aria-label="{{ comp.name_ar }}">
+                            <div class="door-unit">
+                                <div class="door-front">
+                                    <div class="door-panel">
+                                        <div class="door-handle">
+                                            <span class="handle-grip"></span>
+                                        </div>
+                                        
+                                        <div class="door-frame-inner"></div>
+                                        
+                                        <div class="door-content">
+                                            {% if comp.image %}
+                                            <img src="{{ comp.image.url }}" alt="{{ comp.name_ar }}" class="door-img">
+                                            {% else %}
+                                            <span class="door-icon">{{ comp.name_ar|slice:":1" }}</span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="door-label">
+                                            <span>{{ comp.name_ar }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="door-hinge door-hinge-top"></div>
+                                <div class="door-hinge door-hinge-bottom"></div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                    {% else %}
+                    <div class="store-empty-state wardrobe-empty-wrap">
+                        <p class="store-empty-state__title">لا توجد خانات بعد</p>
+                        <p class="store-empty-state__text">عندما يضيف المتجر خاناتاً ستظهر هنا بتجربة الدولاب ثلاثية الأبعاد.</p>
+                        <div class="store-empty-state__actions">
+                            <a href="{% url 'products_all' %}" class="store-btn store-btn--primary">تصفّح كل المنتجات</a>
+                            <a href="{% url 'support_chat' %}" class="store-btn store-btn--ghost">تحدّث مع الدعم</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="wardrobe-base">
+                <div class="base-front"></div>
+                <div class="base-top"></div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/wardrobe3d.js' %}"></script>{% endblock %}
+

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}لوحة الإدارة{% endblock %} | دولابك</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/manage.css' %}?v=20">
+    <script src="{% static 'js/form-helpers.js' %}?v=20"></script>
+    <script src="{% static 'js/manage-flash.js' %}?v=20"></script>
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="manage-body dir-rtl">
+    {% if user.is_authenticated %}
+    <header class="manage-header">
+        <div class="manage-header-inner">
+            <a href="{% url 'manage:dashboard' %}" class="manage-logo">
+                <img src="{% static 'images/logo-placeholder.svg' %}" alt="دولابك" class="logo-image">
+                <span class="logo-text">دولابك</span>
+            </a>
+            
+            <nav class="manage-nav">
+                <a href="{% url 'manage:dashboard' %}" class="nav-link">🏠 الرئيسية</a>
+                {% with account_type=user.profile.account_type|default:'' %}
+                    {% if user.is_superuser or account_type != 'customer_service' and account_type != 'customer_service_manager' %}
+                        <div class="manage-nav-group">
+                            <button type="button" class="manage-nav-toggle nav-link" data-menu-toggle="catalog">🗂️ الكتالوج</button>
+                            <span class="manage-nav-badge manage-nav-dot" data-manage-badge="catalog_group" hidden aria-label="تحديثات الكتالوج"></span>
+                            <div class="manage-nav-menu" data-menu="catalog" hidden>
+                                <a href="{% url 'manage:overview' %}" class="manage-nav-menu-link">🗂️ نظرة شاملة</a>
+                                <a href="{% url 'manage:compartment_list' %}" class="manage-nav-menu-link">📦 الخانات</a>
+                                <a href="{% url 'manage:shelf_list' %}" class="manage-nav-menu-link">🗄️ الرفوف</a>
+                                <a href="{% url 'manage:category_list' %}" class="manage-nav-menu-link">📁 الأصناف</a>
+                                <a href="{% url 'manage:product_list' %}" class="manage-nav-menu-link">👕 المنتجات</a>
+                            </div>
+                        </div>
+                        {% if user.is_superuser %}
+                        <div class="manage-nav-group">
+                            <button type="button" class="manage-nav-toggle nav-link" data-menu-toggle="accounts">👥 الحسابات</button>
+                            <span class="manage-nav-badge manage-nav-dot" data-manage-badge="users" hidden aria-label="تحديثات الحسابات"></span>
+                            <div class="manage-nav-menu" data-menu="accounts" hidden>
+                                <a href="{% url 'manage:users_list' %}" class="manage-nav-menu-link nav-link--badge-wrap">👥 المستخدمين<span class="manage-nav-badge" data-manage-badge="users" hidden aria-label="تسجيلات جديدة"></span></a>
+                                <a href="{% url 'manage:shipping_managers_list' %}" class="manage-nav-menu-link">🚛 مسؤولو الشحن</a>
+                                <a href="{% url 'manage:warehouse_managers_list' %}" class="manage-nav-menu-link">📦 مسؤولو المستودع</a>
+                                <a href="{% url 'manage:customer_service_accounts_list' %}" class="manage-nav-menu-link">💬 موظفو خدمة العملاء</a>
+                                <a href="{% url 'manage:customer_service_managers_list' %}" class="manage-nav-menu-link">🧭 مسؤولو خدمة العملاء</a>
+                                <a href="{% url 'manage:support_team_accounts' %}" class="manage-nav-menu-link">👤 فريق خدمة العملاء</a>
+                            </div>
+                        </div>
+                        <div class="manage-nav-group">
+                            <button type="button" class="manage-nav-toggle nav-link" data-menu-toggle="system">⚙️ النظام</button>
+                            <div class="manage-nav-menu" data-menu="system" hidden>
+                                <a href="{% url 'manage:site_backup' %}" class="manage-nav-menu-link">💾 نسخ احتياطي ZIP</a>
+                                <a href="{% url 'manage:site_full_wipe' %}" class="manage-nav-menu-link">🗑️ حذف النظام بالكامل</a>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="manage-nav-group">
+                            <button type="button" class="manage-nav-toggle nav-link" data-menu-toggle="offers">🏷️ التسويق</button>
+                            <div class="manage-nav-menu" data-menu="offers" hidden>
+                                <a href="{% url 'manage:promotion_list' %}" class="manage-nav-menu-link">🏷️ العروض</a>
+                                <a href="{% url 'manage:coupon_list' %}" class="manage-nav-menu-link">🎟️ الكوبونات</a>
+                            </div>
+                        </div>
+
+                        <div class="manage-nav-group">
+                            <button type="button" class="manage-nav-toggle nav-link" data-menu-toggle="sales">🛒 المبيعات</button>
+                            <span class="manage-nav-badge manage-nav-dot" data-manage-badge="sales_group" hidden aria-label="تحديثات المبيعات"></span>
+                            <div class="manage-nav-menu" data-menu="sales" hidden>
+                                <a href="{% url 'manage:order_list' %}" class="manage-nav-menu-link nav-link--badge-wrap">🛒 الطلبات<span class="manage-nav-badge" data-manage-badge="orders" hidden aria-label="طلبات تحتاج انتباهاً"></span></a>
+                                <a href="{% url 'manage:returns_list' %}" class="manage-nav-menu-link nav-link--badge-wrap">🔄 المرتجعات<span class="manage-nav-badge" data-manage-badge="returns" hidden aria-label="مرتجعات جديدة"></span></a>
+                            </div>
+                        </div>
+
+                        <div class="manage-nav-group">
+                            <button type="button" class="manage-nav-toggle nav-link" data-menu-toggle="logistics">🚚 اللوجستيات</button>
+                            <span class="manage-nav-badge manage-nav-dot" data-manage-badge="logistics_group" hidden aria-label="تحديثات اللوجستيات"></span>
+                            <div class="manage-nav-menu" data-menu="logistics" hidden>
+                                <a href="{% url 'manage:shipments_list_manage' %}" class="manage-nav-menu-link nav-link--badge-wrap">🚚 الشحنات<span class="manage-nav-badge" data-manage-badge="shipments" hidden aria-label="شحنات نشطة"></span></a>
+                                <a href="{% url 'manage:warehouse_orders_manage' %}" class="manage-nav-menu-link nav-link--badge-wrap">🏭 المستودع<span class="manage-nav-badge" data-manage-badge="warehouse" hidden aria-label="طلبات المستودع"></span></a>
+                            </div>
+                        </div>
+
+                        <div class="manage-nav-group">
+                            <button type="button" class="manage-nav-toggle nav-link" data-menu-toggle="support">💬 التواصل</button>
+                            <span class="manage-nav-badge manage-nav-dot" data-manage-badge="support_group" hidden aria-label="تحديثات التواصل"></span>
+                            <div class="manage-nav-menu" data-menu="support" hidden>
+                                <a href="{% url 'manage:contact_messages_list' %}" class="manage-nav-menu-link nav-link--badge-wrap">📬 رسائل الاتصال<span class="manage-nav-badge" data-manage-badge="contact" hidden aria-label="رسائل غير مقروءة"></span></a>
+                                <a href="{% url 'manage:support_portal' %}" class="manage-nav-menu-link nav-link--badge-wrap">💬 خدمة العملاء<span class="manage-nav-badge" data-manage-badge="support" hidden aria-label="طلبات دردشة جديدة"></span></a>
+                                {% if account_type == 'customer_service_manager' %}
+                                <a href="{% url 'manage:support_team_accounts' %}" class="manage-nav-menu-link">👥 موظفو خدمة العملاء</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% else %}
+                        {# فريق خدمة العملاء: روابط محدودة (دعم + طلبات) #}
+                        <a href="{% url 'manage:support_portal' %}" class="nav-link nav-link--badge-wrap">💬 خدمة العملاء<span class="manage-nav-badge" data-manage-badge="support" hidden aria-label="طلبات دردشة جديدة"></span></a>
+                        <a href="{% url 'manage:order_list' %}" class="nav-link nav-link--badge-wrap">🛒 الطلبات<span class="manage-nav-badge" data-manage-badge="orders" hidden aria-label="طلبات تحتاج انتباهاً"></span></a>
+                    {% endif %}
+                {% endwith %}
+            </nav>
+            
+            <div class="header-user">
+                <div class="manage-user-dropdown">
+                    <button type="button" id="manage-user-toggle" class="manage-user-toggle">
+                        <span class="manage-user-avatar">
+                            {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}" class="manage-user-avatar-photo">
+                            {% else %}
+                            <span class="manage-user-avatar-fallback">{{ user.username|first|upper }}</span>
+                            {% endif %}
+                        </span>
+                        <span class="manage-user-name">{{ user.first_name|default:user.username }}</span>
+                    </button>
+                    <div id="manage-user-menu" class="manage-user-menu" hidden>
+                        <a href="#" id="manage-activity-toggle" class="manage-user-menu-link nav-link--badge-wrap">🔔 النشاط<span class="manage-nav-badge" data-manage-badge="support" hidden aria-label="طلبات دردشة جديدة"></span></a>
+                        <span class="manage-user-menu-text">👤 {{ user.username }}</span>
+                        {% if user.is_superuser %}
+                        <a href="/warehouse/" target="_blank" class="manage-user-menu-link">🏭 المستودع</a>
+                        <a href="/shipping/" target="_blank" class="manage-user-menu-link">🚚 شركة الشحن</a>
+                        {% endif %}
+                        <a href="{% url 'wardrobe' %}" target="_blank" class="manage-user-menu-link">🛍️ المتجر</a>
+                        <a href="{% url 'manage:logout' %}" class="manage-user-menu-link manage-user-menu-link--danger">🚪 خروج</a>
+                    </div>
+                    <div id="manage-activity-panel" class="manage-activity-panel" hidden>
+                        <div class="manage-activity-head">آخر العمليات</div>
+                        <div id="manage-activity-list" class="manage-activity-list">
+                            <div class="manage-activity-empty">لا توجد أحداث حديثة.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    {% endif %}
+
+    <main class="manage-main">
+        {% if messages %}
+        <ul class="manage-messages">
+            {% for message in messages %}
+            <li class="manage-message {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% block manage_content %}{% endblock %}
+    </main>
+
+    <div id="imageModal" class="image-modal">
+        <span class="image-modal-close">&times;</span>
+        <img class="image-modal-content" id="modalImage" alt="صورة">
+        <div class="image-modal-caption" id="imageCaption"></div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const menuToggles = document.querySelectorAll('[data-menu-toggle]');
+        const manageUserToggle = document.getElementById('manage-user-toggle');
+        const manageUserMenu = document.getElementById('manage-user-menu');
+        const activityToggle = document.getElementById('manage-activity-toggle');
+        const activityPanel = document.getElementById('manage-activity-panel');
+
+        function closeAllTopMenus() {
+            document.querySelectorAll('.manage-nav-menu').forEach(function (menu) {
+                menu.setAttribute('hidden', 'hidden');
+            });
+            if (manageUserMenu) manageUserMenu.setAttribute('hidden', 'hidden');
+            if (activityPanel) activityPanel.setAttribute('hidden', 'hidden');
+        }
+
+        menuToggles.forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const target = btn.getAttribute('data-menu-toggle');
+                const menu = document.querySelector('[data-menu="' + target + '"]');
+                if (!menu) return;
+                const willOpen = menu.hasAttribute('hidden');
+                closeAllTopMenus();
+                if (willOpen) menu.removeAttribute('hidden');
+            });
+        });
+
+        if (manageUserToggle && manageUserMenu) {
+            manageUserToggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const willOpen = manageUserMenu.hasAttribute('hidden');
+                closeAllTopMenus();
+                if (willOpen) manageUserMenu.removeAttribute('hidden');
+            });
+        }
+
+        if (activityToggle && activityPanel) {
+            activityToggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const willOpen = activityPanel.hasAttribute('hidden');
+                if (willOpen) {
+                    activityPanel.removeAttribute('hidden');
+                } else {
+                    activityPanel.setAttribute('hidden', 'hidden');
+                }
+            });
+        }
+
+        document.addEventListener('click', function () {
+            closeAllTopMenus();
+        });
+
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const captionText = document.getElementById('imageCaption');
+        const closeBtn = document.querySelector('.image-modal-close');
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('table-thumbnail')) {
+                modal.style.display = 'flex';
+                modalImg.src = e.target.src;
+                captionText.innerHTML = e.target.alt || 'صورة';
+                document.body.style.overflow = 'hidden';
+            }
+        });
+
+        if (closeBtn) {
+            closeBtn.onclick = function() {
+                closeModal();
+            };
+        }
+
+        modal.onclick = function(e) {
+            if (e.target === modal || e.target === closeBtn) {
+                closeModal();
+            }
+        };
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && modal.style.display === 'flex') {
+                closeModal();
+            }
+        });
+
+        function closeModal() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    });
+    </script>
+    <script>window.MANAGE_CSRF_TOKEN = "{{ csrf_token }}";</script>
+    <script>window.MANAGE_NOTIFICATIONS_URL = "{% url 'manage:notifications_json' %}";</script>
+    <script>window.MANAGE_NOTIFICATIONS_POLL_MS = {{ MANAGE_NOTIFICATIONS_POLL_MS|default:8000 }};</script>
+    <script>window.MANAGE_MARK_SEEN_URL = "{% url 'manage:mark_seen_json' %}";</script>
+    <script>window.MANAGE_MARK_SEEN_BULK_URL = "{% url 'manage:mark_seen_bulk_json' %}";</script>
+    <script src="{% static 'js/manage-notifications.js' %}?v=21"></script>
+    <script src="{% static 'js/manage-row-flags.js' %}?v=21"></script>
+    <script src="{% static 'js/manage-image-dropzone.js' %}?v=20"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

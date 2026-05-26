@@ -1,0 +1,118 @@
+/* تحسينات إضافية للدولاب ثلاثي الأبعاد */
+
+/* تأثير الإضاءة على الأبواب */
+.door-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 40%;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+        rgba(255,255,255,.3) 0%, 
+        transparent 50%);
+    pointer-events: none;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.compartment-door-link:hover .door-panel::before {
+    opacity: 0.7;
+}
+
+/* تأثير الانعكاس على الباب */
+.door-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+        rgba(255,255,255,.15) 0%, 
+        transparent 40%);
+    pointer-events: none;
+}
+
+/* نسيج خشبي خفيف للدولاب */
+.wardrobe-body::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,.02) 2px,
+            rgba(0,0,0,.02) 4px
+        );
+    pointer-events: none;
+}
+
+/* حواف ناعمة للأبواب */
+.door-panel {
+    will-change: transform;
+}
+
+/* تحسين الأداء */
+.door-front,
+.door-unit {
+    will-change: transform;
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .door-panel::before {
+    opacity: 0 !important;
+}
+
+body.theme-dark .door-content::after {
+    opacity: 0 !important;
+}
+
+/* ظل ديناميكي تحت الأبواب */
+.compartment-slot::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 10%;
+    right: 10%;
+    height: 8px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,.15) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+}
+
+.compartment-door-link:hover ~ .compartment-slot::after,
+.compartment-slot:hover::after {
+    opacity: 1;
+}
+
+/* تحسينات للموبايل */
+@media (max-width: 480px) {
+    .door-handle {
+        width: 6px;
+        height: 36px;
+    }
+    .handle-grip {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+/* تحسين الرسوميات للشاشات عالية الدقة */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .door-panel {
+        box-shadow: 
+            inset 0 2px 0 rgba(255,255,255,.7),
+            inset 0 -2px 0 rgba(0,0,0,.08),
+            3px 6px 20px rgba(0,0,0,.25);
+    }
+}
+
+/* حالة عدم وجود خانات — تمتد على الشبكة داخل الدولاب */
+.compartments-wrapper .store-empty-state.wardrobe-empty-wrap {
+    grid-column: 1 / -1;
+    align-self: center;
+    justify-self: center;
+    width: 100%;
+    max-width: min(100%, 380px);
+}

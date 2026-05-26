@@ -1,0 +1,58 @@
+{# يتطلب portal_slug في السياق #}
+<script>
+(function () {
+  var portalSlug = '{{ portal_slug }}';
+  var forms = Array.prototype.slice.call(document.querySelectorAll('.js-support-compose-form'));
+  forms.forEach(function (form, index) {
+    var input = form.querySelector('.js-support-file-input');
+    var label = form.querySelector('.support-file-trigger');
+    var box = form.querySelector('.js-support-preview-box');
+    var grid = form.querySelector('.js-support-preview-grid');
+    var name = form.querySelector('.js-support-preview-name');
+    var clearBtn = form.querySelector('.js-support-preview-clear');
+    if (!input || !label || !box || !grid || !name || !clearBtn) return;
+
+    var id = portalSlug + '-image-input-' + index;
+    input.id = id;
+    label.setAttribute('for', id);
+
+    function clearPreview() {
+      input.value = '';
+      grid.innerHTML = '';
+      name.textContent = '';
+      box.hidden = true;
+    }
+
+    input.addEventListener('change', function () {
+      var files = input.files ? Array.prototype.slice.call(input.files) : [];
+      if (!files.length) {
+        clearPreview();
+        return;
+      }
+      var imageFiles = files.filter(function (file) {
+        return file.type && file.type.indexOf('image/') === 0;
+      });
+      if (!imageFiles.length) {
+        clearPreview();
+        return;
+      }
+      grid.innerHTML = '';
+      imageFiles.forEach(function (file) {
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var img = document.createElement('img');
+          img.className = 'support-preview-image';
+          img.alt = 'معاينة الصورة';
+          img.src = ev.target && ev.target.result ? ev.target.result : '';
+          grid.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+      name.textContent = imageFiles.length === 1 ? (imageFiles[0].name || '') : (imageFiles.length + ' صور محددة');
+      box.hidden = false;
+    });
+
+    clearBtn.addEventListener('click', clearPreview);
+  });
+})();
+</script>

@@ -1,0 +1,186 @@
+{% extends "shipping/base_shipping.html" %}
+{% block title %}الشحنات | شركة السريع للشحن{% endblock %}
+{% block extra_css %}
+<style>
+  body.theme-dark .manage-table a[href^="tel:"] { color:#7dd3fc !important; }
+  @media (max-width: 768px) {
+    .shipping-shipments-table-wrap {
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .shipping-shipments-table-wrap .manage-table {
+      min-width: 0 !important;
+      width: 100% !important;
+      table-layout: fixed;
+    }
+    .shipping-shipments-table-wrap .manage-table,
+    .shipping-shipments-table-wrap .manage-table thead,
+    .shipping-shipments-table-wrap .manage-table tbody,
+    .shipping-shipments-table-wrap .manage-table th,
+    .shipping-shipments-table-wrap .manage-table td,
+    .shipping-shipments-table-wrap .manage-table tr {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .shipping-shipments-table-wrap .manage-table thead { display: none; }
+    .shipping-shipments-table-wrap .manage-table tr {
+      border: 1px solid rgba(15,23,42,.12);
+      border-radius: 14px;
+      background: #fff;
+      padding: .65rem;
+      margin-bottom: .75rem;
+      box-shadow: 0 8px 22px rgba(15,23,42,.08);
+    }
+    .shipping-shipments-table-wrap .manage-table td {
+      border: none;
+      padding: .42rem .2rem;
+      text-align: right;
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .7rem;
+      line-height: 1.5;
+    }
+    .shipping-shipments-table-wrap .manage-table td::before {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      font-size: .78rem;
+      font-weight: 900;
+      color: #64748b;
+      margin: 0;
+      content: attr(data-label);
+      text-align: right;
+      max-width: 45%;
+    }
+    .shipping-shipments-table-wrap .manage-table td > * {
+      flex: 1 1 auto;
+      text-align: start;
+      direction: inherit;
+    }
+    .shipping-shipments-table-wrap .manage-table td[data-label^="📞"] > *,
+    .shipping-shipments-table-wrap .manage-table td[data-label^="🔎"] > *,
+    .shipping-shipments-table-wrap .manage-table td[data-label^="🧾"] > *,
+    .shipping-shipments-table-wrap .manage-table td[data-label^="🕒"] > * {
+      direction: ltr;
+      text-align: left;
+    }
+    .shipping-shipments-table-wrap .manage-table td[data-label^="⚙️"] {
+      justify-content: flex-start;
+      gap: .45rem;
+    }
+    .shipping-shipments-table-wrap .manage-table td[data-label^="⚙️"]::before {
+      max-width: none;
+      margin-inline-end: .35rem;
+    }
+    .shipping-shipments-table-wrap .manage-table td[data-label^="⚙️"] > * {
+      flex: 0 0 auto;
+      direction: rtl;
+      text-align: left;
+    }
+    .shipping-shipments-table-wrap .manage-table td[data-label^="⚙️"] .btn {
+      width: fit-content;
+      min-width: 0;
+      padding: .4rem .72rem;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid rgba(148,163,184,.32);
+      box-shadow: 0 6px 14px rgba(2,6,23,.35);
+    }
+    .shipping-shipments-table-wrap .manage-table td[data-label^="⚙️"] .btn:hover {
+      background: #111827;
+      color: #fff;
+      border-color: rgba(148,163,184,.4);
+    }
+    body.theme-dark .shipping-shipments-table-wrap .manage-table tr {
+      background: #0f172a;
+      border-color: rgba(148,163,184,.26);
+      box-shadow: 0 12px 26px rgba(2,6,23,.48);
+    }
+    body.theme-dark .shipping-shipments-table-wrap .manage-table td::before { color: #94a3b8; }
+    body.theme-dark .shipping-shipments-table-wrap .manage-table td[data-label^="⚙️"] .btn {
+      background: #020617;
+      color: #e2e8f0;
+      border-color: rgba(148,163,184,.34);
+    }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<h1 class="manage-page-title">📦 الشحنات</h1>
+
+<div class="manage-filters">
+  <form method="get" class="filters-form">
+    <div class="filter-group">
+      <label>فلترة بالحالة:</label>
+      <details class="ship-filter">
+        <summary>
+          {% if status_filter %}
+            {% for val, lbl in status_choices %}{% if val == status_filter %}{{ lbl }}{% endif %}{% endfor %} ▾
+          {% else %}
+            الكل ▾
+          {% endif %}
+        </summary>
+        <div class="ship-filter-menu">
+          <a href="{% url 'shipping:shipments_list' %}">الكل</a>
+          {% for val, lbl in status_choices %}
+          <a href="{% url 'shipping:shipments_list' %}?status={{ val }}">{{ lbl }}</a>
+          {% endfor %}
+        </div>
+      </details>
+    </div>
+    {% if status_filter %}
+    <a href="{% url 'shipping:shipments_list' %}" class="btn btn-clear">مسح</a>
+    {% endif %}
+    <span class="results-count">النتائج: <strong>{{ items.paginator.count }}</strong></span>
+  </form>
+</div>
+
+<div class="manage-section">
+  {% if items %}
+  <div class="manage-table-container shipping-shipments-table-wrap">
+    <table class="manage-table shipping-shipments-table">
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>العميل</th>
+          <th>الجوال</th>
+          <th>رقم التتبع</th>
+          <th>حالة الشحنة</th>
+          <th>آخر تحديث</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in items %}
+        <tr>
+          <td data-label="🧾 رقم الطلب"><strong>#{{ s.order.id }}</strong></td>
+          <td data-label="👤 العميل">{{ s.order.customer_name }}</td>
+          <td data-label="📞 الجوال"><a href="tel:{{ s.order.customer_phone }}" style="color:#2c5f4f;">{{ s.order.customer_phone }}</a></td>
+          <td data-label="🔎 رقم التتبع" style="font-family: monospace;">{{ s.tracking_number }}</td>
+          <td data-label="📦 حالة الشحنة">{{ s.get_status_display }}</td>
+          <td data-label="🕒 آخر تحديث">{{ s.updated_at|date:"Y-m-d H:i" }}</td>
+          <td data-label="⚙️ الإجراء"><a class="btn btn-sm" href="{% url 'shipping:shipment_detail' s.id %}">🔎 التفاصيل</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-msg">لا توجد شحنات.</p>
+  {% endif %}
+</div>
+{% if items.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=items query_string=query_string %}
+{% endif %}
+{% endblock %}
+

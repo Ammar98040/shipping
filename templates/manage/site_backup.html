@@ -1,0 +1,50 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}نسخ احتياطي ZIP{% endblock %}
+
+{% block manage_content %}
+<div style="max-width:920px; margin:0 auto; padding:0 1rem;">
+    <h1 style="margin-top:0;">نسخ احتياطي واستعادة ZIP</h1>
+    <p style="color:#64748b;">هذه الصفحة لل<b>المدير الرئيسي فقط</b>. التصدير يشمل بيانات المتجر والمستخدمين ومجلد الوسائط. الاستيراد يمسح البيانات الحالية غير المحمية ثم يعيد تحميل النسخة.</p>
+
+    <div class="manage-section" style="border-color:#fecaca; background:#fef2f2; margin-bottom:1rem;">
+        <strong style="color:#991b1b;">تحذير:</strong>
+        الاستيراد عملية خطيرة وقد يؤدي لفقدان بيانات أو تعطيل الجلسات. خذ نسخة خارجية قبل التجربة على الإنتاج.
+        المستخدمون المحميون بالبيئة لا يُستبدلون من ملف النسخة أثناء الاستيراد (يبقى حسابهم الحالي وكلمة المرور الحالية).
+        حساب النظام <code>ammar</code> محمٍ دائماً في الشيفرة ولا يُصدَّر ولا يُحذف بالحذف الكامل.
+        <div style="margin-top:0.5rem;"><strong>محميون الآن:</strong> {{ protected_hint }}</div>
+        {% if web_restore_blocked %}
+        <div style="margin-top:0.75rem; font-weight:800; color:#b45309;">
+            استيراد الويب الكامل غير مفعّل على هذا النوع من القاعدة (إحدى قواعد غير SQLite). يمكن تفعيل BACKUP_WEB_RESTORE_ALLOW_MYSQL بعد تقييم المخاطر أو استخدام SQLite محلياً.
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="manage-section" style="margin-bottom:1.25rem;">
+        <h2 style="margin-top:0;">تصدير ZIP</h2>
+        <form method="post" style="margin:0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="export">
+            <button type="submit" class="btn btn-primary">تنزيل نسخة كاملة (.zip)</button>
+        </form>
+        <p style="font-size:0.88rem; color:#64748b; margin-bottom:0;">يشمل manifest.json و data.json ومجلد media/ بنفس مسارات الملفات الحالية.</p>
+    </div>
+
+    <div class="manage-section">
+        <h2 style="margin-top:0;">استيراد ZIP</h2>
+        {% if web_restore_blocked %}
+        <p style="color:#b45309;">الزر معطّل حسب الإعدادات الحالية للقاعدة.</p>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data" style="margin:0;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="import">
+            <div style="margin-bottom:0.75rem;">
+                <label for="backup_zip">ملف ZIP صادر من هذه الصفحة</label><br>
+                <input id="backup_zip" type="file" name="backup_zip" accept=".zip,application/zip" {% if web_restore_blocked %}disabled{% endif %} required>
+                <div style="font-size:0.85rem; color:#64748b;">الحد الأقصى تقريباً: {{ max_upload_mb }} ميجابايت.</div>
+            </div>
+            <button type="submit" class="btn btn-danger" {% if web_restore_blocked %}disabled{% endif %} onclick="return confirm('هل أنت متأكد؟ سيتم مسح البيانات غير المحمية ثم استيراد النسخة.');">بدء الاستيراد</button>
+        </form>
+        <p style="font-size:0.88rem; color:#64748b;">قبل الاستيراد يُحاول النظام حفظ نسخة أمان تلقائية على الخادم (مجلد BACKUP_AUTO_SAVE_DIR أو مجلد النظام المؤقت).</p>
+    </div>
+</div>
+{% endblock %}

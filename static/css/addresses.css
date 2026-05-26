@@ -1,0 +1,324 @@
+/* صفحات العناوين */
+.addresses-page,
+.address-form-page {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.btn-add,
+.btn-primary {
+    padding: 0.75rem 1.5rem;
+    background: var(--accent);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-add:hover,
+.btn-primary:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+}
+
+.addresses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.address-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    border: 2px solid transparent;
+}
+
+.address-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.default-address {
+    border-color: var(--accent);
+    background: linear-gradient(to bottom, rgba(44,95,79,0.05) 0%, white 100%);
+}
+
+.address-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.address-header h3 {
+    margin: 0;
+    color: var(--text);
+}
+
+.address-body {
+    margin-bottom: 1.5rem;
+}
+
+.address-body p {
+    margin: 0.5rem 0;
+    color: var(--text);
+}
+
+.address-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.address-phone {
+    color: var(--text-muted);
+}
+
+.address-text {
+    margin-top: 1rem !important;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.address-notes {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.address-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-default {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-default:hover {
+    background: var(--accent-light);
+}
+
+.btn-edit {
+    background: #007bff;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #0056b3;
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.empty-addresses {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.empty-addresses p {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+/* نموذج العنوان */
+.form-container {
+    max-width: 700px;
+    margin: 0 auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+.address-form {
+    margin-top: 2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group.checkbox-group {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.checkbox-label {
+    font-weight: normal !important;
+}
+
+.form-group input,
+.form-group textarea {
+    padding: 0.75rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.form-help {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.btn-submit {
+    flex: 1;
+    padding: 1rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-submit:hover {
+    background: var(--accent-light);
+}
+
+.btn-cancel {
+    flex: 1;
+    padding: 1rem;
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+    background: #5a6268;
+}
+
+@media (max-width: 768px) {
+    .addresses-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-group.full-width {
+        grid-column: 1;
+    }
+    
+    .page-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .address-card {
+    background: var(--card);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .default-address {
+    background: linear-gradient(to bottom, rgba(45, 212, 191, 0.06) 0%, var(--card) 100%);
+}
+
+body.theme-dark .address-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-dark .address-text {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+body.theme-dark .empty-addresses {
+    background: var(--card);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .form-container {
+    background: var(--card);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.theme-dark .form-group input,
+body.theme-dark .form-group textarea {
+    background: var(--bg);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text);
+}
+
+.addresses-page-hint {
+    text-align: center;
+    margin: -0.85rem auto 1.85rem;
+    max-width: 38rem;
+    line-height: 1.6;
+}

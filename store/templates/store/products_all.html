@@ -1,0 +1,740 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}كل المنتجات{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/category3d.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+<style>
+.promo-spotlight {
+    margin: 0 0 16px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+    background: linear-gradient(135deg, rgba(45, 212, 191, 0.12), rgba(59, 130, 246, 0.1));
+}
+.promo-spotlight__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    font-weight: 800;
+    color: #0f172a;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    background: rgba(255, 255, 255, 0.78);
+    border-radius: 16px 16px 0 0;
+    overflow: hidden;
+}
+.promo-spotlight__tag {
+    font-size: 12px;
+    border-radius: 999px;
+    padding: 4px 10px;
+    color: #0f766e;
+    background: rgba(15, 118, 110, 0.14);
+}
+.promo-spotlight__viewport {
+    padding: 0;
+    position: relative;
+    border-radius: 0 0 16px 16px;
+}
+
+/* ----- شريط العروض: تمرير أفقي + snap ----- */
+.promo-carousel {
+    position: relative;
+}
+
+/* موبايل: شريحة لكل عرض (نقطة لكل عرض) | سطح مكتب: مجموعات من 3 */
+.products-promo-carousel--chunk {
+    display: none;
+}
+
+.products-promo-carousel--solo {
+    display: block;
+}
+
+@media (min-width: 681px) {
+    .products-promo-carousel--solo {
+        display: none;
+    }
+
+    .products-promo-carousel--chunk {
+        display: block;
+    }
+}
+
+.products-promo-carousel--solo .promo-slide {
+    direction: rtl;
+}
+
+.products-promo-carousel--solo .promo-slide__grid {
+    grid-template-columns: 1fr;
+}
+
+@media (max-width: 680px) {
+    .products-promo-carousel--solo .promo-carousel__dots {
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 7px;
+        padding: 4px 10px 12px;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+
+    .products-promo-carousel--solo .promo-carousel__dots::-webkit-scrollbar {
+        display: none;
+    }
+
+    .products-promo-carousel--solo .promo-dot {
+        flex-shrink: 0;
+        width: 8px;
+        height: 8px;
+    }
+
+    /* تفادي ميل المحتوى في الشرائح الوسطى + إزالة إزاحة المنظور ثلاثي الأبعاد على الهاتف */
+    .products-promo-carousel--solo .promo-carousel__strip {
+        perspective: none;
+    }
+
+    .products-promo-carousel--solo .promo-carousel__strip.anim-3d .promo-slide:not(.is-promo-focus),
+    .products-promo-carousel--solo .promo-slide.is-promo-focus {
+        transform: none !important;
+        opacity: 1 !important;
+        filter: none !important;
+    }
+}
+
+.promo-carousel__strip {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(44, 95, 79, 0.35) transparent;
+    perspective: 1100px;
+    perspective-origin: 50% 50%;
+    direction: rtl;
+}
+
+/* موبايل (عرض وحيد): ثبات scroll + تمركز أفضل من RTL الخام؛ الترتيق المرئي يبقى «العرض الأول من اليمين» */
+.products-promo-carousel--solo .promo-carousel__strip {
+    direction: ltr;
+    flex-direction: row-reverse;
+}
+
+.promo-carousel__strip::-webkit-scrollbar {
+    height: 6px;
+}
+
+.promo-carousel__strip::-webkit-scrollbar-thumb {
+    background: rgba(44, 95, 79, 0.3);
+    border-radius: 999px;
+}
+
+.promo-carousel__strip.promo-carousel__strip--grabbing {
+    scroll-snap-type: none;
+}
+
+.promo-carousel__dots {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 9px;
+    padding: 4px 12px 14px;
+    flex-wrap: wrap;
+}
+
+.promo-dot {
+    box-sizing: border-box;
+    width: 10px;
+    height: 10px;
+    padding: 0;
+    border: 2px solid rgba(15, 65, 55, 0.45);
+    background: transparent;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), background 0.45s ease, border-color 0.45s ease, box-shadow 0.45s ease;
+}
+
+.promo-dot:hover {
+    border-color: rgba(15, 65, 55, 0.75);
+    transform: scale(1.12);
+}
+
+.promo-dot:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+}
+
+.promo-dot.is-active {
+    background: #0f766e;
+    border-color: #0f766e;
+    transform: scale(1.32);
+    box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.2);
+}
+
+.promo-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    box-sizing: border-box;
+    padding: 12px;
+    transition: transform 0.58s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease, filter 0.45s ease;
+    transform-style: preserve-3d;
+    transform-origin: center center;
+    opacity: 0.92;
+}
+
+.promo-slide.is-promo-focus {
+    opacity: 1;
+    transform: translateZ(32px) scale(1) rotateY(0deg);
+    filter: saturate(1.05);
+    z-index: 1;
+}
+
+.promo-carousel__strip.anim-3d .promo-slide:not(.is-promo-focus) {
+    transform: translateZ(-12px) scale(0.94) rotateY(-7deg);
+    opacity: 0.78;
+    filter: saturate(0.92);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .promo-carousel__strip {
+        perspective: none;
+        scroll-behavior: auto;
+    }
+
+    .promo-slide {
+        transition: opacity 0.2s ease;
+        transform: none !important;
+    }
+
+    .promo-carousel__strip.anim-3d .promo-slide:not(.is-promo-focus) {
+        transform: none !important;
+    }
+
+    .promo-slide.is-promo-focus {
+        transform: none !important;
+    }
+}
+
+.promo-slide__grid {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    transform-style: inherit;
+}
+
+@media (max-width: 1024px) {
+    .promo-slide__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 680px) {
+    .promo-slide__grid {
+        grid-template-columns: 1fr;
+    }
+
+    .promo-slide__grid .promo-slide__link:nth-child(n + 2) {
+        display: none;
+    }
+}
+
+.promo-slide__link {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    background: linear-gradient(130deg, #ffffff, #f0fdfa, #eff6ff, #ffffff);
+    background-size: 220% 220%;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 12px;
+    padding: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: promoCardGradient 8s ease infinite;
+}
+.promo-slide__link::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background-image: var(--promo-bg);
+    background-position: center;
+    background-size: cover;
+    opacity: 0.28;
+    transform: scale(1.04);
+}
+.promo-slide__link::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(140deg, rgba(255,255,255,0.72), rgba(255,255,255,0.62));
+}
+.promo-slide__link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.12);
+}
+.promo-card-line-1 {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #0b766d;
+    background: rgba(45, 212, 191, 0.14);
+    border-radius: 999px;
+    padding: 4px 10px;
+}
+.promo-card-line-1 .promo-slide__icon {
+    font-size: 14px;
+}
+.promo-card-line-2 {
+    margin: 0 0 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+.promo-card-line-2-title {
+    margin: 0;
+    font-weight: 900;
+    color: #0f172a;
+    font-size: 15px;
+}
+.promo-discount-pill {
+    flex-shrink: 0;
+    font-weight: 900;
+    font-size: 14px;
+    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.26);
+    border-radius: 999px;
+    padding: 4px 10px;
+    animation: promoDiscountPulse 1.2s ease-in-out infinite;
+}
+.promo-card-line-3 {
+    margin: 0;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+    min-height: 20px;
+}
+.promo-card-line-4 {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+.promo-go-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-grid;
+    place-items: center;
+    background: linear-gradient(135deg, #2563eb, #0ea5e9);
+    color: #fff;
+    box-shadow: 0 8px 14px rgba(37, 99, 235, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.promo-go-btn:hover {
+    transform: translateX(-2px) scale(1.04);
+    box-shadow: 0 10px 18px rgba(37, 99, 235, 0.33);
+}
+@keyframes promoDiscountPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 rgba(239, 68, 68, 0);
+    }
+    50% {
+        transform: scale(1.06);
+        box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.14);
+    }
+}
+@keyframes promoCardGradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}">الدولاب</a>
+    <span aria-hidden="true">›</span>
+    <span class="breadcrumb-current">كل المنتجات</span>
+</nav>
+
+<div class="page-header">
+    <a href="{% url 'wardrobe' %}" class="back-link">← رجوع للدولاب</a>
+    <h1 class="page-title">كل المنتجات</h1>
+    <p class="page-subtitle">تصفح كل المنتجات المتوفرة في صفحة واحدة</p>
+</div>
+
+{% if promo_slides %}
+<div class="promo-spotlight" role="region" aria-label="منطقة العروض الترويجية">
+    <div class="promo-spotlight__head">
+        <span>🔥 العروض الحالية</span>
+        <span class="promo-spotlight__tag">عروض مباشرة</span>
+    </div>
+    <div class="promo-spotlight__viewport">
+        {# موبايل: كل عرض = شريحة + نقطة #}
+        <div class="products-promo-carousel products-promo-carousel--solo promo-carousel">
+            <div class="promo-carousel__strip anim-3d" data-products-all-promo-strip tabindex="0" role="region" aria-roledescription="عرض ترويجي" aria-label="مرّر لعرض كل العروض على التوالي">
+                {% for item in promo_strip_items %}
+                <article class="promo-slide{% if forloop.first %} is-promo-focus{% endif %}" data-promo-slide id="promo-products-m-slide-{{ forloop.counter0 }}" role="tabpanel">
+                    <div class="promo-slide__grid">
+                        <a href="{{ item.url }}" class="promo-slide__link" aria-label="{{ item.hint }}"{% if item.bg_image_url %} style="--promo-bg: url('{{ item.bg_image_url }}');"{% endif %}>
+                            <span class="promo-card-line-1"><span class="promo-slide__icon">{{ item.icon|default:'🏷️' }}</span>عرض</span>
+                            <div class="promo-card-line-2">
+                                <h3 class="promo-card-line-2-title">{{ item.title }}</h3>
+                                <span class="promo-discount-pill">{{ item.discount_display }}</span>
+                            </div>
+                            <p class="promo-card-line-3">{{ item.scope_target_name }}</p>
+                            <div class="promo-card-line-4">
+                                <span class="promo-go-btn" aria-hidden="true">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                        <path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                            </div>
+                        </a>
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% if promo_strip_items|length > 1 %}
+            <div class="promo-carousel__dots" role="tablist" aria-label="مؤشرات العروض — لكل عرض نقطة">
+                {% for item in promo_strip_items %}
+                <button type="button" class="promo-dot{% if forloop.first %} is-active{% endif %}" data-promo-dot="{{ forloop.counter0 }}" role="tab" aria-controls="promo-products-m-slide-{{ forloop.counter0 }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" aria-label="العرض {{ forloop.counter }} من {{ promo_strip_items|length }}"></button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {# سطح المكتب والتابلت العريض: حتى 3 عروض في الشريحة #}
+        <div class="products-promo-carousel products-promo-carousel--chunk promo-carousel">
+            <div class="promo-carousel__strip anim-3d" data-products-all-promo-strip tabindex="0" role="region" aria-roledescription="عرض ترويجي" aria-label="مرّر أفقياً لعرض كل العروض، أو انتظر للتبديل التلقائي">
+                {% for slide_items in promo_slides %}
+                <article class="promo-slide{% if forloop.first %} is-promo-focus{% endif %}" data-promo-slide id="promo-products-slide-{{ forloop.counter0 }}" role="tabpanel">
+                    <div class="promo-slide__grid">
+                        {% for item in slide_items %}
+                        <a href="{{ item.url }}" class="promo-slide__link" aria-label="{{ item.hint }}"{% if item.bg_image_url %} style="--promo-bg: url('{{ item.bg_image_url }}');"{% endif %}>
+                            <span class="promo-card-line-1"><span class="promo-slide__icon">{{ item.icon|default:'🏷️' }}</span>عرض</span>
+                            <div class="promo-card-line-2">
+                                <h3 class="promo-card-line-2-title">{{ item.title }}</h3>
+                                <span class="promo-discount-pill">{{ item.discount_display }}</span>
+                            </div>
+                            <p class="promo-card-line-3">{{ item.scope_target_name }}</p>
+                            <div class="promo-card-line-4">
+                                <span class="promo-go-btn" aria-hidden="true">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                                        <path d="M8 5l8 7-8 7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </article>
+                {% endfor %}
+            </div>
+            {% if promo_slides|length > 1 %}
+            <div class="promo-carousel__dots" role="tablist" aria-label="انتقال سريع بين شرائح العروض">
+                {% for slide_items in promo_slides %}
+                <button type="button" class="promo-dot{% if forloop.first %} is-active{% endif %}" data-promo-dot="{{ forloop.counter0 }}" role="tab" aria-controls="promo-products-slide-{{ forloop.counter0 }}" aria-selected="{% if forloop.first %}true{% else %}false{% endif %}" aria-label="الشريحة {{ forloop.counter }} من {{ promo_slides|length }}"></button>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="products-display">
+    {% for p in products %}
+    <div class="product-hanger">
+        <div class="hanger-hook"></div>
+        <div class="hanger-bar"></div>
+        <div class="product-item">
+            <a href="{% url 'product' p.id %}" class="product-item-link" aria-label="عرض {{ p.name_ar }}"></a>
+            <div class="product-image-wrap">
+                {% if p.image %}
+                <img src="{{ p.image.url }}" alt="{{ p.name_ar }}" class="product-img store-media-fill">
+                {% else %}
+                <span class="product-placeholder">{{ p.name_ar|slice:":1" }}</span>
+                {% endif %}
+            </div>
+            <div class="product-info">
+                <h3 class="product-name">{{ p.name_ar }}</h3>
+                <div class="product-price-row">
+                    {% if p.has_listing_discount %}
+                        <span class="product-price product-price--original">{{ p.listing_price_original }} ر.س</span>
+                        <span class="product-price product-price--discount">{{ p.listing_price_discounted }} ر.س</span>
+                        {% if p.listing_discount_label %}
+                            <span class="product-discount-badge">{{ p.listing_discount_label }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="product-price">{{ p.listing_price_original }} ر.س</span>
+                    {% endif %}
+                </div>
+                {% if p.has_storefront_variants %}
+                {% include 'partials/product_variant_teaser.html' %}
+                {% endif %}
+                <div class="product-card-actions">
+                    {% if user.is_authenticated %}
+                    <button type="button" class="product-icon-btn wishlist-btn btn-wishlist-ajax {% if p.id in wishlist_product_ids %}in-wishlist active-wishlist{% endif %}" data-product-id="{{ p.id }}" title="{% if p.id in wishlist_product_ids %}إزالة من المفضلات{% else %}إضافة للمفضلات{% endif %}" aria-label="المفضلات">
+                        {% if p.id in wishlist_product_ids %}❤️{% else %}🤍{% endif %}
+                    </button>
+                    {% else %}
+                    <a href="{% url 'user_login' %}?next={{ request.get_full_path|urlencode }}" class="product-icon-btn wishlist-btn" title="سجّل الدخول للمفضلات" aria-label="المفضلات">🤍</a>
+                    {% endif %}
+                    <a href="{% url 'product' p.id %}" class="product-icon-btn product-btn-details" title="تفاصيل أكثر" aria-label="تفاصيل أكثر">
+                        <span class="btn-icon" aria-hidden="true">🔍</span>
+                    </a>
+                    <button type="button" class="product-icon-btn product-btn-cart btn-add-to-cart-ajax {% if p.id in cart_product_ids %}in-cart active-cart{% endif %}" data-product-id="{{ p.id }}" title="{% if p.id in cart_product_ids %}في السلة{% else %}أضف للسلة{% endif %}" aria-label="أضف للسلة" {% if p.listing_stock < 1 %}disabled{% endif %}>
+                        <span class="btn-icon" aria-hidden="true">🛒</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="store-empty-state">
+        <p class="store-empty-state__title">لا توجد منتجات للعرض الآن</p>
+        <p class="store-empty-state__text">عند تفعيل منتجات من لوحة الإدارة ستظهر هنا مباشرة. يمكنك العودة لتجربة الدولاب أو التواصل مع الدعم.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'wardrobe' %}" class="store-btn store-btn--secondary">الدولاب</a>
+            <a href="{% url 'support_chat' %}" class="store-btn store-btn--ghost">خدمة العملاء</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if products.has_other_pages %}
+<div class="pagination">
+    {% if products.has_previous %}
+    <a href="?page=1" class="page-link">«</a>
+    <a href="?page={{ products.previous_page_number }}" class="page-link">‹</a>
+    {% endif %}
+
+    <span class="page-info">صفحة {{ products.number }} من {{ products.paginator.num_pages }}</span>
+
+    {% if products.has_next %}
+    <a href="?page={{ products.next_page_number }}" class="page-link">›</a>
+    <a href="?page={{ products.paginator.num_pages }}" class="page-link">»</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/navigation3d.js' %}"></script>
+<script>
+(function () {
+    function carouselIsActive(strip) {
+        var root = strip.closest('.products-promo-carousel');
+        if (!root) return true;
+        return window.getComputedStyle(root).display !== 'none';
+    }
+
+    function setupProductsPromoCarousel(strip) {
+        if (!strip) return;
+
+        var slides = strip.querySelectorAll('[data-promo-slide]');
+        var dotsWrap = strip.parentElement && strip.parentElement.querySelector('.promo-carousel__dots');
+        var dots = dotsWrap ? dotsWrap.querySelectorAll('[data-promo-dot]') : [];
+        var n = slides.length;
+        if (n === 0) return;
+
+        var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var programmaticScroll = false;
+        var activeIndex = 0;
+        var scrollEndTimer = null;
+        var autoTimer = null;
+        var pausedUntilUser = 0;
+        var AUTO_MS = 7000;
+        var USER_PAUSE_MS = 26000;
+
+        function nearestIndexFromScroll() {
+            var sr = strip.getBoundingClientRect();
+            var cx = sr.left + sr.width * 0.5;
+            var best = 0;
+            var bestDist = Infinity;
+            for (var i = 0; i < n; i++) {
+                var r = slides[i].getBoundingClientRect();
+                var mx = r.left + r.width * 0.5;
+                var d = Math.abs(mx - cx);
+                if (d < bestDist) {
+                    bestDist = d;
+                    best = i;
+                }
+            }
+            return best;
+        }
+
+        function slideAlignmentError(sl) {
+            var sr = strip.getBoundingClientRect();
+            var er = sl.getBoundingClientRect();
+            return (er.left + er.width * 0.5) - (sr.left + sr.width * 0.5);
+        }
+
+        function nudgeSlideIntoCenter(sl) {
+            if (!sl || strip.clientWidth < 8) return;
+            var err = slideAlignmentError(sl);
+            if (Math.abs(err) < 0.75) return;
+            strip.scrollBy({ left: err, behavior: 'auto' });
+            window.requestAnimationFrame(function () {
+                var err2 = slideAlignmentError(sl);
+                if (Math.abs(err2) >= 0.75) {
+                    strip.scrollBy({ left: err2, behavior: 'auto' });
+                }
+            });
+        }
+
+        function setVisualState(idx) {
+            if (idx < 0 || idx >= n) return;
+            activeIndex = idx;
+            slides.forEach(function (s, j) {
+                s.classList.toggle('is-promo-focus', j === idx);
+            });
+            dots.forEach(function (d, j) {
+                var on = j === idx;
+                d.classList.toggle('is-active', on);
+                d.setAttribute('aria-selected', on ? 'true' : 'false');
+            });
+        }
+
+        function goToIndex(idx, behaviorSmooth) {
+            if (idx < 0 || idx >= n) return;
+            if (strip.clientWidth < 8) return;
+            programmaticScroll = true;
+            var slide = slides[idx];
+            var behave = reduceMotion ? 'auto' : (behaviorSmooth === false ? 'auto' : 'smooth');
+            var err = slideAlignmentError(slide);
+            strip.scrollBy({
+                left: err,
+                behavior: behave,
+            });
+
+            function finishProg() {
+                nudgeSlideIntoCenter(slide);
+                window.setTimeout(function () {
+                    programmaticScroll = false;
+                }, 280);
+            }
+
+            if (behave === 'smooth') {
+                window.setTimeout(finishProg, 480);
+            } else {
+                window.requestAnimationFrame(function () {
+                    window.requestAnimationFrame(finishProg);
+                });
+            }
+        }
+
+        function onScrollStable() {
+            if (!carouselIsActive(strip)) return;
+            var idx = nearestIndexFromScroll();
+            setVisualState(idx);
+            if (!programmaticScroll) {
+                nudgeSlideIntoCenter(slides[idx]);
+                pausedUntilUser = Date.now() + USER_PAUSE_MS;
+            }
+        }
+
+        function scheduleScrollStable() {
+            if (scrollEndTimer) window.clearTimeout(scrollEndTimer);
+            scrollEndTimer = window.setTimeout(onScrollStable, 110);
+        }
+
+        strip.addEventListener('scroll', scheduleScrollStable, { passive: true });
+
+        strip.addEventListener('pointerdown', function () {
+            if (carouselIsActive(strip)) {
+                pausedUntilUser = Date.now() + USER_PAUSE_MS;
+            }
+        }, { passive: true });
+
+        strip.addEventListener('wheel', function () {
+            if (carouselIsActive(strip)) {
+                pausedUntilUser = Date.now() + USER_PAUSE_MS;
+            }
+        }, { passive: true });
+
+        strip.addEventListener('keydown', function (ev) {
+            if (!carouselIsActive(strip)) return;
+            if (ev.key === 'ArrowRight' || ev.key === 'ArrowLeft') {
+                ev.preventDefault();
+                pausedUntilUser = Date.now() + USER_PAUSE_MS;
+                var next = activeIndex;
+                if (ev.key === 'ArrowRight') {
+                    next = (activeIndex + 1) % n;
+                } else {
+                    next = (activeIndex - 1 + n) % n;
+                }
+                goToIndex(next, true);
+            }
+        });
+
+        dots.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                if (!carouselIsActive(strip)) return;
+                var raw = btn.getAttribute('data-promo-dot');
+                var idx = parseInt(raw, 10);
+                if (isNaN(idx)) return;
+                pausedUntilUser = Date.now() + USER_PAUSE_MS;
+                goToIndex(idx, true);
+            });
+        });
+
+        function tickAuto() {
+            if (n < 2) return;
+            if (!carouselIsActive(strip)) return;
+            if (document.hidden) return;
+            if (Date.now() < pausedUntilUser) return;
+            var next = (nearestIndexFromScroll() + 1) % n;
+            goToIndex(next, !reduceMotion);
+        }
+
+        if (n > 1) {
+            autoTimer = window.setInterval(tickAuto, AUTO_MS);
+        }
+
+        window.addEventListener('resize', scheduleScrollStable, { passive: true });
+        window.requestAnimationFrame(function () {
+            window.requestAnimationFrame(function () {
+                if (carouselIsActive(strip) && strip.clientWidth >= 8) {
+                    setVisualState(0);
+                    goToIndex(0, false);
+                }
+                scheduleScrollStable();
+            });
+        });
+    }
+
+    document.querySelectorAll('[data-products-all-promo-strip]').forEach(setupProductsPromoCarousel);
+})();
+</script>
+{% endblock %}

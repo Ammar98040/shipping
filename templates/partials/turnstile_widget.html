@@ -1,0 +1,6 @@
+{% if turnstile_site_key %}
+<div class="turnstile-wrap" style="margin:1rem 0;display:flex;justify-content:center;min-height:70px;">
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="light"></div>
+</div>
+{% endif %}

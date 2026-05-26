@@ -1,0 +1,187 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}تعديل الطلب #{{ order.id }}{% endblock %}
+
+{% block manage_content %}
+<h1 class="manage-page-title">✏️ تعديل شامل الطلب #{{ order.id }}</h1>
+<p style="color:#64748b; margin-top:0;">
+  يمكنك حذف بند، تعديل الكمية، أو استبدال المنتج/النسخة. عند الحفظ تُطبّق تسوية مخزون (Delta) وإعادة تسعير تلقائياً.
+</p>
+
+<div class="manage-section">
+  <form method="post">
+    {% csrf_token %}
+    <div class="manage-table-container">
+      <table class="manage-table">
+        <thead>
+          <tr>
+            <th>البند</th>
+            <th>الحالي</th>
+            <th>الكمية الجديدة</th>
+            <th>استبدال بمنتج</th>
+            <th>استبدال بنسخة</th>
+            <th>حذف</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in editable_rows %}
+          {% with it=row.item %}
+          <tr>
+            <td>
+              <strong>#{{ it.id }}</strong>
+              <input type="hidden" name="item_id" value="{{ it.id }}">
+            </td>
+            <td>
+              {{ it.display_product_name }}
+              {% if it.display_variant_label %}<br><small style="color:#64748b;">{{ it.display_variant_label }}</small>{% endif %}
+            </td>
+            <td style="max-width:120px;">
+              <input type="number" min="0" name="qty_{{ it.id }}" value="{{ row.qty }}" class="input" style="max-width:90px;">
+            </td>
+            <td>
+              <select name="repl_product_{{ it.id }}" class="input" style="min-width:220px;">
+                <option value="">(بدون)</option>
+                {% for p in active_products %}
+                <option value="{{ p.id }}" {% if row.repl_product == p.id|stringformat:"s" %}selected{% endif %}>{{ p.name_ar }} — {{ p.sku }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <select name="repl_variant_{{ it.id }}" class="input" style="min-width:240px;">
+                <option value="">(بدون)</option>
+                {% for v in active_variants %}
+                <option value="{{ v.id }}" {% if row.repl_variant == v.id|stringformat:"s" %}selected{% endif %}>{{ v.product.name_ar }} — {{ v.code }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td>
+              <label>
+                <input type="checkbox" name="remove_{{ it.id }}" value="1" {% if row.remove %}checked{% endif %}>
+                حذف
+              </label>
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if preview %}
+    <div style="margin-top:1rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:0.9rem 1rem;">
+      <div style="font-weight:800; margin-bottom:0.5rem;">📊 ملخص فرق السعر قبل الحفظ</div>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:0.65rem; font-size:0.92rem;">
+        <div>الإجمالي الحالي: <strong>{{ preview.old_total }} ر.س</strong></div>
+        <div>الإجمالي بعد التعديل: <strong>{{ preview.new_total }} ر.س</strong></div>
+        <div>
+          الفرق:
+          {% if preview.direction == 'up' %}
+            <strong style="color:#b45309;">+ {{ preview.delta_abs }} ر.س (مبلغ إضافي)</strong>
+          {% elif preview.direction == 'down' %}
+            <strong style="color:#065f46;">- {{ preview.delta_abs }} ر.س (قابل للاسترداد)</strong>
+          {% else %}
+            <strong>0 ر.س (بدون فرق)</strong>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    {% if changes_summary %}
+    <div style="margin-top:1rem; background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:0.9rem 1rem;">
+      <div style="font-weight:800; margin-bottom:0.5rem;">🧾 سجل التعديلات المقترحة (قبل/بعد)</div>
+      <div class="manage-table-container">
+        <table class="manage-table">
+          <thead>
+            <tr>
+              <th>نوع التعديل</th>
+              <th>قبل التعديل</th>
+              <th>بعد التعديل</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in changes_summary %}
+            <tr>
+              <td>
+                {% if c.change_type == 'remove' %}🗑️ حذف
+                {% elif c.change_type == 'replace' %}🔁 استبدال
+                {% else %}🔢 تعديل كمية{% endif %}
+              </td>
+              <td>
+                <strong>{{ c.before_name }}</strong><br>
+                <small>النسخة: {{ c.before_variant }} | SKU: {{ c.before_sku }}</small><br>
+                {% if c.before_image_url %}<img src="{{ c.before_image_url }}" alt="{{ c.before_name }}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;margin-top:4px;"><br>{% endif %}
+                <small>الكمية: {{ c.before_qty }} | قبل الخصم: {{ c.before_base_price }} ر.س | بعد الخصم: {{ c.before_final_price }} ر.س | الخصم: {{ c.before_discount }} ر.س | الإجمالي: {{ c.before_subtotal }} ر.س</small>
+              </td>
+              <td>
+                <strong>{{ c.after_name }}</strong><br>
+                <small>النسخة: {{ c.after_variant }} | SKU: {{ c.after_sku }}</small><br>
+                {% if c.after_image_url %}<img src="{{ c.after_image_url }}" alt="{{ c.after_name }}" style="width:50px;height:50px;object-fit:cover;border-radius:8px;margin-top:4px;"><br>{% endif %}
+                <small>الكمية: {{ c.after_qty }} | قبل الخصم: {{ c.after_base_price }}{% if c.after_base_price != '-' %} ر.س{% endif %} | بعد الخصم: {{ c.after_final_price }}{% if c.after_final_price != '-' %} ر.س{% endif %} | الخصم: {{ c.after_discount }}{% if c.after_discount != '-' %} ر.س{% endif %} | الإجمالي: {{ c.after_subtotal }}{% if c.after_subtotal != '-' %} ر.س{% endif %}</small>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+    <div style="margin-top:1rem; display:flex; gap:0.7rem; flex-wrap:wrap;">
+      <button type="submit" name="edit_action" value="preview" class="btn btn-secondary">🧮 معاينة الفرق</button>
+      <button type="submit" name="edit_action" value="apply" class="btn btn-primary">💾 تطبيق التعديل</button>
+      <a href="{% url 'manage:order_detail' order.id %}" class="btn btn-secondary">↩️ رجوع</a>
+    </div>
+  </form>
+</div>
+
+<div class="manage-section" style="margin-top:1rem;">
+  <h3 style="margin-top:0;">📚 سجل تعديلات الطلب (دائم)</h3>
+  {% if parsed_edit_history %}
+    <div style="display:flex; flex-direction:column; gap:0.6rem;">
+      {% for row in parsed_edit_history %}
+      <div style="border:1px solid #e2e8f0; border-radius:10px; padding:0.75rem 0.85rem; background:#f8fafc;">
+        <div style="font-size:0.9rem; margin-bottom:0.35rem;">
+          <strong>المنفذ:</strong> {{ row.history.changed_by.username|default:"نظام" }}
+          <span style="color:#64748b;">|</span>
+          <strong>الوقت:</strong> {{ row.history.created_at|date:"Y-m-d H:i" }}
+        </div>
+        {% if row.operations %}
+        <div class="manage-table-container">
+          <table class="manage-table">
+            <thead>
+              <tr>
+                <th>العملية</th>
+                <th>المنتج الأصلي</th>
+                <th>المنتج البديل / النتيجة</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for op in row.operations %}
+              <tr>
+                <td>{{ op.action }}</td>
+                <td>
+                  <strong>{{ op.before_name|default:op.before }}</strong><br>
+                  <small>النسخة: {{ op.before_variant|default:"-" }} | SKU: {{ op.before_sku|default:"-" }} | الكمية: {{ op.before_qty|default:"0" }}</small><br>
+                  {% if op.before_image_url %}<img src="{{ op.before_image_url }}" alt="{{ op.before_name }}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;margin-top:4px;"><br>{% endif %}
+                  <small>قبل الخصم: {{ op.before_base_price|default:"-" }}{% if op.before_base_price and op.before_base_price != '-' %} ر.س{% endif %} | بعد الخصم: {{ op.before_final_price|default:"-" }}{% if op.before_final_price and op.before_final_price != '-' %} ر.س{% endif %} | الخصم: {{ op.before_discount|default:"-" }}{% if op.before_discount and op.before_discount != '-' %} ر.س{% endif %}</small>
+                </td>
+                <td>
+                  <strong>{{ op.after_name|default:op.after }}</strong><br>
+                  <small>النسخة: {{ op.after_variant|default:"-" }} | SKU: {{ op.after_sku|default:"-" }} | الكمية: {{ op.after_qty|default:"0" }}</small><br>
+                  {% if op.after_image_url %}<img src="{{ op.after_image_url }}" alt="{{ op.after_name }}" style="width:52px;height:52px;object-fit:cover;border-radius:8px;margin-top:4px;"><br>{% endif %}
+                  <small>قبل الخصم: {{ op.after_base_price|default:"-" }}{% if op.after_base_price and op.after_base_price != '-' %} ر.س{% endif %} | بعد الخصم: {{ op.after_final_price|default:"-" }}{% if op.after_final_price and op.after_final_price != '-' %} ر.س{% endif %} | الخصم: {{ op.after_discount|default:"-" }}{% if op.after_discount and op.after_discount != '-' %} ر.س{% endif %}</small>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div style="white-space:pre-line; font-size:0.88rem; color:#334155;">{{ row.history.note }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p style="color:#64748b; margin:0;">لا يوجد سجل تعديلات شاملة لهذا الطلب حتى الآن.</p>
+  {% endif %}
+</div>
+{% endblock %}
+

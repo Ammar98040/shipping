@@ -1,0 +1,141 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}المسؤولون{% endblock %}
+
+{% block manage_content %}
+<h1 class="manage-page-title">🛡️ حسابات المسؤولين</h1>
+<div style="display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem;">
+    <a href="{% url 'manage:shipping_managers_list' %}" class="btn btn-primary">🚛 مسؤولو الشحن</a>
+    <a href="{% url 'manage:warehouse_managers_list' %}" class="btn btn-primary">📦 مسؤولو المستودع</a>
+    <a href="{% url 'manage:customer_service_accounts_list' %}" class="btn btn-primary">💬 موظفو خدمة العملاء</a>
+    <a href="{% url 'manage:customer_service_managers_list' %}" class="btn btn-primary">🧭 مسؤولو خدمة العملاء</a>
+</div>
+
+<div class="manage-filters">
+    <form method="get" class="filters-form">
+        <div class="filter-group" style="flex: 2;">
+            <label for="search">بحث:</label>
+            <input type="text" name="search" id="search" placeholder="ابحث باسم المستخدم أو البريد..." value="{{ search_query }}" class="input filter-search">
+        </div>
+        <button type="submit" class="btn btn-primary btn-filter">🔍 بحث</button>
+        {% if search_query %}
+        <a href="{% url 'manage:admins_list' %}" class="btn btn-clear">مسح</a>
+        {% endif %}
+        <span class="results-count">🛡️ عدد المسؤولين: <strong>{{ admins.paginator.count }}</strong></span>
+    </form>
+</div>
+
+<div class="manage-section" style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px; padding: 1rem 1.5rem; margin-bottom: 1.5rem;">
+    💡 <strong>ملاحظة:</strong> لتغيير نوع حساب مستخدم إلى مسؤول، افتح تفاصيل المستخدم من قسم <a href="{% url 'manage:users_list' %}">المستخدمين</a> واستخدم قسم "تغيير نوع الحساب".
+</div>
+
+<div class="manage-section">
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم المستخدم</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>الاسم</th>
+                    <th>النوع</th>
+                    <th>الحالة</th>
+                    <th>تاريخ التسجيل</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for admin in admins %}
+                <tr>
+                    <td><strong>{{ admin.id }}</strong></td>
+                    <td>
+                        <strong>{{ admin.username }}</strong>
+                    </td>
+                    <td>{{ admin.email|default:"-" }}</td>
+                    <td>{{ admin.get_full_name|default:"-" }}</td>
+                    <td>
+                        {% if admin.is_superuser %}
+                        <span class="badge" style="background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; padding: 0.4rem 0.8rem; border-radius: 20px; font-weight: 700;">👑 مدير رئيسي</span>
+                        {% else %}
+                        <span class="badge" style="background: linear-gradient(135deg, #6f42c1, #8e44ad); color: #fff; padding: 0.4rem 0.8rem; border-radius: 20px; font-weight: 700;">🛡️ مسؤول</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if admin.is_active %}
+                        <span class="badge badge-active js-user-status-badge">✓ نشط</span>
+                        {% else %}
+                        <span class="badge badge-inactive js-user-status-badge">✗ معطل</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ admin.date_joined|date:"Y-m-d" }}</td>
+                    <td>
+                        <a href="{% url 'manage:user_detail' admin.id %}" class="btn btn-sm">👁️ عرض</a>
+                        {% if not admin.is_superuser %}
+                        <a href="{% url 'manage:user_profile_edit' admin.id %}" class="btn btn-sm btn-secondary">✏️ تعديل</a>
+                        <form method="post" action="{% url 'manage:user_toggle_active' admin.id %}" class="js-toggle-user-active-form" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm js-toggle-user-active-btn {% if admin.is_active %}btn-danger{% else %}btn-success{% endif %}">
+                                {% if admin.is_active %}🔒 تعطيل{% else %}✅ تفعيل{% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="empty-msg">لا توجد نتائج</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if admins.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=admins query_string=query_string %}
+{% endif %}
+<script>
+    (function () {
+        document.addEventListener('submit', function (e) {
+            var form = e.target.closest('form.js-toggle-user-active-form');
+            if (!form) return;
+            e.preventDefault();
+
+            var tr = form.closest('tr');
+            var btn = form.querySelector('.js-toggle-user-active-btn');
+            var badge = tr ? tr.querySelector('.js-user-status-badge') : null;
+            if (btn) btn.disabled = true;
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+                },
+                body: new FormData(form)
+            })
+                .then(function (r) {
+                    var ct = (r.headers.get('content-type') || '').toLowerCase();
+                    if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+                    return r.json();
+                })
+                .then(function (data) {
+                    if (!data || !data.success) throw new Error('toggle_failed');
+                    if (badge) {
+                        badge.classList.remove('badge-active', 'badge-inactive');
+                        badge.classList.add(data.badge_class || 'badge-inactive');
+                        badge.textContent = data.badge_text || '';
+                    }
+                    if (btn) {
+                        btn.textContent = data.button_text || '';
+                        btn.classList.remove('btn-danger', 'btn-success');
+                        btn.classList.add(data.button_class || 'btn-success');
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function () {
+                    if (btn) btn.disabled = false;
+                    showManageError('تعذر تنفيذ العملية. حاول مرة أخرى.');
+                });
+        });
+    })();
+</script>
+{% endblock %}

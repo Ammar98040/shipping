@@ -1,0 +1,103 @@
+{% extends "manage/base_manage.html" %}
+{% load manage_seen_tags %}
+{% block title %}إدارة المستودع{% endblock %}
+
+{% block manage_content %}
+<div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin-bottom:1rem;">
+  <h1 class="manage-page-title" style="margin:0;">🏭 إدارة المستودع</h1>
+  <a class="btn btn-sm" href="/warehouse/" target="_blank">فتح بوابة المستودع</a>
+</div>
+
+<div class="manage-filters">
+  <form method="get" class="filters-form">
+    <div class="filter-group">
+      <label>الحالة:</label>
+      <select class="input" name="status">
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>الكل</option>
+        {% for val,label in status_choices %}
+          <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>المجهّز:</label>
+      <select class="input" name="packer">
+        <option value="">الكل</option>
+        <option value="unassigned" {% if packer_filter == 'unassigned' %}selected{% endif %}>غير مسند</option>
+        {% for p in packers %}
+          <option value="{{ p.id }}" {% if packer_filter == p.id|stringformat:"s" %}selected{% endif %}>{{ p.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group" style="flex:2;">
+      <label>بحث:</label>
+      <input class="input filter-search" name="search" value="{{ search_query }}" placeholder="رقم الطلب / اسم العميل / الجوال">
+    </div>
+    <button class="btn btn-primary btn-filter" type="submit">🔍 بحث</button>
+    {% if status_filter != 'all' or packer_filter or search_query %}
+      <a class="btn btn-clear" href="{% url 'manage:warehouse_orders_manage' %}">مسح</a>
+    {% endif %}
+    <span class="results-count">النتائج: <strong>{{ orders.paginator.count }}</strong></span>
+  </form>
+</div>
+
+<div class="manage-section">
+  <div style="display:flex; justify-content:flex-end; margin-bottom:0.65rem;">
+    <button type="button" class="btn btn-secondary btn-sm manage-mark-visible-btn" data-manage-mark-visible=".manage-table-container">✔️ تعيين الظاهر كمقروء</button>
+  </div>
+  <div class="manage-table-container">
+    <table class="manage-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الحالة</th>
+          <th>العميل</th>
+          <th>الجوال</th>
+          <th>المبلغ</th>
+          <th>المجهّز</th>
+          <th>وقت الإنشاء</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        {% manage_row_state request.user o "order" as wh_order_state %}
+        <tr class="{% if wh_order_state == 'new' %}manage-row--new{% elif wh_order_state == 'updated' %}manage-row--updated{% endif %}" data-manage-row-key="order:{{ o.id }}">
+          <td>
+            {% if wh_order_state == 'new' %}<span class="manage-row-new-dot" title="طلب جديد"></span>{% elif wh_order_state == 'updated' %}<span class="manage-row-new-dot" title="تحديث حالة الطلب"></span>{% endif %}
+            <strong>{{ o.id }}</strong>
+          </td>
+          <td><span class="badge">{{ o.get_status_display }}</span></td>
+          <td>{{ o.customer_name|default:"-" }}</td>
+          <td>{{ o.customer_phone|default:"-" }}</td>
+          <td><strong>{{ o.total }}</strong> ر.س</td>
+          <td>
+            {% if o.packer %}
+              <strong>{{ o.packer.username }}</strong>
+              {% if o.packer.profile.is_available %}
+              <span class="badge badge-active">🟢 متوفر</span>
+              {% else %}
+              <span class="badge" style="background:#fff1e6; color:#9a3412;">⚪ غير متوفر</span>
+              {% endif %}
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>{{ o.created_at|date:"Y-m-d H:i" }}</td>
+          <td>
+            <a class="btn btn-sm" href="{% url 'manage:order_detail' o.id %}">📄 تفاصيل الطلب</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" style="text-align:center; padding:2rem; color:#64748b;">لا توجد طلبات مطابقة.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if orders.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=orders query_string=query_string %}
+{% endif %}
+{% endblock %}
+

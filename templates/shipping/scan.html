@@ -1,0 +1,370 @@
+{% extends "shipping/base_shipping.html" %}
+{% block title %}{% if scan_action == 'deliver' %}مسح — تسليم للعميل{% else %}مسح — استلام من المتجر{% endif %}{% endblock %}
+
+{% block content %}
+<style>
+  .scan-wrap{max-width: 980px; margin: 1rem auto;}
+  .scan-hero{
+    background: linear-gradient(135deg, rgba(37,99,235,0.16), rgba(14,165,233,0.10));
+    border: 1px solid rgba(37,99,235,0.18);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .scan-hero h1{margin:0; font-size:1.2rem;}
+  .scan-hero p{margin:0.4rem 0 0; color:#475569; font-weight:800;}
+  .scan-grid{display:grid; grid-template-columns: 1.25fr 0.75fr; gap: 1rem;}
+  .scan-card{background:#fff; border:1px solid rgba(15,23,42,0.12); border-radius:16px; box-shadow: 0 10px 28px rgba(15,23,42,0.08); overflow:hidden;}
+  .scan-card-h{padding: 0.9rem 1rem; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; border-bottom:1px solid rgba(15,23,42,0.08);}
+  .scan-card-h strong{font-size:0.98rem;}
+  .scan-tabs{display:flex; gap:0.5rem; flex-wrap:wrap;}
+  .scan-tab{border:1px solid rgba(15,23,42,0.16); background:#f8fafc; color:#0f172a; font-weight:900; padding:0.45rem 0.75rem; border-radius:999px; cursor:pointer;}
+  .scan-tab[aria-pressed="true"]{background:#2563eb; border-color:#2563eb; color:#fff;}
+  .scan-body{padding: 1rem;}
+  .cam-box{
+    position: relative;
+    border-radius: 16px;
+    background: #0b1220;
+    border: 1px solid rgba(255,255,255,0.10);
+    overflow:hidden;
+    min-height: 280px;
+  }
+  .cam-box video{width:100%; height: 100%; display:block; object-fit: cover;}
+  .cam-frame{
+    position:absolute; inset: 14px;
+    border-radius: 18px;
+    border: 2px solid rgba(255,255,255,0.22);
+    box-shadow: inset 0 0 0 2px rgba(37,99,235,0.35);
+    pointer-events:none;
+  }
+  .cam-line{
+    position:absolute; left: 18px; right: 18px; top: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(96,165,250,0.95), transparent);
+    opacity: 0.9;
+    animation: scanLine 2s linear infinite;
+    pointer-events:none;
+  }
+  @keyframes scanLine { 0%{transform: translateY(-70px);} 50%{transform: translateY(70px);} 100%{transform: translateY(-70px);} }
+  .scan-status{margin-top:0.75rem; color:#475569; font-weight:900;}
+  .scan-inline-feedback{
+    display:none;
+    margin-top:0.55rem;
+    padding:0.55rem 0.7rem;
+    border-radius:10px;
+    font-weight:800;
+    font-size:0.9rem;
+    line-height:1.45;
+  }
+  .scan-inline-feedback--ok{
+    display:block;
+    background:#ecfdf5;
+    border:1px solid #6ee7b7;
+    color:#065f46;
+  }
+  .scan-inline-feedback--err{
+    display:block;
+    background:#fef2f2;
+    border:1px solid #fca5a5;
+    color:#991b1b;
+  }
+  .scan-hint{color:#64748b; font-weight:800; font-size:0.9rem; margin-top:0.35rem;}
+  .scan-actions{display:flex; gap:0.75rem; flex-wrap:wrap; margin-top:0.75rem;}
+  .scan-pill{display:inline-flex; align-items:center; gap:0.4rem; font-weight:900; color:#0f172a; background:#f1f5f9; border:1px solid rgba(15,23,42,0.12); border-radius:999px; padding:0.35rem 0.7rem;}
+  .manual-form .input{height: 46px;}
+  .manual-form .btn{height: 46px;}
+  .side-card{padding: 1rem;}
+  .side-card h3{margin:0 0 0.6rem; font-size:1rem;}
+  .side-list{margin:0; padding:0; list-style:none; display:grid; gap:0.6rem;}
+  .side-list li{display:flex; gap:0.6rem; align-items:flex-start; color:#334155; font-weight:800;}
+  .side-dot{width: 10px; height: 10px; border-radius:999px; background:#2563eb; margin-top:0.35rem; flex:0 0 auto;}
+  @media (max-width: 900px){ .scan-grid{grid-template-columns: 1fr;} }
+  .scan-back{margin-bottom:0.75rem;}
+  .scan-back a{font-weight:900; color:#2563eb; text-decoration:none;}
+  .scan-back a:hover{text-decoration:underline;}
+  body.theme-dark .scan-hero{
+    background: linear-gradient(135deg, rgba(37,99,235,0.26), rgba(14,165,233,0.16));
+    border-color: rgba(125,211,252,0.28);
+  }
+  body.theme-dark .scan-hero h1{color:#f8fafc;}
+  body.theme-dark .scan-hero p{color:#cbd5e1;}
+  body.theme-dark .scan-card{
+    background:#0f172a;
+    border-color: rgba(148,163,184,0.24);
+    box-shadow: 0 12px 28px rgba(2,6,23,0.48);
+  }
+  body.theme-dark .scan-card-h{border-bottom-color: rgba(148,163,184,0.2);}
+  body.theme-dark .scan-card-h strong,
+  body.theme-dark .side-card h3{color:#f8fafc;}
+  body.theme-dark .scan-tab{
+    border-color: rgba(148,163,184,0.3);
+    background:#111827;
+    color:#e2e8f0;
+  }
+  body.theme-dark .scan-tab[aria-pressed="true"]{
+    background:#2563eb;
+    border-color:#2563eb;
+    color:#fff;
+  }
+  body.theme-dark .scan-status{color:#cbd5e1;}
+  body.theme-dark .scan-inline-feedback--ok{
+    background:#052e2b;
+    border-color:#0f766e;
+    color:#99f6e4;
+  }
+  body.theme-dark .scan-inline-feedback--err{
+    background:#3f1d1d;
+    border-color:#b91c1c;
+    color:#fecaca;
+  }
+  body.theme-dark .scan-hint{color:#94a3b8;}
+  body.theme-dark .scan-pill{
+    color:#cbd5e1;
+    background:#111827;
+    border-color: rgba(148,163,184,0.28);
+  }
+  body.theme-dark .manual-form .input{
+    background:#111827;
+    color:#f8fafc;
+    border-color: rgba(148,163,184,0.35);
+  }
+  body.theme-dark .manual-form .input::placeholder{color:#94a3b8;}
+  body.theme-dark .btn.btn-secondary{
+    background:#334155;
+    border-color:#475569;
+    color:#f8fafc;
+  }
+  body.theme-dark .btn.btn-clear{
+    background:#1f2937;
+    border-color:#334155;
+    color:#e2e8f0;
+  }
+  body.theme-dark .side-list li{color:#cbd5e1;}
+  body.theme-dark .side-dot{background:#60a5fa;}
+  body.theme-dark .scan-back a{color:#93c5fd;}
+</style>
+
+<div class="scan-wrap">
+  <div class="scan-back">
+    <a href="{% url 'shipping:scan' %}">← مسار البوليصة (المراحل)</a>
+  </div>
+
+  <div class="scan-hero">
+    {% if scan_action == 'deliver' %}
+    <h1>✅ تسليم الشحنة للعميل (OTP)</h1>
+    <p>امسح نفس كود البوليصة بعد أن سجّلت <strong>استلام الشحنة من المتجر</strong>. إن لم يُسجَّل الاستلام لن يُقبل الكود هنا.</p>
+    {% else %}
+    <h1>📦 استلام الشحنة من المتجر</h1>
+    <p>امسح QR أو أدخل الكود عند استلام الطرد من المتجر. هذه الخطوة تسبق تسليم العميل.</p>
+    {% endif %}
+  </div>
+
+  <div class="scan-grid">
+    <div class="scan-card">
+      <div class="scan-card-h">
+        <strong>المسح والتأكيد</strong>
+        <div class="scan-tabs" role="group" aria-label="طريقة الإدخال">
+          <button type="button" class="scan-tab" id="tabCam" aria-pressed="true">📷 كاميرا</button>
+          <button type="button" class="scan-tab" id="tabManual" aria-pressed="false">⌨️ يدوي</button>
+        </div>
+      </div>
+
+      <div class="scan-body">
+        <div id="panelCam">
+          <div class="cam-box">
+            <video id="video" playsinline></video>
+            <div class="cam-frame"></div>
+            <div class="cam-line" id="scanLine" style="display:none;"></div>
+          </div>
+          <div class="scan-actions">
+            <button class="btn btn-secondary" type="button" id="btnStart">تشغيل الكاميرا</button>
+            <button class="btn btn-clear" type="button" id="btnStop" disabled>إيقاف</button>
+            <span class="scan-pill">QR فقط</span>
+          </div>
+          <div id="scanStatus" class="scan-status"></div>
+          <div class="scan-hint">نصيحة: قرب الكاميرا من الباركود حتى يظهر واضحاً داخل الإطار.</div>
+        </div>
+
+        <div id="panelManual" style="display:none;">
+          <form method="post" action="{% url 'shipping:scan_consume' %}" class="manual-form" id="shipping-scan-manual-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="actionField" value="{{ scan_action }}">
+            <label style="display:block; font-weight:900; margin-bottom:0.5rem;">أدخل كود البوليصة</label>
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+              <input name="code" id="codeField" class="input" style="flex:1; min-width: 240px;" placeholder="DLBK:XXXXXXXXXXXXXX أو XXXXXXXXXXXXXX" required>
+              <button class="btn btn-primary" type="submit">تنفيذ</button>
+            </div>
+            <div id="shippingInlineFeedback" class="scan-inline-feedback" aria-live="polite"></div>
+            {% if scan_action == 'deliver' %}
+            <div class="scan-hint" style="margin-top:0.6rem;">بعد التنفيذ الصحيح ستنتقل إلى صفحة إرسال رمز OTP للعميل.</div>
+            {% else %}
+            <div class="scan-hint" style="margin-top:0.6rem;">بعد التنفيذ تُحدَّث حالة الشحنة إلى «تم الاستلام من المتجر».</div>
+            {% endif %}
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="scan-card">
+      <div class="scan-card-h"><strong>ملاحظة</strong></div>
+      <div class="side-card">
+        {% if scan_action == 'deliver' %}
+        <h3>تسليم للعميل</h3>
+        <ul class="side-list">
+          <li><span class="side-dot"></span><span>يُسمح بالتسليم فقط إذا سبق تسجيل <strong>استلام من المتجر</strong> لنفس البوليصة.</span></li>
+        </ul>
+        {% else %}
+        <h3>استلام من المتجر</h3>
+        <ul class="side-list">
+          <li><span class="side-dot"></span><span>عند أخذ الشحنة من المتجر؛ بعدها استخدم صفحة «تسليم للعميل» لاحقاً.</span></li>
+        </ul>
+        {% endif %}
+        <div style="margin-top:1rem; display:flex; flex-wrap:wrap; gap:0.5rem;">
+          <a class="btn btn-secondary" href="{% url 'shipping:available_jobs' %}">🆕 طلبات جديدة</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const video = document.getElementById('video');
+  const btnStart = document.getElementById('btnStart');
+  const statusEl = document.getElementById('scanStatus');
+  const codeField = document.getElementById('codeField');
+  const actionField = document.getElementById('actionField');
+  const btnStop = document.getElementById('btnStop');
+  const scanLine = document.getElementById('scanLine');
+  const tabCam = document.getElementById('tabCam');
+  const tabManual = document.getElementById('tabManual');
+  const panelCam = document.getElementById('panelCam');
+  const panelManual = document.getElementById('panelManual');
+  const SCAN_ACTION = '{{ scan_action|default:"pickup"|escapejs }}';
+  if (actionField) actionField.value = SCAN_ACTION;
+
+  function setTab(which) {
+    const cam = which === 'cam';
+    tabCam.setAttribute('aria-pressed', cam ? 'true' : 'false');
+    tabManual.setAttribute('aria-pressed', cam ? 'false' : 'true');
+    panelCam.style.display = cam ? '' : 'none';
+    panelManual.style.display = cam ? 'none' : '';
+  }
+  tabCam?.addEventListener('click', () => setTab('cam'));
+  tabManual?.addEventListener('click', () => setTab('manual'));
+
+  let stream = null;
+  let detector = null;
+  let running = false;
+
+  async function start() {
+    if (!('BarcodeDetector' in window)) {
+      statusEl.textContent = 'المتصفح لا يدعم BarcodeDetector. استخدم الإدخال اليدوي.';
+      return;
+    }
+    try {
+      detector = new BarcodeDetector({ formats: ['qr_code'] });
+    } catch (e) {
+      statusEl.textContent = 'تعذر إنشاء BarcodeDetector. استخدم الإدخال اليدوي.';
+      return;
+    }
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      video.srcObject = stream;
+      await video.play();
+      running = true;
+      scanLine.style.display = '';
+      btnStop.disabled = false;
+      statusEl.textContent = 'وجّه الكاميرا نحو الـ QR...';
+      loop();
+    } catch (e) {
+      statusEl.textContent = 'تعذر تشغيل الكاميرا. استخدم الإدخال اليدوي.';
+    }
+  }
+
+  async function loop() {
+    if (!running) return;
+    try {
+      const barcodes = await detector.detect(video);
+      if (barcodes && barcodes.length) {
+        const val = (barcodes[0].rawValue || '').trim();
+        if (val) {
+          codeField.value = val;
+          statusEl.textContent = 'تمت القراءة. انتقل إلى "يدوي" واضغط "تنفيذ".';
+          running = false;
+          stopStream();
+          setTab('manual');
+        }
+      }
+    } catch (_) {}
+    requestAnimationFrame(loop);
+  }
+
+  function stopStream() {
+    if (stream) {
+      stream.getTracks().forEach(t => t.stop());
+      stream = null;
+    }
+    video.srcObject = null;
+    scanLine.style.display = 'none';
+    btnStop.disabled = true;
+  }
+
+  btnStart?.addEventListener('click', () => {
+    if (running) return;
+    start();
+  });
+
+  btnStop?.addEventListener('click', () => {
+    running = false;
+    stopStream();
+    statusEl.textContent = 'تم إيقاف الكاميرا.';
+  });
+})();
+
+(() => {
+  const form = document.getElementById('shipping-scan-manual-form');
+  if (!form) return;
+  const feedbackEl = document.getElementById('shippingInlineFeedback');
+  function setFeedback(text, ok) {
+    if (!feedbackEl) return;
+    feedbackEl.textContent = text || '';
+    feedbackEl.className = 'scan-inline-feedback ' + (ok ? 'scan-inline-feedback--ok' : 'scan-inline-feedback--err');
+  }
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    if (feedbackEl) {
+      feedbackEl.textContent = '';
+      feedbackEl.className = 'scan-inline-feedback';
+    }
+    fetch(getFormActionUrl(form), {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر تنفيذ العملية');
+      setFeedback(data.message || 'تمت العملية بنجاح.', true);
+      if (btn) btn.disabled = false;
+      if (data.redirect_url) {
+        setTimeout(function () { window.location.href = data.redirect_url; }, 450);
+      }
+    })
+    .catch(function (err) {
+      setFeedback((err && err.message) ? err.message : 'تعذر تنفيذ العملية.', false);
+      if (btn) btn.disabled = false;
+    });
+  });
+})();
+</script>
+{% endblock %}

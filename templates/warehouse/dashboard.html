@@ -1,0 +1,524 @@
+{% extends "warehouse/base_warehouse.html" %}
+{% block title %}الرئيسية | بوابة المستودع{% endblock %}
+
+{% block extra_css %}
+<style>
+  .wh-dashboard-title {
+    margin-bottom: 1rem;
+  }
+  .wh-dash-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .wh-dash-card {
+    background: #fff;
+    border: 1px solid #dbe5e1;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    padding: 1rem;
+  }
+  .wh-dash-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .wh-dash-card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .wh-dash-card-sub {
+    color: #64748b;
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+  .wh-dash-btn {
+    width: 100%;
+    text-align: center;
+    border-radius: 12px;
+    font-weight: 800;
+    min-height: 44px;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.1);
+  }
+  .wh-dash-btn.btn-primary {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border-color: #1d4ed8;
+  }
+  .wh-dash-btn.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+  }
+  .wh-dash-btn.btn-secondary {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    border-color: #334155;
+  }
+  .wh-dash-btn.btn-secondary:hover {
+    background: linear-gradient(135deg, #334155 0%, #1f2937 100%);
+  }
+  .wh-dash-availability {
+    border: 1px solid #fdba74;
+    background: linear-gradient(180deg, #fff7ed 0%, #fffaf5 100%);
+  }
+  .wh-dash-availability.wh-dash-availability--on {
+    border-color: #34d399;
+    background: linear-gradient(180deg, #ecfdf5 0%, #f7fffb 100%);
+  }
+  .wh-dash-status-line {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+  .wh-dash-status-label {
+    color: #334155;
+    font-weight: 700;
+    font-size: 0.9rem;
+  }
+  .wh-dash-live-card {
+    border-color: #34d399;
+    background: linear-gradient(180deg, #f0faf5 0%, #f8fffc 100%);
+  }
+  .wh-dash-live-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 1.35rem;
+    font-weight: 900;
+    color: #065f46;
+  }
+  .wh-dash-live-dot {
+    display: none;
+    margin-inline-start: 0.15rem;
+    color: #059669;
+    font-weight: 800;
+    font-size: 0.82rem;
+  }
+  .wh-dash-stats {
+    margin-top: 1rem;
+  }
+  .wh-dash-stats .manage-stat-card {
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+    border: 1px solid #e2e8f0;
+    padding: 1.2rem 0.9rem;
+  }
+  .wh-dash-stats .manage-stat-number {
+    font-size: 1.8rem;
+    margin-bottom: 0.35rem;
+  }
+  .wh-dash-stats .manage-stat-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+  .wh-recent-table-wrap {
+    overflow-x: auto;
+  }
+  .wh-recent-table {
+    min-width: 620px;
+  }
+  .wh-recent-date {
+    font-variant-numeric: tabular-nums;
+    color: #475569;
+    font-weight: 700;
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+  .wh-recent-order-no {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .wh-recent-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .wh-recent-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #334155;
+    font-weight: 700;
+  }
+  body.theme-dark .wh-dashboard-title {
+    color: #f8fafc;
+  }
+  body.theme-dark .wh-dash-card {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.26);
+    box-shadow: 0 14px 30px rgba(2, 6, 23, 0.48);
+  }
+  body.theme-dark .wh-dash-card-title {
+    color: #f8fafc;
+  }
+  body.theme-dark .wh-dash-card-sub,
+  body.theme-dark .wh-dash-status-label,
+  body.theme-dark .wh-recent-date {
+    color: #94a3b8;
+  }
+  body.theme-dark .wh-dash-availability {
+    border-color: #92400e;
+    background: linear-gradient(180deg, #2a1b0f 0%, #1f1611 100%);
+  }
+  body.theme-dark .wh-dash-availability.wh-dash-availability--on {
+    border-color: #0f766e;
+    background: linear-gradient(180deg, #062a27 0%, #09211f 100%);
+  }
+  body.theme-dark .wh-dash-live-card {
+    border-color: #0f766e;
+    background: linear-gradient(180deg, #052c28 0%, #081f1e 100%);
+  }
+  body.theme-dark .wh-dash-live-count {
+    color: #34d399;
+  }
+  body.theme-dark .wh-dash-btn {
+    box-shadow: 0 10px 24px rgba(2, 6, 23, 0.42);
+  }
+  body.theme-dark .wh-dash-btn.btn-primary {
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    border-color: #0f766e;
+  }
+  body.theme-dark .wh-dash-btn.btn-primary:hover {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  }
+  body.theme-dark .wh-dash-btn.btn-secondary {
+    background: linear-gradient(135deg, #334155 0%, #1f2937 100%);
+    border-color: #475569;
+  }
+  body.theme-dark .wh-dash-stats .manage-stat-card {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.24);
+    box-shadow: 0 14px 26px rgba(2, 6, 23, 0.45);
+  }
+  body.theme-dark .wh-dash-stats .manage-stat-number {
+    color: #f8fafc;
+  }
+  body.theme-dark .wh-dash-stats .manage-stat-label {
+    color: #cbd5e1;
+  }
+  body.theme-dark .wh-dash-stats .manage-stat-card.highlight {
+    background: linear-gradient(145deg, #2b2111 0%, #221b10 100%);
+    border-color: #b45309;
+  }
+  body.theme-dark .wh-dash-stats .manage-stat-card.highlight .manage-stat-number {
+    color: #fbbf24;
+  }
+  body.theme-dark .wh-dash-stats .manage-stat-card[style*="#e0f2fe"] {
+    background: linear-gradient(145deg, #0f2238 0%, #0d1a2b 100%) !important;
+    border-color: #2563eb !important;
+  }
+  body.theme-dark .wh-dash-stats .manage-stat-card[style*="#e0f2fe"] .manage-stat-number,
+  body.theme-dark .wh-dash-stats .manage-stat-card[style*="#e0f2fe"] .manage-stat-label {
+    color: #93c5fd !important;
+  }
+  body.theme-dark .wh-recent-order-no,
+  body.theme-dark .wh-recent-name,
+  body.theme-dark .wh-recent-status {
+    color: #e2e8f0;
+  }
+  body.theme-dark .wh-recent-table tbody tr {
+    background: #111827;
+    border-color: rgba(148, 163, 184, 0.24);
+  }
+  body.theme-dark .wh-recent-table td::before {
+    color: #94a3b8;
+  }
+  @media (max-width: 768px) {
+    .wh-dashboard-title {
+      font-size: 1.45rem;
+      margin-bottom: 0.8rem;
+    }
+    .wh-dash-card {
+      padding: 0.85rem;
+      border-radius: 14px;
+    }
+    .wh-dash-card-head {
+      margin-bottom: 0.65rem;
+    }
+    .wh-dash-card-title {
+      font-size: 0.96rem;
+    }
+    .wh-dash-live-count {
+      font-size: 1.2rem;
+    }
+    .wh-dash-stats {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    .wh-recent-table-wrap {
+      overflow: visible;
+    }
+    .wh-recent-table {
+      width: 100%;
+      min-width: 0;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    .wh-recent-table thead {
+      display: none;
+    }
+    .wh-recent-table tbody {
+      display: grid;
+      gap: 0.75rem;
+    }
+    .wh-recent-table tbody tr {
+      display: grid;
+      gap: 0.45rem;
+      padding: 0.75rem;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .wh-recent-table td {
+      padding: 0;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+    }
+    .wh-recent-table td::before {
+      content: attr(data-label);
+      color: #64748b;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .wh-recent-table td:last-child::before {
+      content: '';
+    }
+    .wh-recent-table td:last-child {
+      justify-content: flex-end;
+      margin-top: 0.35rem;
+    }
+    body.theme-dark .wh-recent-table tbody tr {
+      background: #0f172a;
+      border-color: rgba(148, 163, 184, 0.26);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="manage-page-title wh-dashboard-title">🏠 لوحة التجهيز</h1>
+
+<div class="wh-dash-grid">
+  <section class="wh-dash-card wh-dash-availability{% if profile_obj.is_available %} wh-dash-availability--on{% endif %}">
+    <div class="wh-dash-card-head">
+      <div>
+        <div class="wh-dash-card-title">حالة التوفر</div>
+        <div class="wh-dash-card-sub">يمكنك إيقاف استقبال المهام أو تفعيله فورًا</div>
+      </div>
+      <div class="wh-dash-status-line">
+        <span class="wh-dash-status-label">الحالة:</span>
+        {% if profile_obj.is_available %}
+        <span class="badge badge-active" id="warehouse-availability-badge">🟢 متوفر</span>
+        {% else %}
+        <span class="badge" id="warehouse-availability-badge" style="background:#fff1e6; color:#9a3412;">⚪ غير متوفر</span>
+        {% endif %}
+      </div>
+    </div>
+    <form method="post" action="{% url 'warehouse:set_availability' %}" id="warehouse-availability-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'warehouse:dashboard' %}">
+      {% if profile_obj.is_available %}
+      <input type="hidden" name="is_available" value="0">
+      <button type="submit" class="btn btn-secondary wh-dash-btn" id="warehouse-availability-btn">⏸️ إيقاف التوفر مؤقتاً</button>
+      {% else %}
+      <input type="hidden" name="is_available" value="1">
+      <button type="submit" class="btn btn-primary wh-dash-btn" id="warehouse-availability-btn">✅ أنا متوفر الآن</button>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="wh-dash-card wh-dash-live-card">
+    <div class="wh-dash-card-head">
+      <div>
+        <div class="wh-dash-card-title">طلبات تجهيز جديدة غير مسندة</div>
+        <div class="wh-dash-card-sub">تحديث حي كل عدة ثوانٍ</div>
+      </div>
+      <div class="wh-dash-live-count">
+        <span id="warehouse-available-count">{{ available_count }}</span>
+        <span id="warehouse-live-dot" class="wh-dash-live-dot">● تحديث الآن</span>
+      </div>
+    </div>
+    <a class="btn btn-primary wh-dash-btn" href="{% url 'warehouse:available_orders' %}">🚀 عرض طلبات التجهيز</a>
+  </section>
+</div>
+
+<div class="manage-stats wh-dash-stats">
+  <div class="manage-stat-card highlight">
+    <span class="manage-stat-number">{{ stats.my_all }}</span>
+    <span class="manage-stat-label">📦 طلباتي</span>
+  </div>
+  <div class="manage-stat-card">
+    <span class="manage-stat-number">{{ stats.my_processing }}</span>
+    <span class="manage-stat-label">⚙️ قيد التجهيز</span>
+  </div>
+  <div class="manage-stat-card" style="background:#e0f2fe; border-color:#38bdf8;">
+    <span class="manage-stat-number" style="color:#0369a1;">{{ stats.my_ready }}</span>
+    <span class="manage-stat-label" style="color:#0369a1;">📦 جاهز للشحن</span>
+  </div>
+</div>
+
+<div class="manage-section">
+  <h2>آخر الطلبات المسندة لي</h2>
+  {% if recent %}
+  <div class="manage-table-container wh-recent-table-wrap">
+    <table class="manage-table wh-recent-table">
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>العميل</th>
+          <th>الحالة</th>
+          <th>التاريخ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in recent %}
+        <tr>
+          <td data-label="رقم الطلب"><strong class="wh-recent-order-no">#{{ o.id }} <span aria-hidden="true">🧾</span></strong></td>
+          <td data-label="العميل"><span class="wh-recent-name"><span aria-hidden="true">👤</span>{{ o.customer_name }}</span></td>
+          <td data-label="الحالة"><span class="wh-recent-status"><span aria-hidden="true">📌</span>{{ o.get_status_display }}</span></td>
+          <td data-label="التاريخ"><span class="wh-recent-date">🕒 {{ o.updated_at|date:"Y-m-d H:i" }}</span></td>
+          <td data-label=""><a class="btn btn-sm" href="{% url 'warehouse:order_detail' o.id %}">👁️ فتح</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-msg">لا توجد طلبات مسندة لك بعد.</p>
+  {% endif %}
+</div>
+<script>
+(function () {
+  var form = document.getElementById('warehouse-availability-form');
+  var btn = document.getElementById('warehouse-availability-btn');
+  var badge = document.getElementById('warehouse-availability-badge');
+  var availStrip = document.querySelector('.wh-dash-availability');
+  if (!form || !btn || !badge) return;
+
+  var liveUrl = "{% url 'warehouse:my_availability_live' %}";
+  var lastAvailSync = {
+    avail: {{ profile_obj.is_available|yesno:"true,false" }},
+    at: {% if profile_obj.availability_updated_at %}'{{ profile_obj.availability_updated_at|date:"c" }}'{% else %}''{% endif %}
+  };
+
+  function applyWarehouseAvailabilityUi(data) {
+    if (!data || !data.success) return;
+    badge.textContent = data.badge_text || '';
+    if (data.is_available) {
+      badge.className = 'badge badge-active';
+      badge.style.background = '';
+      badge.style.color = '';
+    } else {
+      badge.className = 'badge';
+      badge.style.background = '#fff1e6';
+      badge.style.color = '#9a3412';
+    }
+    if (availStrip) availStrip.classList.toggle('wh-dash-availability--on', !!data.is_available);
+    btn.textContent = data.button_text || '';
+    btn.classList.remove('btn-primary', 'btn-secondary');
+    btn.classList.add(data.button_class || 'btn-primary');
+    var hidden = form.querySelector('input[name="is_available"]');
+    if (hidden) hidden.value = data.is_available ? '0' : '1';
+    var headerIndicator = document.getElementById('warehouse-header-status-indicator');
+    var headerText = document.getElementById('warehouse-header-status-text');
+    if (headerIndicator && headerText) {
+      headerIndicator.classList.toggle('warehouse-status-indicator--on', !!data.is_available);
+      headerIndicator.classList.toggle('warehouse-status-indicator--off', !data.is_available);
+      headerText.textContent = data.is_available ? '🟢 متوفر الآن' : '⚪ غير متوفر';
+    }
+    if (typeof data.updated_at === 'string') lastAvailSync.at = data.updated_at;
+    lastAvailSync.avail = !!data.is_available;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    btn.disabled = true;
+    fetch(getFormActionUrl(form), {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': window.WAREHOUSE_CSRF_TOKEN || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'failed');
+      applyWarehouseAvailabilityUi(data);
+      btn.disabled = false;
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      showManageError((err && err.message && err.message !== 'failed') ? err.message : 'تعذر تحديث حالة التوفر.', { durationMs: 3200 });
+    });
+  });
+
+  function pollAvailabilitySync() {
+    if (document.hidden) return;
+    fetch(liveUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var at = data.updated_at || '';
+        if (at === lastAvailSync.at && data.is_available === lastAvailSync.avail) return;
+        applyWarehouseAvailabilityUi(data);
+      })
+      .catch(function () {});
+  }
+  setInterval(pollAvailabilitySync, 4000);
+})();
+
+(function () {
+  var countEl = document.getElementById('warehouse-available-count');
+  var liveDot = document.getElementById('warehouse-live-dot');
+  if (!countEl) return;
+  var liveUrl = "{% url 'warehouse:available_orders_live' %}";
+  var lastCount = parseInt(countEl.textContent || '0', 10) || 0;
+
+  function flashLive() {
+    if (!liveDot) return;
+    liveDot.style.display = 'inline';
+    setTimeout(function () { liveDot.style.display = 'none'; }, 1200);
+  }
+
+  function pollAvailableCount() {
+    if (document.hidden) return;
+    fetch(liveUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var nextCount = typeof data.count === 'number' ? data.count : (Array.isArray(data.items) ? data.items.length : lastCount);
+        if (nextCount !== lastCount) {
+          countEl.textContent = String(nextCount);
+          flashLive();
+          lastCount = nextCount;
+        }
+      })
+      .catch(function () {});
+  }
+
+  pollAvailableCount();
+  setInterval(pollAvailableCount, 3000);
+})();
+</script>
+{% endblock %}

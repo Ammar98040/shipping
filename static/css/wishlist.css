@@ -1,0 +1,230 @@
+/* صفحة المفضلات */
+.wishlist-page {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.wishlist-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.wishlist-item {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.wishlist-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.product-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    flex: 1;
+}
+
+.product-image {
+    width: 100%;
+    aspect-ratio: 1;
+    overflow: hidden;
+    background: #f8f9fa;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    font-weight: bold;
+    color: var(--accent);
+    background: linear-gradient(135deg, #f8f6f3 0%, #e8e6e3 100%);
+}
+
+.product-info {
+    padding: 1rem;
+}
+
+.product-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text);
+    margin: 0 0 0.5rem 0;
+}
+
+.product-path {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0.5rem 0;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+}
+
+.product-price {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--accent);
+    margin: 0.5rem 0;
+}
+
+.product-stock {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.stock-good {
+    background: #d4edda;
+    color: #155724;
+}
+
+.stock-low {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.stock-out {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.item-actions {
+    padding: 1rem;
+    display: flex;
+    gap: 0.5rem;
+    border-top: 1px solid #eee;
+}
+
+.add-cart-form {
+    flex: 1;
+}
+
+.btn-add-cart {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-add-cart:hover {
+    background: var(--accent-light);
+}
+
+.btn-remove {
+    padding: 0.75rem 1.5rem;
+    background: #dc3545;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-remove:hover {
+    background: #c82333;
+}
+
+.empty-wishlist {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.empty-wishlist p {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+
+.btn-browse {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background: var(--accent);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-browse:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .wishlist-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+    }
+    
+    .product-name {
+        font-size: 0.95rem;
+    }
+    
+    .item-actions {
+        flex-direction: column;
+    }
+}
+
+/* ===== ??? ????? ===== */
+body.theme-dark .wishlist-item {
+    background: var(--card);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.4);
+}
+
+body.theme-dark .product-image,
+body.theme-dark .product-path {
+    background: rgba(255,255,255,0.05);
+}
+
+body.theme-dark .item-actions {
+    border-color: rgba(255,255,255,0.07);
+}
+
+body.theme-dark .empty-wishlist {
+    background: var(--card);
+    box-shadow: 0 2px 14px rgba(0,0,0,0.4);
+}
+
+body.theme-dark .stock-good {
+    background: rgba(21,87,36,0.35);
+    color: #86efac;
+}
+
+body.theme-dark .stock-low {
+    background: rgba(133,100,4,0.3);
+    color: #fde68a;
+}
+
+body.theme-dark .stock-out {
+    background: rgba(114,28,36,0.3);
+    color: #fca5a5;
+}

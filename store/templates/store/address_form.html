@@ -1,0 +1,84 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ title }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/addresses.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/address-fields-unified.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="address-form-page">
+    <div class="form-container">
+        <h1 class="page-title">{{ title }}</h1>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <form method="post" class="address-form" id="address-form">
+            {% csrf_token %}
+            <section class="unified-address-block" aria-labelledby="address-form-section-title">
+                <h2 class="unified-address-block__title" id="address-form-section-title">بيانات العنوان</h2>
+                {% include 'store/partials/address_form_fields.html' %}
+            </section>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-submit" id="address-form-submit-btn">حفظ العنوان</button>
+                <a href="{% url 'addresses_list' %}" class="btn-cancel">إلغاء</a>
+            </div>
+            <div id="address-form-inline-msg" style="display:none; margin-top:0.8rem; font-weight:800;"></div>
+        </form>
+    </div>
+</div>
+<script>
+(function () {
+    var form = document.getElementById('address-form');
+    var btn = document.getElementById('address-form-submit-btn');
+    var msg = document.getElementById('address-form-inline-msg');
+    if (!form || !btn || !msg) return;
+
+    function showMsg(text, ok) {
+        msg.style.display = 'block';
+        msg.style.color = ok ? '#065f46' : '#b91c1c';
+        msg.textContent = text;
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        btn.disabled = true;
+        msg.style.display = 'none';
+
+        fetch(form.action || window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر حفظ العنوان');
+            showMsg(data.message || 'تم حفظ العنوان بنجاح.', true);
+            btn.disabled = false;
+            if (data.redirect_url) {
+                setTimeout(function () { window.location.href = data.redirect_url; }, 500);
+            }
+        })
+        .catch(function (err) {
+            showMsg((err && err.message) ? err.message : 'تعذر حفظ العنوان.', false);
+            btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}
+

@@ -1,0 +1,1085 @@
+{% extends "base.html" %}
+{% load static %}
+{% load store_tags %}
+{% block title %}إنشاء طلب إرجاع - طلب #{{ order.id }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/checkout.css' %}">
+<style>
+.return-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: clamp(0.85rem, 3vw, 2rem) clamp(0.6rem, 3vw, 1rem);
+}
+
+.return-page .page-title {
+    text-align: center;
+    font-size: clamp(1.2rem, 4.8vw, 1.75rem);
+    margin-bottom: clamp(0.75rem, 3vw, 1.5rem);
+    color: var(--text);
+}
+
+.return-container {
+    background: var(--card);
+    padding: clamp(1rem, 4vw, 2rem);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.return-container h2 {
+    margin: 0 0 clamp(0.85rem, 2.5vw, 1.5rem) 0;
+    font-size: clamp(1.05rem, 3.5vw, 1.3rem);
+    color: var(--text);
+    font-weight: 700;
+}
+
+.order-info-summary {
+    background: rgba(44, 95, 79, 0.05);
+    padding: clamp(0.65rem, 2.5vw, 1rem);
+    border-radius: 8px;
+    margin-bottom: clamp(1rem, 3vw, 2rem);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.info-summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.info-summary-label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.info-summary-value {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.section-title {
+    font-size: clamp(0.98rem, 3.2vw, 1.1rem);
+    font-weight: 600;
+    margin: clamp(1.1rem, 3vw, 2rem) 0 clamp(0.45rem, 2vw, 1rem) 0;
+    color: var(--text);
+}
+
+.return-items-intro {
+    margin: -0.35rem 0 0.75rem;
+    font-size: clamp(0.78rem, 2.6vw, 0.9rem);
+    color: var(--text-muted);
+    line-height: 1.45;
+}
+
+.items-selection {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.65rem, 2vw, 1rem);
+    margin-bottom: clamp(1.1rem, 3vw, 2rem);
+}
+
+.return-item-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.return-item-card {
+    display: block;
+    cursor: pointer;
+    margin: 0;
+}
+
+.return-item-card__checkbox {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.return-item-card__surface {
+    display: grid;
+    grid-template-columns: auto 92px 1fr;
+    align-items: stretch;
+    gap: 0.85rem 1rem;
+    padding: 1rem 1.1rem;
+    border-radius: 14px;
+    border: 2px solid #e8ecf0;
+    background: linear-gradient(165deg, #fff 0%, #f8fafb 100%);
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.return-item-card:hover .return-item-card__surface {
+    border-color: rgba(44, 95, 79, 0.35);
+    box-shadow: 0 4px 18px rgba(15, 23, 42, 0.08);
+}
+
+.return-item-card__checkbox:checked + .return-item-card__surface {
+    border-color: var(--accent);
+    background: linear-gradient(165deg, #fff 0%, rgba(44, 95, 79, 0.06) 100%);
+    box-shadow: 0 0 0 3px rgba(44, 95, 79, 0.12);
+}
+
+.return-item-card__check {
+    width: 26px;
+    min-width: 26px;
+    height: 26px;
+    border: 2px solid #cbd5e1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: center;
+    transition: background 0.2s, border-color 0.2s;
+    background: #fff;
+}
+
+.return-item-card__checkbox:checked + .return-item-card__surface .return-item-card__check {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.return-item-card__checkbox:checked + .return-item-card__surface .return-item-card__check::after {
+    content: '✓';
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.return-item-card__thumb {
+    width: 92px;
+    height: 92px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    flex-shrink: 0;
+    align-self: center;
+}
+
+.return-item-card__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.return-item-card__thumb-ph {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: #94a3b8;
+    background: linear-gradient(135deg, #e2e8f0, #f1f5f9);
+}
+
+.return-item-card__body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    justify-content: center;
+}
+
+.return-item-card__title {
+    font-weight: 800;
+    font-size: 1.02rem;
+    color: var(--text);
+    line-height: 1.35;
+}
+
+.return-item-card__variant-row {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.return-item-variant-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    display: inline-block;
+    vertical-align: middle;
+    flex-shrink: 0;
+}
+.return-item-variant-dot--placeholder {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+}
+
+.return-item-card__promo {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.return-item-card__stats {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+    margin-top: 0.25rem;
+    font-size: 0.88rem;
+}
+
+@media (min-width: 480px) {
+    .return-item-card__stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.5rem;
+    }
+}
+
+.return-item-card__stat {
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid #e8ecf0;
+    border-radius: 10px;
+    padding: 0.45rem 0.55rem;
+    text-align: center;
+}
+
+.return-item-card__stat-label {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+}
+
+.return-item-card__stat-value {
+    font-weight: 800;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.return-item-card__stat--accent .return-item-card__stat-value {
+    color: var(--accent);
+    font-size: 1rem;
+}
+
+/* سطر مكدس للهاتف: نفس الأرقام بلا ثلاث بطاقات */
+.return-item-card__stats-line {
+    display: none;
+    margin: 0.35rem 0 0;
+    padding: 0.4rem 0.45rem;
+    border-radius: 8px;
+    background: rgba(44, 95, 79, 0.06);
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.35;
+    font-variant-numeric: tabular-nums;
+}
+.return-item-card__stats-line .dir-ltr {
+    direction: ltr;
+    display: inline-block;
+    unicode-bidi: isolate;
+}
+.return-item-card__stats-line strong {
+    color: var(--accent);
+    font-weight: 900;
+}
+
+.return-item-qty {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    padding: 0.65rem 1rem 0.85rem;
+    margin-top: 0.35rem;
+    border-radius: 0 0 12px 12px;
+    background: rgba(44, 95, 79, 0.04);
+    border: 1px dashed rgba(44, 95, 79, 0.25);
+    border-top: none;
+}
+
+.return-item-qty label {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.return-item-qty input {
+    width: 76px;
+    padding: 0.5rem;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.return-item-qty input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+@media (max-width: 576px) {
+    .order-info-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem 0.65rem;
+    }
+    .info-summary-label {
+        font-size: 0.72rem;
+    }
+    .info-summary-value {
+        font-size: 0.88rem;
+    }
+    .warning-box {
+        font-size: 0.82rem;
+        padding: 0.6rem 0.7rem;
+        margin-bottom: 1rem;
+        line-height: 1.45;
+    }
+    .return-items-intro--long {
+        display: none;
+    }
+    .return-items-intro--short {
+        display: block !important;
+    }
+    .return-item-card__surface {
+        grid-template-columns: auto 64px 1fr;
+        gap: 0.5rem 0.55rem;
+        padding: 0.65rem 0.7rem;
+        border-radius: 12px;
+        border-width: 1px;
+        box-shadow: 0 1px 6px rgba(15, 23, 42, 0.06);
+    }
+    .return-item-card__check {
+        width: 22px;
+        min-width: 22px;
+        height: 22px;
+        border-radius: 6px;
+    }
+    .return-item-card__thumb {
+        width: 64px;
+        height: 64px;
+        border-radius: 10px;
+    }
+    .return-item-card__thumb-ph {
+        font-size: 1.35rem;
+    }
+    .return-item-card__title {
+        font-size: 0.88rem;
+        line-height: 1.3;
+    }
+    .return-item-card__variant-row {
+        gap: 0.25rem;
+    }
+    .return-item-card__promo {
+        font-size: 0.65rem;
+        padding: 0.12rem 0.4rem;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .return-item-card__stats {
+        display: none !important;
+    }
+    .return-item-card__stats-line {
+        display: block;
+    }
+    .return-item-qty {
+        padding: 0.5rem 0.65rem;
+        margin-top: 0.25rem;
+        justify-content: space-between;
+        border-radius: 0 0 10px 10px;
+    }
+    .return-item-qty label {
+        font-size: 0.78rem;
+        flex: 1;
+        min-width: 0;
+    }
+    .return-item-qty input {
+        width: 64px;
+        padding: 0.4rem;
+        font-size: 0.9rem;
+    }
+    .reason-select-trigger {
+        min-height: 2.75rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        border-radius: 10px;
+    }
+    .reason-option {
+        padding: 0.55rem 0.7rem;
+        font-size: 0.88rem;
+    }
+    .form-group textarea {
+        min-height: 80px;
+        padding: 0.65rem 0.75rem;
+        font-size: 0.92rem;
+    }
+    .btn-submit-return {
+        padding: 0.85rem;
+        font-size: 1rem;
+    }
+}
+
+.return-items-intro--short {
+    display: none;
+}
+
+.reason-section {
+    margin: clamp(1.1rem, 3vw, 2rem) 0;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.form-group select,
+.form-group textarea {
+    padding: 0.85rem 1rem;
+    border: 2px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(44, 95, 79, 0.12);
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+.btn-submit-return {
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-submit-return:hover {
+    background: #35725e;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(44, 95, 79, 0.3);
+}
+
+.warning-box {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    color: #856404;
+}
+
+/* ——— قائمة أسباب الإرجاع المخصّصة (وسط الشاشة + ألوان + أيقونات) ——— */
+.form-group--reason-select {
+    align-items: center;
+    text-align: center;
+}
+
+.form-group--reason-select > label {
+    width: 100%;
+}
+
+.reason-select-wrap {
+    position: relative;
+    width: max-content;
+    max-width: 100%;
+    min-width: min(100%, 22rem);
+    margin-inline: auto;
+}
+
+.reason-select-wrap.is-open {
+    z-index: 45;
+}
+
+.reason-select-trigger {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    min-height: 3.1rem;
+    padding: 0.65rem 1rem;
+    padding-inline-start: 1rem;
+    border: 2px solid #e0e4e8;
+    border-radius: 12px;
+    background: #fff;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    text-align: right;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.reason-select-trigger:hover,
+.reason-select-trigger.is-open {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(44, 95, 79, 0.12);
+}
+
+.reason-select-trigger.has-value {
+    padding-inline-start: 2.85rem;
+}
+
+.reason-select-trigger .reason-select-preview-icon {
+    position: absolute;
+    inset-inline-start: 0.85rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.35rem;
+    line-height: 1;
+    opacity: 0.9;
+}
+
+.reason-select-trigger:not(.has-value) .reason-select-preview-icon {
+    display: none;
+}
+
+.reason-select-label {
+    flex: 1;
+    color: var(--text-muted);
+}
+
+.reason-select-trigger.has-value .reason-select-label {
+    color: var(--text);
+}
+
+.reason-select-chevron {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    transition: transform 0.2s;
+}
+
+.reason-select-trigger.is-open .reason-select-chevron {
+    transform: rotate(-180deg);
+}
+
+.reason-select-panel {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    min-width: 100%;
+    width: max-content;
+    max-width: min(100vw - 2rem, 26rem);
+    z-index: 2;
+    background: #fff;
+    border-radius: 14px;
+    border: 2px solid #e8ecf0;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.14);
+    padding: 0.4rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.reason-select-panel.is-open {
+    display: block;
+    animation: reasonPanelIn 0.18s ease;
+}
+
+@keyframes reasonPanelIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.reason-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 0.9rem;
+    margin: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    font: inherit;
+    font-weight: 600;
+    text-align: right;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    white-space: nowrap;
+}
+
+.reason-option:hover,
+.reason-option:focus-visible {
+    outline: none;
+    filter: brightness(0.97);
+    transform: translateX(-2px);
+}
+
+.reason-option-icon {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+}
+
+.reason-option--defective .reason-option-icon { background: #ffebee; }
+.reason-option--defective { color: #b71c1c; }
+
+.reason-option--wrong_item .reason-option-icon { background: #f3e5f5; }
+.reason-option--wrong_item { color: #6a1b9a; }
+
+.reason-option--not_as_described .reason-option-icon { background: #fff3e0; }
+.reason-option--not_as_described { color: #e65100; }
+
+.reason-option--changed_mind .reason-option-icon { background: #e0f2f1; }
+.reason-option--changed_mind { color: #00695c; }
+
+.reason-option--other .reason-option-icon { background: #eceff1; }
+.reason-option--other { color: #37474f; }
+
+.reason-option.is-selected {
+    box-shadow: inset 0 0 0 2px var(--accent);
+    background: rgba(44, 95, 79, 0.06);
+}
+
+.reason-select-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: rgba(0,0,0,0.14);
+    backdrop-filter: blur(2px);
+}
+
+.reason-select-wrap.is-open .reason-select-backdrop {
+    display: block;
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .return-container {
+    background: var(--card);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+}
+
+body.theme-dark .order-info-summary {
+    background: rgba(255,255,255,0.03);
+}
+
+body.theme-dark .warning-box {
+    background: rgba(250,204,21,0.08);
+    border-color: rgba(250,204,21,0.3);
+    color: #fde68a;
+}
+
+body.theme-dark .return-item-card__surface {
+    background: linear-gradient(165deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+    border-color: rgba(255,255,255,0.1);
+}
+
+body.theme-dark .return-item-card:hover .return-item-card__surface {
+    border-color: rgba(45,212,191,0.35);
+}
+
+body.theme-dark .return-item-card__checkbox:checked + .return-item-card__surface {
+    border-color: var(--accent);
+    background: linear-gradient(165deg, rgba(45,212,191,0.04) 0%, rgba(45,212,191,0.08) 100%);
+}
+
+body.theme-dark .return-item-card__check {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.2);
+}
+
+body.theme-dark .return-item-card__thumb {
+    background: rgba(255,255,255,0.05);
+    border-color: rgba(255,255,255,0.1);
+}
+
+body.theme-dark .return-item-card__thumb-ph {
+    background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+    color: var(--text-muted);
+}
+
+body.theme-dark .return-item-card__stat {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.08);
+}
+
+body.theme-dark .return-item-card__promo {
+    background: rgba(16,185,129,0.12);
+    color: #6ee7b7;
+    border-color: rgba(16,185,129,0.25);
+}
+
+body.theme-dark .return-item-card__stats-line {
+    background: rgba(45,212,191,0.06);
+}
+
+body.theme-dark .return-item-qty {
+    background: rgba(45,212,191,0.04);
+    border-color: rgba(45,212,191,0.2);
+}
+
+body.theme-dark .return-item-qty input {
+    background: var(--bg);
+    border-color: rgba(255,255,255,0.15);
+    color: var(--text);
+}
+
+body.theme-dark .form-group select,
+body.theme-dark .form-group textarea {
+    background: var(--bg);
+    border-color: rgba(255,255,255,0.15);
+    color: var(--text);
+}
+
+body.theme-dark .reason-select-trigger {
+    background: var(--bg);
+    border-color: rgba(255,255,255,0.15);
+    color: var(--text);
+}
+
+body.theme-dark .reason-select-trigger:hover,
+body.theme-dark .reason-select-trigger.is-open {
+    border-color: var(--accent);
+}
+
+body.theme-dark .reason-select-panel {
+    background: var(--card);
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+}
+
+body.theme-dark .reason-option--defective .reason-option-icon { background: rgba(239,68,68,0.15); }
+body.theme-dark .reason-option--defective { color: #fca5a5; }
+body.theme-dark .reason-option--wrong_item .reason-option-icon { background: rgba(168,85,247,0.15); }
+body.theme-dark .reason-option--wrong_item { color: #d8b4fe; }
+body.theme-dark .reason-option--not_as_described .reason-option-icon { background: rgba(249,115,22,0.15); }
+body.theme-dark .reason-option--not_as_described { color: #fdba74; }
+body.theme-dark .reason-option--changed_mind .reason-option-icon { background: rgba(20,184,166,0.15); }
+body.theme-dark .reason-option--changed_mind { color: #5eead4; }
+body.theme-dark .reason-option--other .reason-option-icon { background: rgba(148,163,184,0.12); }
+body.theme-dark .reason-option--other { color: #94a3b8; }
+
+body.theme-dark .reason-option:hover,
+body.theme-dark .reason-option:focus-visible {
+    background: rgba(255,255,255,0.05);
+    filter: none;
+}
+
+body.theme-dark .reason-option.is-selected {
+    background: rgba(45,212,191,0.08);
+}
+
+body.theme-dark .reason-select-backdrop {
+    background: rgba(0,0,0,0.4);
+}
+
+.return-msg-ok { color: #065f46; }
+.return-msg-err { color: #b91c1c; }
+body.theme-dark .return-msg-ok { color: #6ee7b7; }
+body.theme-dark .return-msg-err { color: #fca5a5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="return-page">
+    <h1 class="page-title">🔄 إنشاء طلب إرجاع</h1>
+    
+    {% if messages %}
+    <div class="messages-container" style="margin-bottom: 1.5rem;">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}" style="padding: 1rem; border-radius: 8px; margin-bottom: 0.5rem; text-align: center;">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="return-container">
+        <h2>معلومات الطلب الأصلي</h2>
+        
+        <div class="order-info-summary">
+            <div class="info-summary-item">
+                <span class="info-summary-label">رقم الطلب</span>
+                <span class="info-summary-value">#{{ order.id }}</span>
+            </div>
+            <div class="info-summary-item">
+                <span class="info-summary-label">تاريخ الطلب</span>
+                <span class="info-summary-value">{{ order.created_at|date:"Y-m-d" }}</span>
+            </div>
+            <div class="info-summary-item">
+                <span class="info-summary-label">حالة الطلب</span>
+                <span class="info-summary-value">{{ order.get_status_display }}</span>
+            </div>
+            <div class="info-summary-item">
+                <span class="info-summary-label">المجموع</span>
+                <span class="info-summary-value">{{ order.total }} ر.س</span>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            ⚠️ <strong>تنبيه:</strong> سيتم مراجعة طلبك من قبل الإدارة. عند الموافقة، سيتم إرجاع المبلغ خلال 3-5 أيام عمل.
+        </div>
+
+        <form method="post" id="create-return-form">
+            {% csrf_token %}
+            
+            <h3 class="section-title">اختر المنتجات المراد إرجاعها *</h3>
+            <p class="return-items-intro return-items-intro--long">يُعرض سعر الوحدة بعد أي خصم طُبّق عند الشراء، مع الكمية المشتراة وإجمالي السطر.</p>
+            <p class="return-items-intro return-items-intro--short">سعر الوحدة بعد الخصم، الكمية، وإجمالي السطر أدناه.</p>
+            <div class="items-selection">
+                {% for item in order_items %}
+                <div class="return-item-row">
+                    <label class="return-item-card">
+                        <input type="checkbox" class="return-item-card__checkbox" name="item_ids" value="{{ item.id }}" onchange="toggleQuantity(this, {{ item.id }})">
+                        <span class="return-item-card__surface">
+                            <span class="return-item-card__check" aria-hidden="true"></span>
+                            <span class="return-item-card__thumb">
+                                {% if item.display_image_url %}
+                                <img src="{{ item.display_image_url }}" alt="" loading="lazy">
+                                {% else %}
+                                <span class="return-item-card__thumb-ph">{{ item.display_product_name|slice:":1"|default:"?" }}</span>
+                                {% endif %}
+                            </span>
+                            <span class="return-item-card__body">
+                                <span class="return-item-card__title">{{ item.display_product_name }}</span>
+                                <span class="return-item-card__variant-row">
+                                    {% if item.variant %}
+                                    {% if item.variant.color_hex %}
+                                    <span class="return-item-variant-dot" title="{{ item.variant.customer_variant_color_label|default:item.variant.color_hex }}" {{ item.variant.color_hex|variant_swatch_style_attr }}></span>
+                                    {% elif item.variant.customer_variant_color_label %}
+                                    <span class="return-item-variant-dot return-item-variant-dot--placeholder" title="{{ item.variant.customer_variant_color_label }}"></span>
+                                    {% endif %}
+                                    {% endif %}
+                                    {% if item.display_sku %}
+                                    <span style="font-size:0.78rem; color:var(--text-muted); font-family:ui-monospace,monospace;">{{ item.display_sku }}</span>
+                                    {% endif %}
+                                    {% if item.applied_promotion %}
+                                    <span class="return-item-card__promo" title="سعر السطر يشمل خصم هذا العرض">{{ item.applied_promotion.name }}</span>
+                                    {% endif %}
+                                </span>
+                                <span class="return-item-card__stats">
+                                    <span class="return-item-card__stat">
+                                        <span class="return-item-card__stat-label">سعر الوحدة بعد الخصم</span>
+                                        <span class="return-item-card__stat-value">{{ item.price }} ر.س</span>
+                                    </span>
+                                    <span class="return-item-card__stat">
+                                        <span class="return-item-card__stat-label">الكمية المشتراة</span>
+                                        <span class="return-item-card__stat-value">{{ item.quantity }}</span>
+                                    </span>
+                                    <span class="return-item-card__stat return-item-card__stat--accent">
+                                        <span class="return-item-card__stat-label">إجمالي السطر</span>
+                                        <span class="return-item-card__stat-value">{{ item.subtotal }} ر.س</span>
+                                    </span>
+                                </span>
+                                <span class="return-item-card__stats-line">
+                                    بعد الخصم: <span class="dir-ltr"><strong>{{ item.price }}</strong> × {{ item.quantity }} = <strong>{{ item.subtotal }}</strong></span> ر.س
+                                </span>
+                            </span>
+                        </span>
+                    </label>
+                    <div class="return-item-qty" id="qty-{{ item.id }}" style="display: none;">
+                        <label for="qty-input-{{ item.id }}">كمية الإرجاع:</label>
+                        <input type="number" id="qty-input-{{ item.id }}" name="quantity_{{ item.id }}" min="1" max="{{ item.quantity }}" value="{{ item.quantity }}">
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <h3 class="section-title">سبب الإرجاع *</h3>
+            <div class="reason-section">
+                <div class="form-group form-group--reason-select">
+                    <label id="reason-label" for="reason-trigger">اختر السبب:</label>
+                    <input type="hidden" name="reason" id="reason" value="" required>
+                    <div class="reason-select-wrap" data-reason-select>
+                        <div class="reason-select-backdrop" data-reason-backdrop aria-hidden="true"></div>
+                        <button type="button" class="reason-select-trigger" id="reason-trigger" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="reason-label" aria-controls="reason-listbox">
+                            <span class="reason-select-preview-icon" data-reason-preview-icon aria-hidden="true"></span>
+                            <span class="reason-select-label" data-reason-label>— اختر السبب —</span>
+                            <span class="reason-select-chevron" aria-hidden="true">▼</span>
+                        </button>
+                        <div class="reason-select-panel" id="reason-listbox" role="listbox" aria-labelledby="reason-label" hidden>
+                            {% for value, label in reason_choices %}
+                            <button type="button" class="reason-option reason-option--{{ value }}" role="option" data-value="{{ value }}" data-label="{{ label }}" data-icon="{% if value == 'defective' %}⚠️{% elif value == 'wrong_item' %}🔀{% elif value == 'not_as_described' %}📋{% elif value == 'changed_mind' %}💭{% else %}✏️{% endif %}">
+                                <span class="reason-option-icon" aria-hidden="true">{% if value == 'defective' %}⚠️{% elif value == 'wrong_item' %}🔀{% elif value == 'not_as_described' %}📋{% elif value == 'changed_mind' %}💭{% else %}✏️{% endif %}</span>
+                                <span>{{ label }}</span>
+                            </button>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reason_details">تفاصيل السبب (اختياري):</label>
+                    <textarea name="reason_details" id="reason_details" placeholder="يرجى توضيح سبب الإرجاع بالتفصيل..."></textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit-return" id="create-return-btn">
+                إرسال طلب الإرجاع
+            </button>
+            <div id="create-return-msg" style="display:none; margin-top:0.8rem; font-weight:800;"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleQuantity(checkbox, itemId) {
+    const qtyDiv = document.getElementById('qty-' + itemId);
+    if (checkbox.checked) {
+        qtyDiv.style.display = 'flex';
+    } else {
+        qtyDiv.style.display = 'none';
+    }
+}
+
+(function () {
+    const wrap = document.querySelector('[data-reason-select]');
+    if (!wrap) return;
+    const trigger = wrap.querySelector('.reason-select-trigger');
+    const panel = wrap.querySelector('.reason-select-panel');
+    const backdrop = wrap.querySelector('[data-reason-backdrop]');
+    const hidden = document.getElementById('reason');
+    const labelEl = wrap.querySelector('[data-reason-label]');
+    const previewIcon = wrap.querySelector('[data-reason-preview-icon]');
+    const options = wrap.querySelectorAll('.reason-option');
+
+    function open() {
+        wrap.classList.add('is-open');
+        trigger.classList.add('is-open');
+        trigger.setAttribute('aria-expanded', 'true');
+        panel.hidden = false;
+        panel.classList.add('is-open');
+    }
+    function close() {
+        wrap.classList.remove('is-open');
+        trigger.classList.remove('is-open');
+        trigger.setAttribute('aria-expanded', 'false');
+        panel.hidden = true;
+        panel.classList.remove('is-open');
+    }
+    function toggle() {
+        if (panel.classList.contains('is-open')) close();
+        else open();
+    }
+
+    trigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggle();
+    });
+    backdrop.addEventListener('click', close);
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') close();
+    });
+
+    options.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const v = btn.getAttribute('data-value');
+            const t = btn.getAttribute('data-label');
+            const ic = btn.getAttribute('data-icon') || '';
+            hidden.value = v;
+            labelEl.textContent = t;
+            previewIcon.textContent = ic;
+            trigger.classList.add('has-value');
+            options.forEach(function (o) { o.classList.remove('is-selected'); });
+            btn.classList.add('is-selected');
+            close();
+        });
+    });
+
+    var form = wrap.closest('form');
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            if (!hidden.value) {
+                e.preventDefault();
+                open();
+                trigger.focus();
+            }
+        });
+    }
+})();
+
+(function () {
+    var form = document.getElementById('create-return-form');
+    var btn = document.getElementById('create-return-btn');
+    var msg = document.getElementById('create-return-msg');
+    if (!form || !btn) return;
+
+    function showMsg(text, ok) {
+        if (!msg) return;
+        msg.style.display = 'block';
+        msg.className = ok ? 'return-msg-ok' : 'return-msg-err';
+        msg.textContent = text;
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        btn.disabled = true;
+        if (msg) msg.style.display = 'none';
+
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر إرسال طلب الإرجاع');
+            showMsg(data.message || 'تم إرسال طلب الإرجاع بنجاح.', true);
+            btn.disabled = false;
+            if (data.redirect_url) {
+                setTimeout(function () { window.location.href = data.redirect_url; }, 600);
+            }
+        })
+        .catch(function (err) {
+            showMsg((err && err.message) ? err.message : 'تعذر إرسال طلب الإرجاع.', false);
+            btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}

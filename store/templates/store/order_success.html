@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}تم إنشاء الطلب{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/order.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="order-success-page">
+    <div class="success-icon">✓</div>
+    <h1 class="success-title">تم إنشاء طلبك بنجاح!</h1>
+    
+    {% if is_guest %}
+    <div class="guest-warning-box">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-content">
+            <h3 class="warning-title">معلومة مهمة جداً!</h3>
+            <p class="warning-text">
+                يُرجى حفظ المعلومات التالية بعناية لتتمكن من تتبع طلبك:
+            </p>
+            <ul class="warning-list">
+                <li>رقم الطلب: <strong>#{{ order.id }}</strong></li>
+                <li>رقم الجوال المسجل: <strong>{{ order.customer_phone }}</strong></li>
+            </ul>
+            <div class="warning-actions">
+                <div class="screenshot-reminder">
+                    📸 <strong>نوصي بشدة</strong> أخذ لقطة شاشة (سكرين شوت) لهذه الصفحة الآن
+                </div>
+                <div class="future-feature">
+                    ✉️ <em>قريباً:</em> سنرسل تفاصيل الطلب تلقائياً إلى بريدك الإلكتروني
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="order-details">
+        <h2>معلومات الطلب</h2>
+        <div class="detail-row">
+            <span class="label">رقم الطلب:</span>
+            <span class="value">#{{ order.id }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">الاسم:</span>
+            <span class="value">{{ order.customer_name }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">الجوال:</span>
+            <span class="value">{{ order.customer_phone }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">طريقة الدفع:</span>
+            <span class="value">{{ order.get_payment_method_display }}</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">المجموع الفرعي:</span>
+            <span class="value">{{ order.subtotal }} ر.س</span>
+        </div>
+        {% if order.delivery_fee %}
+        <div class="detail-row">
+            <span class="label">رسوم التوصيل:</span>
+            <span class="value">{{ order.delivery_fee }} ر.س</span>
+        </div>
+        {% endif %}
+        <div class="detail-row">
+            <span class="label">المجموع الكلي:</span>
+            <span class="value">{{ order.total }} ر.س</span>
+        </div>
+        <div class="detail-row">
+            <span class="label">الحالة:</span>
+            <span class="value status-{{ order.status }}">{{ order.get_status_display }}</span>
+        </div>
+    </div>
+    
+    <div class="order-items">
+        <h3>المنتجات المطلوبة</h3>
+        {% for item in order.items.all %}
+        <div class="order-item">
+            <span>{{ item.display_product_name }} × {{ item.quantity }}</span>
+            <span>{{ item.subtotal }} ر.س</span>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="success-actions">
+        {% if user.is_authenticated %}
+        <a href="{% url 'my_orders' %}" class="btn-track">طلباتي</a>
+        {% endif %}
+        <a href="{% url 'order_track' %}" class="btn-track">تتبع طلب آخر</a>
+        <a href="{% url 'wardrobe' %}" class="btn-home">متابعة التسوّق</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'my_reviews' %}" class="btn-home secondary-success-link">مراجعاتي</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

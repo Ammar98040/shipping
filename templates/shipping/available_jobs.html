@@ -1,0 +1,303 @@
+{% extends "shipping/base_shipping.html" %}
+{% block title %}طلبات جديدة | شركة السريع للشحن{% endblock %}
+{% block extra_css %}
+<style>
+  body.theme-dark .manage-table a[href^="tel:"] { color:#7dd3fc !important; }
+  @media (max-width: 768px) {
+    .shipping-jobs-table-wrap {
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+    .shipping-jobs-table-wrap .manage-table {
+      min-width: 0 !important;
+      width: 100% !important;
+      table-layout: fixed;
+    }
+    .shipping-jobs-table-wrap .manage-table,
+    .shipping-jobs-table-wrap .manage-table thead,
+    .shipping-jobs-table-wrap .manage-table tbody,
+    .shipping-jobs-table-wrap .manage-table th,
+    .shipping-jobs-table-wrap .manage-table td,
+    .shipping-jobs-table-wrap .manage-table tr {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .shipping-jobs-table-wrap .manage-table thead { display: none; }
+    .shipping-jobs-table-wrap .manage-table tr {
+      border: 1px solid rgba(15,23,42,.12);
+      border-radius: 14px;
+      background: #fff;
+      padding: .65rem;
+      margin-bottom: .75rem;
+      box-shadow: 0 8px 22px rgba(15,23,42,.08);
+    }
+    .shipping-jobs-table-wrap .manage-table td {
+      border: none;
+      padding: .42rem .2rem;
+      text-align: right;
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: .7rem;
+      line-height: 1.5;
+    }
+    .shipping-jobs-table-wrap .manage-table td::before {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      font-size: .78rem;
+      font-weight: 900;
+      color: #64748b;
+      margin: 0;
+      content: attr(data-label);
+      text-align: right;
+      max-width: 45%;
+    }
+    .shipping-jobs-table-wrap .manage-table td > * {
+      flex: 1 1 auto;
+      text-align: start;
+      direction: inherit;
+    }
+    .shipping-jobs-table-wrap .manage-table td[data-label^="📞"] > *,
+    .shipping-jobs-table-wrap .manage-table td[data-label^="🔎"] > *,
+    .shipping-jobs-table-wrap .manage-table td[data-label^="🧾"] > *,
+    .shipping-jobs-table-wrap .manage-table td[data-label^="🕒"] > * {
+      direction: ltr;
+      text-align: left;
+    }
+    .shipping-jobs-table-wrap .manage-table td[data-label^="📍"] > * {
+      direction: rtl;
+      text-align: right;
+    }
+    .shipping-jobs-table-wrap .manage-table td[data-label^="⚙️"] {
+      justify-content: center;
+      text-align: center;
+      padding-top: .62rem;
+    }
+    .shipping-jobs-table-wrap .manage-table td[data-label^="⚙️"]::before {
+      display: none;
+    }
+    .shipping-jobs-table-wrap .manage-table td[data-label^="⚙️"] > * {
+      flex: 0 0 auto;
+      direction: rtl;
+      text-align: center;
+    }
+    .shipping-jobs-table-wrap .manage-table td[data-label^="⚙️"] .shipping-action-btn {
+      width: fit-content;
+      min-width: 126px;
+      min-height: 42px;
+      padding: .45rem .92rem;
+      border-radius: 11px;
+      background: #020617;
+      color: #f8fafc;
+      border: 1px solid rgba(148,163,184,.35);
+      box-shadow: 0 8px 18px rgba(2,6,23,.34);
+      font-weight: 900;
+      font-size: .9rem;
+      line-height: 1;
+    }
+    .shipping-jobs-table-wrap .manage-table td[data-label^="⚙️"] .shipping-action-btn:hover {
+      background: #0f172a;
+      color: #fff;
+      border-color: rgba(148,163,184,.45);
+    }
+    body.theme-dark .shipping-jobs-table-wrap .manage-table tr {
+      background: #0f172a;
+      border-color: rgba(148,163,184,.26);
+      box-shadow: 0 12px 26px rgba(2,6,23,.48);
+    }
+    body.theme-dark .shipping-jobs-table-wrap .manage-table td::before { color: #94a3b8; }
+    body.theme-dark .shipping-jobs-table-wrap .manage-table td[data-label^="⚙️"] .shipping-action-btn {
+      background: #020617;
+      color: #e2e8f0;
+      border-color: rgba(148,163,184,.34);
+    }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<h1 class="manage-page-title">🆕 طلبات توصيل جديدة</h1>
+
+<div class="manage-filters">
+  <form method="get" class="filters-form">
+    <div class="filter-group">
+      <label>فلترة بالحالة:</label>
+      <details class="ship-filter">
+        <summary>
+          {% if status_filter %}
+            {% for val, lbl in status_choices %}{% if val == status_filter %}{{ lbl }}{% endif %}{% endfor %} ▾
+          {% else %}
+            الكل ▾
+          {% endif %}
+        </summary>
+        <div class="ship-filter-menu">
+          <a href="{% url 'shipping:available_jobs' %}">الكل</a>
+          {% for val, lbl in status_choices %}
+          <a href="{% url 'shipping:available_jobs' %}?status={{ val }}">{{ lbl }}</a>
+          {% endfor %}
+        </div>
+      </details>
+    </div>
+    {% if status_filter %}
+    <a href="{% url 'shipping:available_jobs' %}" class="btn btn-clear">مسح</a>
+    {% endif %}
+    <span class="results-count">النتائج: <strong>{{ items.paginator.count }}</strong></span>
+  </form>
+</div>
+
+<div class="manage-section">
+  <div class="manage-table-container shipping-jobs-table-wrap" id="shipping-jobs-table-wrap" {% if not items %}style="display:none;"{% endif %}>
+    <table class="manage-table shipping-jobs-table">
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>العميل</th>
+          <th>الجوال</th>
+          <th>العنوان</th>
+          <th>رقم التتبع</th>
+          <th>الحالة</th>
+          <th>آخر تحديث</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="shipping-jobs-tbody">
+        {% for s in items %}
+        <tr id="shipping-job-row-{{ s.id }}">
+          <td data-label="🧾 رقم الطلب"><strong>#{{ s.order.id }}</strong></td>
+          <td data-label="👤 العميل">{{ s.order.customer_name }}</td>
+          <td data-label="📞 الجوال"><a href="tel:{{ s.order.customer_phone }}" style="color:#2c5f4f;">{{ s.order.customer_phone }}</a></td>
+          <td data-label="📍 العنوان" style="max-width: 320px; white-space: pre-line;">{{ s.order.address|truncatechars:90 }}</td>
+          <td data-label="🔎 رقم التتبع" style="font-family: monospace;">{{ s.tracking_number|default:"-" }}</td>
+          <td data-label="📦 الحالة">{{ s.get_status_display }}</td>
+          <td data-label="🕒 آخر تحديث">{{ s.updated_at|date:"Y-m-d H:i" }}</td>
+          <td data-label="⚙️ الإجراء">
+            <form method="post" action="{% url 'shipping:accept_job' s.id %}" style="margin:0;" class="js-shipping-accept-form" data-shipment-id="{{ s.id }}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary shipping-action-btn">📥 استلام الطلب</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="empty-msg" id="shipping-jobs-empty" {% if items %}style="display:none;"{% endif %}>لا توجد طلبات جديدة حالياً.</p>
+</div>
+
+{% if items.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=items query_string=query_string %}
+{% endif %}
+<script>
+(function () {
+  document.addEventListener('submit', function (e) {
+    var form = e.target.closest('form.js-shipping-accept-form');
+    if (!form) return;
+    e.preventDefault();
+    if (!window.confirm('هل تريد قبول هذه الشحنة؟')) return;
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': window.SHIPPING_CSRF_TOKEN || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'failed');
+      var shipmentId = form.getAttribute('data-shipment-id');
+      var row = document.getElementById('shipping-job-row-' + shipmentId);
+      if (row) row.remove();
+      if (data.detail_url) window.location.href = data.detail_url;
+      if (btn) btn.disabled = false;
+    })
+    .catch(function (err) {
+      if (btn) btn.disabled = false;
+      showManageError((err && err.message && err.message !== 'failed') ? err.message : 'تعذر قبول الشحنة.', { durationMs: 3200 });
+    });
+  });
+})();
+
+(function () {
+  var tbody = document.getElementById('shipping-jobs-tbody');
+  var wrap = document.getElementById('shipping-jobs-table-wrap');
+  var empty = document.getElementById('shipping-jobs-empty');
+  if (!tbody || !wrap || !empty) return;
+  var liveUrl = "{% url 'shipping:available_jobs_live' %}{% if status_filter %}?status={{ status_filter|urlencode }}{% endif %}";
+  var csrf = window.SHIPPING_CSRF_TOKEN || '';
+  var lastSig = '';
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function renderRows(items) {
+    if (!Array.isArray(items)) items = [];
+    if (!items.length) {
+      tbody.innerHTML = '';
+      wrap.style.display = 'none';
+      empty.style.display = '';
+      return;
+    }
+    var html = items.map(function (s) {
+      return '' +
+        '<tr id="shipping-job-row-' + esc(s.id) + '">' +
+          '<td data-label="🧾 رقم الطلب"><strong>#' + esc(s.order_id) + '</strong></td>' +
+          '<td data-label="👤 العميل">' + esc(s.customer_name) + '</td>' +
+          '<td data-label="📞 الجوال"><a href="tel:' + esc(s.customer_phone) + '" style="color:#2c5f4f;">' + esc(s.customer_phone) + '</a></td>' +
+          '<td data-label="📍 العنوان" style="max-width: 320px; white-space: pre-line;">' + esc(s.address) + '</td>' +
+          '<td data-label="🔎 رقم التتبع" style="font-family: monospace;">' + esc(s.tracking_number) + '</td>' +
+          '<td data-label="📦 الحالة">' + esc(s.status_display) + '</td>' +
+          '<td data-label="🕒 آخر تحديث">' + esc(s.updated_at) + '</td>' +
+          '<td data-label="⚙️ الإجراء">' +
+            '<form method="post" action="' + esc(s.accept_url) + '" style="margin:0;" class="js-shipping-accept-form" data-shipment-id="' + esc(s.id) + '">' +
+              '<input type="hidden" name="csrfmiddlewaretoken" value="' + esc(csrf) + '">' +
+              '<button type="submit" class="btn btn-primary shipping-action-btn">📥 استلام الطلب</button>' +
+            '</form>' +
+          '</td>' +
+        '</tr>';
+    }).join('');
+    tbody.innerHTML = html;
+    wrap.style.display = '';
+    empty.style.display = 'none';
+  }
+  function pollLive() {
+    if (document.hidden) return;
+    fetch(liveUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success || !Array.isArray(data.items)) return;
+        var sig = data.items.map(function (s) { return String(s.id); }).join('|');
+        if (sig === lastSig) return;
+        lastSig = sig;
+        renderRows(data.items);
+      })
+      .catch(function () {});
+  }
+  setInterval(pollLive, 4000);
+})();
+</script>
+{% endblock %}
+

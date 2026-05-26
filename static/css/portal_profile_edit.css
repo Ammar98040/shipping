@@ -1,0 +1,166 @@
+/**
+ * تعديل الملف في بوابات المستودع / الشحن — يكمّل profile_edit.css
+ */
+.portal-profile-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 1rem 1rem 2.5rem;
+}
+
+.portal-profile-intro {
+    margin-bottom: 1.25rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.portal-profile-intro h1 {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.portal-profile-intro p {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.92rem;
+}
+
+.portal-profile--warehouse .portal-profile-intro {
+    background: linear-gradient(135deg, rgba(15, 118, 110, 0.12), rgba(44, 95, 79, 0.08));
+    border: 1px solid rgba(15, 118, 110, 0.2);
+}
+
+.portal-profile--shipping .portal-profile-intro {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(14, 165, 233, 0.08));
+    border: 1px solid rgba(37, 99, 235, 0.2);
+}
+
+.portal-profile-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.85fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.portal-profile-grid .profile-edit-card {
+    margin: 0;
+}
+
+.portal-profile-grid .profile-edit-card--password {
+    position: sticky;
+    top: 1rem;
+}
+
+.portal-profile-card-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #eee;
+}
+
+.portal-profile-note {
+    background: #f1f5f9;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    color: #0f172a;
+    font-weight: 600;
+    font-size: 0.88rem;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.portal-profile--warehouse .profile-input:focus {
+    border-color: #0f766e;
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.15);
+}
+
+.portal-profile--warehouse .profile-btn--primary {
+    background: #0f766e;
+    border-color: #0f766e;
+}
+
+.portal-profile--warehouse .profile-btn--primary:hover {
+    background: #0d5f59;
+    border-color: #0d5f59;
+    box-shadow: 0 6px 18px rgba(15, 118, 110, 0.35);
+}
+
+.portal-profile--warehouse .profile-dropzone.is-dragover {
+    border-color: #0f766e;
+    background: rgba(15, 118, 110, 0.08);
+}
+
+.portal-profile--shipping .profile-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.portal-profile--shipping .profile-btn--primary {
+    background: #2563eb;
+    border-color: #2563eb;
+}
+
+.portal-profile--shipping .profile-btn--primary:hover {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+}
+
+.portal-profile--shipping .profile-dropzone.is-dragover {
+    border-color: #2563eb;
+    background: rgba(37, 99, 235, 0.07);
+}
+
+.portal-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.portal-profile--warehouse .portal-back-link {
+    background: rgba(15, 118, 110, 0.15);
+    color: #0f766e;
+    border: 1px solid rgba(15, 118, 110, 0.25);
+}
+
+.portal-profile--warehouse .portal-back-link:hover {
+    background: rgba(15, 118, 110, 0.25);
+    color: #064e3b;
+}
+
+.portal-profile--shipping .portal-back-link {
+    background: rgba(37, 99, 235, 0.12);
+    color: #1d4ed8;
+    border: 1px solid rgba(37, 99, 235, 0.25);
+}
+
+.portal-profile--shipping .portal-back-link:hover {
+    background: rgba(37, 99, 235, 0.2);
+    color: #1e3a8a;
+}
+
+@media (max-width: 900px) {
+    .portal-profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .portal-profile-grid .profile-edit-card--password {
+        position: static;
+    }
+}

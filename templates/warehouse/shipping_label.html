@@ -1,0 +1,152 @@
+{% extends "warehouse/base_warehouse.html" %}
+{% block title %}بوليصة شحن الطلب #{{ order.id }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Barcode+39&display=swap">
+<style>
+  .label-page { background: #fff; border: 2px dashed #cbd5e1; border-radius: 14px; padding: 1.5rem; }
+  .label-header { display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; margin-bottom: 1.25rem; }
+  .brand { font-weight: 900; font-size: 1.35rem; color:#0f766e; }
+  .meta { text-align:left; }
+  .meta div { color:#334155; font-weight:700; }
+  .grid { display:grid; grid-template-columns: 1.2fr 0.8fr; gap: 1rem; }
+  .box { border:1px solid #e2e8f0; border-radius: 12px; padding: 1rem; background:#f8fafc; }
+  .box h3 { margin:0 0 0.6rem; font-size: 1rem; color:#0f172a; }
+  .kv { display:grid; grid-template-columns: 120px 1fr; gap:0.35rem 0.75rem; font-size: 0.95rem; }
+  .kv .k { color:#64748b; font-weight:800; }
+  .kv .v { color:#0f172a; font-weight:700; white-space: pre-line; }
+  .items { margin-top: 0.75rem; font-size: 0.95rem; }
+  .items li { margin: 0.15rem 0; }
+  .barcode-wrap { display:flex; flex-direction:column; gap:0.5rem; align-items:center; justify-content:center; background:#fff; border:1px solid #e2e8f0; border-radius:12px; padding: 1rem; }
+  .qr-img { width: 190px; height: 190px; object-fit: contain; image-rendering: pixelated; }
+  .barcode-text { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; font-weight:900; letter-spacing: 0.12em; }
+  /* يُحمّل الخط عبر رابط Google أعلاه — الاسم الرسمي للعائلة */
+  .barcode-font { font-family: 'Libre Barcode 39', ui-monospace, monospace; font-size: 64px; line-height: 1; }
+  .pay-row { display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; padding: 0.75rem 1rem; border-radius: 12px; background:#fff; border:1px solid #e2e8f0; margin-top: 0.9rem; }
+  .pay-amount { font-size: 1.25rem; font-weight: 900; color:#0f172a; }
+  .pay-badge { display:inline-block; padding:0.3rem 0.8rem; border-radius:999px; font-weight:900; font-size:0.85rem; }
+  .pay-paid { background:#d1fae5; color:#065f46; border:1px solid #10b981; }
+  .pay-unpaid { background:#fff3cd; color:#92400e; border:1px solid #f59e0b; }
+  .print-actions { margin: 1rem 0; display:flex; gap:0.75rem; flex-wrap:wrap; }
+  body.theme-dark .label-page {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.35);
+  }
+  body.theme-dark .brand { color: #2dd4bf; }
+  body.theme-dark .meta div,
+  body.theme-dark .kv .v,
+  body.theme-dark .pay-amount {
+    color: #e2e8f0;
+  }
+  body.theme-dark .box {
+    background: #111827;
+    border-color: rgba(148, 163, 184, 0.26);
+  }
+  body.theme-dark .box h3 { color: #f8fafc; }
+  body.theme-dark .kv .k,
+  body.theme-dark .barcode-text[style],
+  body.theme-dark .label-header div[style],
+  body.theme-dark .pay-row div[style],
+  body.theme-dark .box > div[style] {
+    color: #94a3b8 !important;
+  }
+  body.theme-dark .barcode-wrap,
+  body.theme-dark .pay-row {
+    background: #0b1220;
+    border-color: rgba(148, 163, 184, 0.26);
+  }
+  body.theme-dark .pay-paid {
+    background: rgba(16, 185, 129, 0.15);
+    color: #86efac;
+    border-color: rgba(16, 185, 129, 0.45);
+  }
+  body.theme-dark .pay-unpaid {
+    background: rgba(245, 158, 11, 0.13);
+    color: #fcd34d;
+    border-color: rgba(245, 158, 11, 0.45);
+  }
+  @media print {
+    .wh-header, .print-actions { display:none !important; }
+    body { background:#fff; }
+    .label-page { border: none; border-radius: 0; padding: 0; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="print-actions">
+  <button class="btn btn-primary" onclick="window.print()">🖨️ طباعة</button>
+  <a class="btn btn-secondary" href="{% url 'warehouse:order_detail' order.id %}">← رجوع للطلب</a>
+</div>
+
+<div class="label-page">
+  <div class="label-header">
+    <div>
+      <div class="brand">شركة السريع للشحن</div>
+      <div style="color:#64748b; font-weight:800;">بوليصة شحن (للاختبار)</div>
+    </div>
+    <div class="meta">
+      <div>Order #{{ order.id }}</div>
+      {% if shipment and shipment.tracking_number %}
+      <div style="font-family: monospace;">Tracking: {{ shipment.tracking_number }}</div>
+      {% else %}
+      <div style="color:#64748b;">Tracking: -</div>
+      {% endif %}
+      <div>{{ order.created_at|date:"Y-m-d H:i" }}</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="box">
+      <h3>بيانات المستلم</h3>
+      <div class="kv">
+        <div class="k">الاسم</div><div class="v">{{ order.customer_name }}</div>
+        <div class="k">الجوال</div><div class="v">{{ order.customer_phone }}</div>
+        <div class="k">العنوان</div><div class="v">{{ order.address }}</div>
+      </div>
+
+      <h3 style="margin-top:1rem;">محتويات الطلب (مختصر)</h3>
+      <ul class="items">
+        {% for item in order.items.all %}
+        <li>
+          {{ item.display_product_name }}
+          {% if item.display_variant_label %} — النسخة: {{ item.display_variant_label }}{% endif %}
+          — Qty: {{ item.quantity }}
+          — SKU: {{ item.display_sku }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="box">
+      <h3>باركود</h3>
+      <div class="barcode-wrap">
+        <img class="qr-img" alt="QR" src="{% url 'warehouse:order_label_qr' order.id %}">
+        <div class="barcode-text">{{ label.code }}</div>
+        {% if shipment and shipment.tracking_number %}
+        <div class="barcode-text" style="font-size:0.85rem; color:#64748b;">{{ shipment.tracking_number }}</div>
+        {% endif %}
+      </div>
+
+      <div class="pay-row">
+        <div style="flex: 1; min-width: 220px;">
+          <div style="color:#64748b; font-weight:900; font-size:0.85rem;">المبلغ الإجمالي</div>
+          <div class="pay-amount">{{ order.total }} ر.س</div>
+        </div>
+        <div style="flex: 1; min-width: 220px;">
+          <div style="color:#64748b; font-weight:900; font-size:0.85rem;">المبلغ النهائي</div>
+          {% if order.payment_method == 'cash_on_delivery' %}
+            <div class="pay-amount">{{ order.total }} ر.س</div>
+          {% else %}
+            <div class="pay-amount">0 ر.س</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="margin-top:0.75rem; color:#64748b; font-size:0.85rem;">
+        إذا تعذر المسح: أدخل الكود أعلاه يدوياً في بوابة المستودع/الشحن.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

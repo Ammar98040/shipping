@@ -1,0 +1,50 @@
+{% extends "warehouse/base_warehouse.html" %}
+{% load static %}
+{% block title %}تسجيل الدخول | بوابة المستودع{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+{% block content %}
+<div class="auth-page">
+<div class="auth-container">
+  <div class="auth-header">
+    <div class="auth-brand-logo" aria-hidden="true">
+      <span class="auth-logo-top"></span>
+      <span class="auth-logo-body"></span>
+      <span class="auth-logo-door auth-logo-door--left"></span>
+      <span class="auth-logo-door auth-logo-door--right"></span>
+    </div>
+    <h1 class="auth-title">بوابة المستودع</h1>
+    <p class="auth-subtitle">سجّل دخولك كموظف تجهيز لتحديث الطلبات</p>
+  </div>
+
+  <form method="post" class="auth-form">
+    {% csrf_token %}
+    <div class="auth-field">
+      <span class="auth-field-icon">👤</span>
+      <input name="username" class="input" required placeholder=" ">
+      <label>اسم المستخدم</label>
+    </div>
+    <div class="auth-field">
+      <span class="auth-field-icon">🔒</span>
+      <input name="password" class="input" type="password" required placeholder=" ">
+      <label>كلمة المرور</label>
+    </div>
+    {% if show_login_turnstile %}
+    {% include 'partials/turnstile_widget.html' %}
+    {% endif %}
+    <button class="btn-submit">تسجيل الدخول</button>
+  </form>
+
+  <div class="auth-links">
+    <p><a href="{% url 'warehouse:forgot_password' %}">هل نسيت كلمة المرور؟</a></p>
+  </div>
+
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/auth-floating.js' %}"></script>
+{% endblock %}
+

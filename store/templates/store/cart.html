@@ -1,0 +1,487 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% load store_tags %}
+{% block title %}سلة التسوق{% endblock %}
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/cart.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="cart-page">
+    <nav class="shop-checkout-steps" aria-label="خطوات إتمام الشراء">
+        <span class="shop-checkout-step is-active" aria-current="step">
+            <span class="shop-checkout-step-num">1</span>
+            سلة التسوق
+        </span>
+        <span class="shop-checkout-step-sep" aria-hidden="true">›</span>
+        {% if cart %}
+        <a href="{% url 'checkout' %}" class="shop-checkout-step">
+            <span class="shop-checkout-step-num">2</span>
+            الدفع والتوصيل
+        </a>
+        {% else %}
+        <span class="shop-checkout-step is-muted">
+            <span class="shop-checkout-step-num">2</span>
+            الدفع والتوصيل
+        </span>
+        {% endif %}
+    </nav>
+
+    <h1 class="page-title">سلة التسوق</h1>
+    <p class="page-subtitle">راجع منتجاتك ثم انتقل لإتمام الطلب بأمان</p>
+
+    <div class="shop-trust-strip" role="presentation">
+        <span>🔒 دفع آمن</span>
+        <span>📦 توصيل للمنزل</span>
+        <span>↩️ سياسة إرجاع واضحة</span>
+    </div>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if cart %}
+    <div class="cart-container">
+        <div class="cart-items">
+            {% for item in cart %}
+            <div class="cart-item" data-product-id="{{ item.product.id }}" data-cart-key="{{ item.cart_key }}">
+                <a href="{% url 'product' item.product.id %}{% if item.variant %}?v={{ item.variant.id }}{% endif %}" class="item-image-link">
+                    <div class="item-image">
+                        {% if item.display_image_url %}
+                        <img src="{{ item.display_image_url }}" alt="{{ item.name }}" class="store-media-fill" loading="lazy">
+                        {% else %}
+                        <div class="image-placeholder">{{ item.name|slice:":1" }}</div>
+                        {% endif %}
+                    </div>
+                </a>
+                <div class="item-details">
+                    <a href="{% url 'product' item.product.id %}{% if item.variant %}?v={{ item.variant.id }}{% endif %}" class="item-name">{{ item.name }}</a>
+                    <p class="item-price">
+                        {% if item.has_line_discount %}
+                            <span class="item-price-original">{{ item.price_original }} ر.س</span>
+                            <span class="item-price-discount">{{ item.price_final }} ر.س</span>
+                        {% else %}
+                            <span>{{ item.price_original }} ر.س</span>
+                        {% endif %}
+                    </p>
+                    {% if item.variant %}
+                    {% if item.variant.color_hex or item.variant.customer_variant_color_label %}
+                    <div class="item-variant-meta">
+                        {% if item.variant.color_hex %}
+                        <span class="item-variant-swatch" title="{{ item.variant.customer_variant_color_label|default:item.variant.color_hex }}">
+                            <span class="item-variant-dot" {{ item.variant.color_hex|variant_swatch_style_attr }}></span>
+                        </span>
+                        {% else %}
+                        <span class="item-variant-swatch" title="{{ item.variant.customer_variant_color_label }}">
+                            <span class="item-variant-dot item-variant-dot--no-hex"></span>
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    {% if item.available_stock < item.quantity %}
+                    <p class="stock-warning">⚠️ المتوفر: {{ item.available_stock }} فقط</p>
+                    {% endif %}
+                    <div class="item-actions-mobile">
+                        <form method="post" action="{% url 'cart_update' item.product.id %}" class="quantity-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="cart_key" value="{{ item.cart_key }}">
+                            {% if item.variant %}<input type="hidden" name="variant_id" value="{{ item.variant.id }}">{% endif %}
+                            {% if item.selected_gallery_image and not item.variant %}<input type="hidden" name="selected_gallery_image_id" value="{{ item.selected_gallery_image.id }}">{% endif %}
+                            <div class="quantity-stepper">
+                                <button type="button" class="qty-btn qty-minus" aria-label="تقليل" {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
+                                <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.available_stock }}" class="quantity-input" {% if item.available_stock == 0 %}disabled{% endif %} aria-label="الكمية">
+                                <button type="button" class="qty-btn qty-plus" aria-label="زيادة" {% if item.quantity >= item.available_stock %}disabled{% endif %}>+</button>
+                            </div>
+                        </form>
+                        <span class="total-price">{{ item.total }} ر.س</span>
+                        <a href="{% url 'cart_remove' item.product.id %}?key={{ item.cart_key|urlencode }}" class="btn-remove" onclick="return confirm('حذف هذا المنتج من السلة؟')" aria-label="حذف"><span class="btn-remove-icon">✕</span></a>
+                    </div>
+                </div>
+                <div class="item-quantity item-quantity-desk">
+                    <form method="post" action="{% url 'cart_update' item.product.id %}" class="quantity-form">
+                        {% csrf_token %}
+                        <input type="hidden" name="cart_key" value="{{ item.cart_key }}">
+                        {% if item.variant %}<input type="hidden" name="variant_id" value="{{ item.variant.id }}">{% endif %}
+                        {% if item.selected_gallery_image and not item.variant %}<input type="hidden" name="selected_gallery_image_id" value="{{ item.selected_gallery_image.id }}">{% endif %}
+                        <div class="quantity-stepper">
+                            <button type="button" class="qty-btn qty-minus" aria-label="تقليل" {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
+                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.available_stock }}" class="quantity-input" {% if item.available_stock == 0 %}disabled{% endif %}>
+                            <button type="button" class="qty-btn qty-plus" aria-label="زيادة" {% if item.quantity >= item.available_stock %}disabled{% endif %}>+</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="item-total item-total-desk">
+                    <span class="total-price">{{ item.total }} ر.س</span>
+                </div>
+                <div class="item-remove item-remove-desk">
+                    <a href="{% url 'cart_remove' item.product.id %}?key={{ item.cart_key|urlencode }}" class="btn-remove" onclick="return confirm('حذف هذا المنتج من السلة؟')" aria-label="حذف"><span class="btn-remove-icon">✕</span></a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <aside class="cart-summary">
+            <h2>ملخص الطلب</h2>
+
+            {% if user.is_authenticated %}
+            <form id="cartCouponForm" method="post" action="{% url 'cart_coupon_apply' %}" class="coupon-entry">
+                {% csrf_token %}
+                <div class="coupon-card">
+                    <div class="coupon-card-title">الكوبون</div>
+
+                    <div class="coupon-field">
+                        <label for="coupon_code">كود الخصم</label>
+                        <input
+                            type="text"
+                            id="coupon_code"
+                            name="coupon_code"
+                            class="input"
+                            value="{{ coupon_code_input|default:'' }}"
+                            placeholder="مثال: SALE10"
+                            autocomplete="off"
+                        >
+                        <div id="coupon-inline-msg" class="coupon-inline-msg" aria-live="polite"></div>
+                        <p class="store-field-hint">إن كان الرمز خاطئاً أو منتهياً أو غير منطبق على سلتك، أو سبق استخدامه من حسابك، ستظهر رسالة خطأ أسفل الحقل دون تعطيل الشراء.</p>
+                    </div>
+
+                    <div class="coupon-actions">
+                        <button type="submit" class="btn btn-primary">تطبيق</button>
+                        <button type="submit" name="coupon_code" value="" class="btn btn-secondary">إزالة</button>
+                    </div>
+                </div>
+            </form>
+            {% endif %}
+            <div class="summary-row">
+                <span>عدد المنتجات</span>
+                <span id="cart-items-count">{{ cart|length }}</span>
+            </div>
+            <div class="summary-row" id="product-discount-row" {% if product_discount_total == 0 %}style="display:none"{% endif %}>
+                <span>خصم عروض المنتجات</span>
+                <span id="product-discount-amount">-{{ product_discount_total }} ر.س</span>
+            </div>
+            <div class="summary-row" id="coupon-discount-row" {% if not coupon_discount_total or coupon_discount_total == 0 or not applied_coupon_code %}style="display:none"{% endif %}>
+                <span>خصم الكوبون (<span id="coupon-discount-code">{{ applied_coupon_code }}</span>)</span>
+                <span id="coupon-discount-amount">-{{ coupon_discount_total }} ر.س</span>
+            </div>
+            <div class="summary-row total-row">
+                <span>المجموع الكلي</span>
+                <span id="cart-total-price">{{ cart_subtotal_discounted }} ر.س</span>
+            </div>
+            {% if has_stock_issue %}
+            <div class="checkout-warning">
+                ⚠️ عدّل الكميات قبل إتمام الطلب
+            </div>
+            {% endif %}
+            <a href="{% url 'checkout' %}" class="btn-checkout"><span class="btn-icon">✅</span>إتمام الطلب</a>
+            <a href="{% url 'wardrobe' %}" class="btn-continue"><span class="btn-icon">🛍️</span>متابعة التسوق</a>
+            <button type="button" id="btn-share-cart" class="btn-copy-cart"><span class="btn-icon">🔗</span>نسخ السلة</button>
+        </aside>
+    </div>
+
+    <div class="cart-summary-mobile" aria-hidden="true">
+        <div class="summary-mobile-inner">
+            <span class="summary-mobile-total"><strong id="cart-total-mobile">{{ cart_subtotal_discounted }} ر.س</strong></span>
+            <a href="{% url 'checkout' %}" class="btn-checkout-mobile">إتمام الطلب</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-cart store-empty-state">
+        <div class="empty-cart-icon store-empty-visual" aria-hidden="true">🛒</div>
+        <p class="store-empty-state__title">سلتك فارغة</p>
+        <p class="store-empty-state__text">تصفّح الدولاب أو قائمة كل المنتجات، واحفظ المفضلات للمراجعة لاحقاً.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'wardrobe' %}" class="store-btn store-btn--primary">تصفّح الدولاب</a>
+            <a href="{% url 'products_all' %}" class="store-btn store-btn--secondary">كل المنتجات</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+}
+
+const shareBtn = document.getElementById('btn-share-cart');
+if (shareBtn) {
+    shareBtn.addEventListener('click', function() {
+        fetch('{% url "cart_share_create" %}', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                alert(data.message || 'تعذر إنشاء الرابط');
+                return;
+            }
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(data.share_url).catch(() => {});
+            }
+            shareBtn.innerHTML = '<span class="btn-icon">✅</span>تم نسخ السلة';
+            setTimeout(() => { shareBtn.innerHTML = '<span class="btn-icon">🔗</span>نسخ السلة'; }, 1800);
+        })
+        .catch(() => alert('تعذر نسخ رابط السلة الآن.'));
+    });
+}
+
+function updateSummaryTotals(cartCount, cartTotal) {
+    const c = document.getElementById('cart-items-count');
+    const t = document.getElementById('cart-total-price');
+    const tm = document.getElementById('cart-total-mobile');
+    if (c) c.textContent = cartCount;
+    const n = Number(cartTotal || 0);
+    const totalText = `${n.toFixed(2)} ر.س`;
+    if (t) t.textContent = totalText;
+    if (tm) tm.textContent = totalText;
+}
+
+function updateRowTotal(cartKey, itemTotal) {
+    document.querySelectorAll(`.cart-item[data-cart-key="${cartKey}"] .total-price`).forEach(el => {
+        const n = Number(itemTotal || 0);
+        el.textContent = `${n.toFixed(2)} ر.س`;
+    });
+}
+
+function bindCartControls() {
+    document.querySelectorAll('.cart-item').forEach(function(row) {
+        const productId = row.getAttribute('data-product-id');
+        const cartKey = row.getAttribute('data-cart-key');
+        if (!productId || !cartKey) return;
+        row.querySelectorAll('.quantity-form').forEach(function(form) {
+            const input = form.querySelector('.quantity-input');
+            const plus = form.querySelector('.qty-plus');
+            const minus = form.querySelector('.qty-minus');
+            if (!input || !plus || !minus) return;
+            const max = parseInt(input.getAttribute('max'), 10) || 999;
+
+            function sendQuantity(qty) {
+                form.classList.add('is-updating');
+                const fd = new FormData();
+                fd.append('quantity', qty);
+                const keyInput = form.querySelector('input[name="cart_key"]');
+                const variantInput = form.querySelector('input[name="variant_id"]');
+                const galleryInput = form.querySelector('input[name="selected_gallery_image_id"]');
+                if (keyInput && keyInput.value) fd.append('cart_key', keyInput.value);
+                if (variantInput && variantInput.value) fd.append('variant_id', variantInput.value);
+                if (galleryInput && galleryInput.value) fd.append('selected_gallery_image_id', galleryInput.value);
+                fetch(form.action, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: fd
+                }).then(r => r.json()).then(data => {
+                    if (!data.success) return;
+                    const targetCartKey = data.cart_key || cartKey;
+
+                    if (Array.isArray(data.line_updates)) {
+                        data.line_updates.forEach(upd => {
+                            const rowEl = document.querySelector(`.cart-item[data-cart-key="${upd.cart_key}"]`);
+                            if (!rowEl) return;
+
+                            // تحديث الكمية (في حال كان التوزيع يتطلب تعديلها)
+                            rowEl.querySelectorAll('.quantity-input').forEach(inp => { inp.value = upd.quantity; });
+
+                            // تحديث سعر الوحدة داخل خط المنتج
+                            const priceP = rowEl.querySelector('.item-price');
+                            if (priceP) {
+                                const uo = Number(upd.unit_price_original || 0).toFixed(2);
+                                const uf = Number(upd.unit_price_final || 0).toFixed(2);
+                                if (upd.has_line_discount) {
+                                    priceP.innerHTML = `<span class="item-price-original">${uo} ر.س</span><span class="item-price-discount">${uf} ر.س</span>`;
+                                } else {
+                                    priceP.innerHTML = `<span>${uo} ر.س</span>`;
+                                }
+                            }
+
+                            updateRowTotal(upd.cart_key, upd.item_total);
+                        });
+                    }
+
+                    updateSummaryTotals(data.cart_count, data.cart_total);
+                    const q = parseInt(data.quantity, 10);
+                    document.querySelectorAll(`.cart-item[data-cart-key="${targetCartKey}"] .qty-minus`).forEach(b => { b.disabled = q <= 1; });
+                    document.querySelectorAll(`.cart-item[data-cart-key="${targetCartKey}"] .qty-plus`).forEach(b => { b.disabled = q >= max; });
+                }).finally(() => {
+                    form.classList.remove('is-updating');
+                });
+            }
+
+            plus.addEventListener('click', function() {
+                const v = parseInt(input.value, 10) || 1;
+                if (v < max) sendQuantity(v + 1);
+            });
+            minus.addEventListener('click', function() {
+                const v = parseInt(input.value, 10) || 1;
+                if (v > 1) sendQuantity(v - 1);
+            });
+            input.addEventListener('change', function() {
+                let v = parseInt(input.value, 10) || 1;
+                if (v < 1) v = 1;
+                if (v > max) v = max;
+                input.value = v;
+                sendQuantity(v);
+            });
+        });
+
+        row.querySelectorAll('.btn-remove').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!confirm('حذف هذا المنتج من السلة؟')) return;
+                fetch(btn.getAttribute('href'), {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                }).then(r => r.json()).then(data => {
+                    if (!data.success) return;
+                    const key = data.cart_key || cartKey;
+                    document.querySelectorAll(`.cart-item[data-cart-key="${key}"]`).forEach(el => el.remove());
+                    if (Array.isArray(data.line_updates)) {
+                        data.line_updates.forEach(upd => {
+                            const rowEl = document.querySelector(`.cart-item[data-cart-key="${upd.cart_key}"]`);
+                            if (!rowEl) return;
+
+                            rowEl.querySelectorAll('.quantity-input').forEach(inp => { inp.value = upd.quantity; });
+
+                            const priceP = rowEl.querySelector('.item-price');
+                            if (priceP) {
+                                const uo = Number(upd.unit_price_original || 0).toFixed(2);
+                                const uf = Number(upd.unit_price_final || 0).toFixed(2);
+                                if (upd.has_line_discount) {
+                                    priceP.innerHTML = `<span class="item-price-original">${uo} ر.س</span><span class="item-price-discount">${uf} ر.س</span>`;
+                                } else {
+                                    priceP.innerHTML = `<span>${uo} ر.س</span>`;
+                                }
+                            }
+
+                            updateRowTotal(upd.cart_key, upd.item_total);
+                        });
+                    }
+                    updateSummaryTotals(data.cart_count, data.cart_total);
+                    if (data.cart_count <= 0) window.location.reload();
+                });
+            });
+        });
+    });
+}
+
+bindCartControls();
+
+// AJAX للكوبون مع رسالة فورية تحت الحقل
+(function () {
+    const couponForm = document.getElementById('cartCouponForm');
+    if (!couponForm) return;
+
+    const msgEl = document.getElementById('coupon-inline-msg');
+
+    function showMsg(ok, text) {
+        if (!msgEl) return;
+        msgEl.className = 'coupon-inline-msg';
+        msgEl.classList.add(ok ? 'coupon-inline-msg--success' : 'coupon-inline-msg--error');
+        msgEl.textContent = text;
+        msgEl.classList.add('coupon-inline-msg--show');
+    }
+
+    couponForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (msgEl) {
+            msgEl.className = 'coupon-inline-msg';
+            msgEl.textContent = '...';
+            msgEl.classList.add('coupon-inline-msg--show');
+        }
+
+        const fd = new FormData(couponForm);
+        fetch(couponForm.action, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: fd
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data || !data.success && !data.applied_coupon_code && !data.message) {
+                showMsg(false, 'تعذر تحديث الكوبون.');
+                return;
+            }
+
+            const ok = !!data.success;
+            const prefix = ok ? '😊' : '😢';
+            showMsg(ok, `${prefix} ${data.message || (ok ? 'تم تطبيق الكوبون.' : 'الكوبون غير صالح.')}`);
+
+            // تحديث الإجمالي
+            updateSummaryTotals(data.cart_count, data.cart_total);
+
+            // تحديث خصم العروض
+            const prRow = document.getElementById('product-discount-row');
+            const prAmt = document.getElementById('product-discount-amount');
+            if (prRow && prAmt) {
+                const v = Number(data.product_discount_total || 0);
+                prRow.style.display = v > 0 ? '' : 'none';
+                prAmt.textContent = v > 0 ? `-${v.toFixed(2)} ر.س` : '';
+            }
+
+            // تحديث خصم الكوبون
+            const cRow = document.getElementById('coupon-discount-row');
+            const cAmt = document.getElementById('coupon-discount-amount');
+            const cCode = document.getElementById('coupon-discount-code');
+            if (cRow && cAmt && cCode) {
+                const v = Number(data.coupon_discount_total || 0);
+                const code = data.applied_coupon_code || '';
+                const show = v > 0 && !!code;
+                cRow.style.display = show ? '' : 'none';
+                cCode.textContent = code;
+                cAmt.textContent = show ? `-${v.toFixed(2)} ر.س` : '';
+            }
+
+            // تحديث كل الأسطر
+            if (Array.isArray(data.line_updates)) {
+                data.line_updates.forEach(upd => {
+                    const rowEl = document.querySelector(`.cart-item[data-cart-key="${upd.cart_key}"]`);
+                    if (!rowEl) return;
+
+                    rowEl.querySelectorAll('.quantity-input').forEach(inp => { inp.value = upd.quantity; });
+
+                    const priceP = rowEl.querySelector('.item-price');
+                    if (priceP) {
+                        const uo = Number(upd.unit_price_original || 0).toFixed(2);
+                        const uf = Number(upd.unit_price_final || 0).toFixed(2);
+                        if (upd.has_line_discount) {
+                            priceP.innerHTML = `<span class="item-price-original">${uo} ر.س</span><span class="item-price-discount">${uf} ر.س</span>`;
+                        } else {
+                            priceP.innerHTML = `<span>${uo} ر.س</span>`;
+                        }
+                    }
+
+                    updateRowTotal(upd.cart_key, upd.item_total);
+                });
+            }
+        })
+        .catch(() => showMsg(false, 'تعذر الاتصال بالخادم.'));
+    });
+})();
+
+</script>
+{% endblock %}
+

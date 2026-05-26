@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}الصفحة غير موجودة{% endblock %}
+
+{% block content %}
+<div class="error-page-container">
+    <div class="error-visual">
+        <div class="error-code">404</div>
+        <div class="error-icon">🔍</div>
+    </div>
+    <h1 class="error-title">عذراً، الصفحة غير موجودة</h1>
+    <p class="error-message">
+        يبدو أنك وصلت إلى طريق مسدود. الصفحة التي تبحث عنها قد تم نقلها أو حذفها، أو ربما هناك خطأ في الرابط.
+    </p>
+    <div class="error-actions">
+        <a href="{% url 'wardrobe' %}" class="btn-primary-error">العودة للرئيسية</a>
+        <button onclick="history.back()" class="btn-secondary-error">العودة للصفحة السابقة</button>
+        <a href="{% url 'support_chat' %}" class="btn-secondary-error">التواصل مع الدعم</a>
+    </div>
+</div>
+
+<style>
+.error-page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 1rem;
+    min-height: 60vh;
+}
+
+.error-visual {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.error-code {
+    font-size: clamp(5rem, 15vw, 8rem);
+    font-weight: 900;
+    color: var(--accent);
+    opacity: 0.15;
+    line-height: 1;
+}
+
+.error-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 4rem;
+}
+
+.error-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: var(--text);
+}
+
+.error-message {
+    max-width: 500px;
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+}
+
+.error-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.btn-primary-error {
+    background: var(--accent);
+    color: #fff;
+    padding: 0.85rem 2rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: all 0.3s;
+}
+
+.btn-primary-error:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(44, 95, 79, 0.25);
+}
+
+.btn-secondary-error {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text);
+    padding: 0.85rem 2rem;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+body.theme-dark .btn-secondary-error {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary-error:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+body.theme-dark .btn-secondary-error:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,156 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}تعديل الحساب - {{ target_user.username }}{% endblock %}
+{% block extra_css %}
+<style>
+    .account-edit-wrap { display: grid; gap: 1rem; }
+    .account-edit-form { display: grid; gap: 1rem; }
+    .account-edit-card {
+        background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 1rem;
+    }
+    .account-edit-card h3 {
+        margin: 0 0 0.9rem;
+        font-size: 1rem;
+        color: #0f172a;
+        border-bottom: 1px dashed #dbe2ea;
+        padding-bottom: 0.6rem;
+    }
+    .account-edit-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 0.9rem;
+    }
+    .account-edit-field { display: grid; gap: 0.45rem; }
+    .account-edit-field > strong {
+        font-size: 0.88rem;
+        color: #334155;
+    }
+    .account-edit-note {
+        padding: 0.65rem 0.8rem;
+        border-radius: 10px;
+        background: #eef6ff;
+        border: 1px solid #cfe4ff;
+        color: #1e3a8a;
+        font-size: 0.85rem;
+    }
+    .account-edit-avatar-row {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin-top: 0.8rem;
+        flex-wrap: wrap;
+    }
+    .account-edit-avatar {
+        width: 86px;
+        height: 86px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 2px solid #e2e8f0;
+        background: #fff;
+    }
+    .account-edit-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+    }
+    body.manage-body.theme-dark .account-edit-card {
+        background: linear-gradient(145deg, #0f172a 0%, #111c30 100%);
+        border-color: rgba(148, 163, 184, 0.35);
+    }
+    body.manage-body.theme-dark .account-edit-card h3,
+    body.manage-body.theme-dark .account-edit-field > strong { color: #e2e8f0; }
+    body.manage-body.theme-dark .account-edit-note {
+        background: rgba(37, 99, 235, 0.2);
+        border-color: rgba(96, 165, 250, 0.45);
+        color: #bfdbfe;
+    }
+</style>
+{% endblock %}
+
+{% block manage_content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem; gap:1rem; flex-wrap:wrap;">
+    <h1 class="manage-page-title" style="margin-bottom:0;">✏️ تعديل الحساب: {{ target_user.username }}</h1>
+    <a href="{% url 'manage:user_detail' target_user.id %}" class="btn btn-secondary">← رجوع لتفاصيل الحساب</a>
+</div>
+
+<div class="manage-section account-edit-wrap">
+    <div class="account-edit-note">
+        يمكنك تعديل جميع بيانات الحساب من مكان واحد، ولن يتم تغيير كلمة المرور إلا إذا تم إدخالها هنا.
+    </div>
+    <form method="post" enctype="multipart/form-data" class="account-edit-form">
+        {% csrf_token %}
+        <div class="account-edit-card">
+            <h3>🪪 البيانات الأساسية</h3>
+            <div class="account-edit-grid">
+            <label class="account-edit-field">
+                <strong>اسم المستخدم</strong>
+                <input class="input" type="text" name="username" value="{{ target_user.username }}" required>
+            </label>
+            <label class="account-edit-field">
+                <strong>البريد الإلكتروني</strong>
+                <input class="input" type="email" name="email" value="{{ target_user.email }}" dir="ltr">
+            </label>
+            <label class="account-edit-field">
+                <strong>الاسم الأول</strong>
+                <input class="input" type="text" name="first_name" value="{{ target_user.first_name }}">
+            </label>
+            <label class="account-edit-field">
+                <strong>الاسم الأخير</strong>
+                <input class="input" type="text" name="last_name" value="{{ target_user.last_name }}">
+            </label>
+            </div>
+        </div>
+
+        <div class="account-edit-card">
+            <h3>👤 الملف الشخصي</h3>
+            <div class="account-edit-grid">
+            <label class="account-edit-field">
+                <strong>{{ profile_form.phone.label }}</strong>
+                {{ profile_form.phone }}
+            </label>
+            <label class="account-edit-field">
+                <strong>{{ profile_form.birth_date.label }}</strong>
+                {{ profile_form.birth_date }}
+            </label>
+            <label class="account-edit-field">
+                <strong>{{ profile_form.avatar.label }}</strong>
+                {{ profile_form.avatar }}
+            </label>
+            <label class="account-edit-field" style="display:flex; align-items:center; gap:0.5rem; margin-top:1.8rem;">
+                <input type="checkbox" name="remove_avatar" value="1">
+                حذف الصورة الشخصية الحالية
+            </label>
+            </div>
+
+            {% if target_user.profile.avatar %}
+            <div class="account-edit-avatar-row">
+                <strong>الصورة الحالية:</strong>
+                <img src="{{ target_user.profile.avatar.url }}" alt="{{ target_user.username }}" class="account-edit-avatar">
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="account-edit-card">
+            <h3>🔐 كلمة المرور</h3>
+            <div class="account-edit-grid">
+            <label class="account-edit-field">
+                <strong>كلمة مرور جديدة</strong>
+                <input class="input" type="password" name="new_password" autocomplete="new-password">
+            </label>
+            <label class="account-edit-field">
+                <strong>تأكيد كلمة المرور</strong>
+                <input class="input" type="password" name="confirm_password" autocomplete="new-password">
+            </label>
+            </div>
+        </div>
+
+        <div class="account-edit-actions">
+            <button type="submit" class="btn btn-primary">💾 حفظ جميع التعديلات</button>
+            <a href="{% url 'manage:user_detail' target_user.id %}" class="btn btn-clear">إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

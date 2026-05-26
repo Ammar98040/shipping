@@ -1,0 +1,425 @@
+{% extends "warehouse/base_warehouse.html" %}
+{% block title %}طلب #{{ order.id }} | بوابة المستودع{% endblock %}
+{% block extra_css %}
+<style>
+  .wh-order-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.1rem;
+  }
+  .wh-order-title {
+    margin: 0;
+  }
+  .wh-order-back {
+    border-radius: 12px;
+    min-height: 42px;
+    font-weight: 800;
+  }
+  .wh-order-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.95rem;
+  }
+  .wh-order-info-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0.7rem 0.85rem;
+  }
+  .wh-order-info-label {
+    color: #64748b;
+    font-weight: 800;
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.84rem;
+  }
+  .wh-order-address-box {
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 0.85rem 1rem;
+    white-space: pre-line;
+  }
+  .wh-order-products-wrap {
+    overflow-x: auto;
+  }
+  .wh-order-products-table {
+    min-width: 700px;
+  }
+  .wh-order-variant-note {
+    font-size: 0.82rem;
+    color: #475569;
+    margin-top: 0.25rem;
+  }
+  .wh-order-sku {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: #334155;
+    font-weight: 800;
+  }
+  .wh-order-state-card {
+    border-radius: 14px;
+  }
+  .wh-order-state-card h2 {
+    margin-bottom: 0.5rem;
+  }
+  .wh-order-state-text {
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.7;
+  }
+  body.theme-dark .wh-order-title {
+    color: #f8fafc;
+  }
+  body.theme-dark .wh-order-info-item,
+  body.theme-dark .wh-order-address-box {
+    background: #111827;
+    border-color: rgba(148, 163, 184, 0.24);
+    color: #e2e8f0;
+  }
+  body.theme-dark .wh-order-info-label {
+    color: #94a3b8;
+  }
+  body.theme-dark .wh-order-sku,
+  body.theme-dark .wh-order-variant-note {
+    color: #cbd5e1;
+  }
+  body.theme-dark #warehouse-waybill-section {
+    border-color: rgba(15, 118, 110, 0.4) !important;
+    background: linear-gradient(180deg, #0b2b2a 0%, #0f172a 100%) !important;
+  }
+  body.theme-dark .warehouse-waybill-intro {
+    color: #cbd5e1 !important;
+  }
+  body.theme-dark #warehouse-waybill-err {
+    color: #fca5a5 !important;
+  }
+  body.theme-dark .wh-order-state-card[style*="#f0faf5"] {
+    background: linear-gradient(180deg, #062a27 0%, #0f172a 100%) !important;
+    border-color: #0f766e !important;
+  }
+  body.theme-dark .wh-order-state-card[style*="#f0faf5"] .wh-order-state-text {
+    color: #99f6e4 !important;
+  }
+  body.theme-dark .wh-order-state-card[style*="#fff5f5"] {
+    background: linear-gradient(180deg, #2a1114 0%, #1f1115 100%) !important;
+    border-color: #b91c1c !important;
+  }
+  body.theme-dark .wh-order-state-card[style*="#fff5f5"] .wh-order-state-text {
+    color: #fecaca !important;
+  }
+  body.theme-dark .wh-order-state-card[style*="#ecfdf5"] {
+    background: linear-gradient(180deg, #052b26 0%, #0f172a 100%) !important;
+    border-color: #0f766e !important;
+  }
+  body.theme-dark .wh-order-state-card[style*="#ecfdf5"] .wh-order-state-text {
+    color: #99f6e4 !important;
+  }
+  body.theme-dark .wh-order-products-table td::before {
+    color: #94a3b8;
+  }
+  @media (max-width: 768px) {
+    .wh-order-title {
+      font-size: 1.35rem;
+    }
+    .wh-order-products-wrap {
+      overflow: visible;
+    }
+    .wh-order-products-table {
+      width: 100%;
+      min-width: 0;
+    }
+    .wh-order-products-table thead {
+      display: none;
+    }
+    .wh-order-products-table tbody {
+      display: grid;
+      gap: 0.72rem;
+    }
+    .wh-order-products-table tbody tr {
+      display: grid;
+      gap: 0.4rem;
+      padding: 0.75rem;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .wh-order-products-table td {
+      border: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+    }
+    .wh-order-products-table td::before {
+      content: attr(data-label);
+      color: #64748b;
+      font-weight: 700;
+    }
+    body.theme-dark .wh-order-products-table tbody tr {
+      background: #0f172a;
+      border-color: rgba(148, 163, 184, 0.24);
+    }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="wh-order-head">
+  <h1 class="manage-page-title wh-order-title">🧾 تجهيز الطلب #{{ order.id }}</h1>
+  <div>
+    <a class="btn btn-secondary wh-order-back" href="{% url 'warehouse:dashboard' %}">⬅️ رجوع</a>
+  </div>
+</div>
+
+<div class="manage-section">
+  <h2>معلومات الطلب</h2>
+  <div class="wh-order-info-grid">
+    <div class="wh-order-info-item"><strong class="wh-order-info-label">👤 العميل</strong>{{ order.customer_name }}</div>
+    <div class="wh-order-info-item"><strong class="wh-order-info-label">📞 الجوال</strong>{{ order.customer_phone }}</div>
+    <div class="wh-order-info-item"><strong class="wh-order-info-label">🏷️ الحالة</strong><span class="badge" id="wh-order-status-badge" style="background:#ede9fe;color:#5b21b6;">{{ order.get_status_display }}</span></div>
+    <div class="wh-order-info-item"><strong class="wh-order-info-label">🕒 تاريخ الطلب</strong>{{ order.created_at|date:"Y-m-d H:i" }}</div>
+  </div>
+  <div style="margin-top: 1rem;">
+    <strong class="wh-order-info-label">📍 العنوان</strong>
+    <div class="wh-order-address-box">{{ order.address }}</div>
+  </div>
+</div>
+
+<div class="manage-section">
+  <h2>المنتجات</h2>
+  <div class="manage-table-container wh-order-products-wrap">
+    <table class="manage-table wh-order-products-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الصورة</th>
+          <th>المنتج</th>
+          <th>SKU</th>
+          <th>الكمية</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in order.items.all %}
+        <tr>
+          <td data-label="#"><strong>{{ forloop.counter }}</strong></td>
+          <td data-label="الصورة">
+            {% if item.display_image_url %}
+            <img src="{{ item.display_image_url }}" alt="{{ item.display_product_name }}" class="table-thumbnail" title="اضغط لتكبير الصورة" role="button" tabindex="0" loading="lazy">
+            {% else %}
+            <div class="table-placeholder">{{ item.display_product_name|slice:":1"|default:"?" }}</div>
+            {% endif %}
+          </td>
+          <td data-label="المنتج">
+            {{ item.display_product_name }}
+            {% if item.display_variant_label %}
+            <div class="wh-order-variant-note">🎨 النسخة: {{ item.display_variant_label }}</div>
+            {% endif %}
+          </td>
+          <td data-label="SKU"><span class="wh-order-sku">{{ item.display_sku }}</span></td>
+          <td data-label="الكمية"><strong>🧺 {{ item.quantity }}</strong></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="manage-section" style="border:2px solid rgba(44,95,79,0.2); background:#f8faf9;" id="warehouse-waybill-section">
+  <h2>📄 بوليصة الشحن</h2>
+  <p class="warehouse-waybill-intro" style="color:#475569; margin-top:0; font-size:0.92rem; line-height:1.6;">
+    {% if order.status == 'cancelled' %}
+    لا يُنشأ سجل بوليصة لطلب ملغى.
+    {% elif shipping_waybill %}
+    البوليصة مسجّلة في النظام — نفس الرقم ونص الباركود لدى <strong>المسؤول</strong> والمندوب. استخدم <strong>طباعة البوليصة</strong> لفتح صفحة الطباعة في نافذة جديدة، أو <strong>نسخ الباركود</strong> لمشاركة النص مع المندوب.
+    {% else %}
+    اضغط <strong>إنشاء بوليصة الشحن</strong> لتوليد كود الملصق وحفظ السجل. بعدها تظهر التفاصيل كاملة هنا، ثم يمكنك الطباعة أو نسخ نص الباركود.
+    {% endif %}
+  </p>
+  <div id="warehouse-waybill-root">
+    {% if order.status == 'cancelled' %}
+    <p style="margin:0; color:#991b1b; font-weight:700;">لا يمكن إنشاء بوليصة لهذا الطلب.</p>
+    {% elif shipping_waybill %}
+    {% include 'warehouse/partials/order_waybill_panel.html' %}
+    {% else %}
+    <button type="button" class="btn btn-primary" id="warehouse-create-waybill-btn" data-url="{% url 'warehouse:create_shipping_waybill' order.id %}">📄 إنشاء بوليصة الشحن</button>
+    <p id="warehouse-waybill-err" style="display:none; margin-top:0.75rem; color:#b91c1c; font-weight:700;"></p>
+    {% endif %}
+  </div>
+</div>
+<script>
+(function () {
+  var section = document.getElementById('warehouse-waybill-section');
+  var root = document.getElementById('warehouse-waybill-root');
+  if (!section || !root) return;
+
+  function csrf() {
+    return (typeof window.WAREHOUSE_CSRF_TOKEN !== 'undefined' && window.WAREHOUSE_CSRF_TOKEN)
+      ? window.WAREHOUSE_CSRF_TOKEN
+      : '';
+  }
+
+  function copyText(text, hintEl) {
+    text = (text || '').trim();
+    if (!text) return;
+    function ok() {
+      if (hintEl) {
+        hintEl.textContent = 'تم نسخ نص الباركود.';
+        setTimeout(function () { hintEl.textContent = ''; }, 2500);
+      }
+    }
+    function fail() {
+      if (hintEl) hintEl.textContent = 'تعذر النسخ — انسخ النص يدوياً من المربع الأخضر.';
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(ok).catch(function () {
+        try {
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.setAttribute('readonly', '');
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          ok();
+        } catch (e) { fail(); }
+      });
+    } else {
+      try {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        ok();
+      } catch (e) { fail(); }
+    }
+  }
+
+  section.addEventListener('click', function (e) {
+    var btn = e.target.closest('.js-copy-waybill-barcode');
+    if (!btn) return;
+    var barcode = btn.getAttribute('data-barcode') || '';
+    var panel = btn.closest('.wh-waybill-panel');
+    var hint = panel ? panel.querySelector('.wh-copy-hint') : null;
+    copyText(barcode, hint);
+  });
+
+  var createBtn = document.getElementById('warehouse-create-waybill-btn');
+  if (!createBtn) return;
+
+  createBtn.addEventListener('click', function () {
+    var url = createBtn.getAttribute('data-url');
+    if (!url) return;
+    var errEl = document.getElementById('warehouse-waybill-err');
+    createBtn.disabled = true;
+    if (errEl) { errEl.style.display = 'none'; errEl.textContent = ''; }
+
+    fetch(url, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': csrf(),
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: 'csrfmiddlewaretoken=' + encodeURIComponent(csrf())
+    })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) {
+          return r.text().then(function () {
+            throw new Error('انتهت الجلسة أو لم يُقبل الطلب. حدّث الصفحة ثم أعد المحاولة.');
+          });
+        }
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) {
+          throw new Error((data && data.error) ? data.error : 'فشل الإنشاء');
+        }
+        root.innerHTML = data.html || '';
+        var intro = section.querySelector('.warehouse-waybill-intro');
+        if (intro) {
+          intro.innerHTML = 'البوليصة مسجّلة في النظام — نفس الرقم ونص الباركود لدى <strong>المسؤول</strong> والمندوب. استخدم <strong>طباعة البوليصة</strong> لفتح صفحة الطباعة في نافذة جديدة، أو <strong>نسخ الباركود</strong> لمشاركة النص مع المندوب.';
+        }
+      })
+      .catch(function (err) {
+        if (errEl) {
+          errEl.style.display = 'block';
+          errEl.textContent = (err && err.message) ? err.message : 'تعذر إنشاء البوليصة.';
+        }
+        createBtn.disabled = false;
+      });
+  });
+})();
+</script>
+
+{% if order.status == 'processing' %}
+<div class="manage-section wh-order-state-card" style="background:#f0faf5; border:1px solid #34d399;">
+  <h2>✅ تأكيد التجهيز</h2>
+  <p class="wh-order-state-text" style="color:#065f46;">
+    تغيير الحالة لم يعد يدوياً. بعد تجهيز الطلب استخدم <strong>مسح الباركود</strong> لتحويله إلى <strong>جاهز للشحن</strong>.
+  </p>
+  <a class="btn btn-primary" href="{% url 'warehouse:scan' %}">📷 مسح باركود</a>
+</div>
+{% elif order.status == 'cancelled' %}
+<div class="manage-section wh-order-state-card" style="background:#fff5f5; border:1px solid #fca5a5;">
+  <h2>❌ طلب ملغى</h2>
+  <p class="wh-order-state-text" style="color:#991b1b;">لا يُستخدم الباركود لهذا الطلب.</p>
+</div>
+{% else %}
+<div class="manage-section wh-order-state-card" style="background:#ecfdf5; border:1px solid #6ee7b7;">
+  <h2>✅ تم التجهيز عبر الباركود</h2>
+  <p class="wh-order-state-text" style="color:#065f46;">
+    الحمد لله — هذا الطلب لم يعد يحتاج مسح باركود للتجهيز. حالته الحالية: <strong>{{ order.get_status_display }}</strong>.
+  </p>
+</div>
+{% endif %}
+
+<script>
+(function () {
+  'use strict';
+  var pollUrl = "{% url 'warehouse:order_detail_poll' order.pk %}";
+  var lastSig = "{{ order.status }}|{{ order.updated_at|date:'c' }}";
+
+  function poll() {
+    if (document.hidden) return;
+    fetch(pollUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var sig = data.signature || '';
+        if (sig && sig !== lastSig) {
+          lastSig = sig;
+          /* تحديث شارة الحالة */
+          var badge = document.getElementById('wh-order-status-badge');
+          if (badge && data.status_display) {
+            badge.textContent = data.status_display;
+          }
+        }
+      })
+      .catch(function () {});
+  }
+
+  setInterval(poll, 8000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') poll();
+  });
+})();
+</script>
+{% endblock %}
+

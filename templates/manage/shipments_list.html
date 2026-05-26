@@ -1,0 +1,103 @@
+{% extends "manage/base_manage.html" %}
+{% load manage_seen_tags %}
+{% block title %}الشحنات{% endblock %}
+
+{% block manage_content %}
+<h1 class="manage-page-title">🚚 الشحنات</h1>
+
+<div class="manage-filters">
+  <form method="get" class="filters-form" style="gap: 0.75rem; flex-wrap: wrap;">
+    <div class="filter-group" style="flex: 2; min-width: 220px;">
+      <label>بحث:</label>
+      <input type="text" name="search" value="{{ search_query }}" placeholder="رقم الطلب / التتبع / الاسم / الجوال" class="input filter-search">
+    </div>
+    <div class="filter-group">
+      <label>الحالة:</label>
+      <select name="status" class="input filter-select" onchange="this.form.submit()">
+        <option value="">الكل</option>
+        {% for val, lbl in status_choices %}
+        <option value="{{ val }}" {% if status_filter == val %}selected{% endif %}>{{ lbl }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>المندوب:</label>
+      <select name="courier" class="input filter-select" onchange="this.form.submit()">
+        <option value="">الكل</option>
+        <option value="unassigned" {% if courier_filter == 'unassigned' %}selected{% endif %}>غير مسند</option>
+        {% for c in couriers %}
+        <option value="{{ c.id }}" {% if courier_filter == c.id|stringformat:"s" %}selected{% endif %}>{{ c.username }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-filter">🔍 بحث</button>
+    {% if status_filter or courier_filter or search_query %}
+    <a href="{% url 'manage:shipments_list_manage' %}" class="btn btn-clear">مسح</a>
+    {% endif %}
+    <span class="results-count">النتائج: <strong>{{ items.paginator.count }}</strong></span>
+  </form>
+</div>
+
+<div class="manage-section">
+  {% if items %}
+  <div style="display:flex; justify-content:flex-end; margin-bottom:0.65rem;">
+    <button type="button" class="btn btn-secondary btn-sm manage-mark-visible-btn" data-manage-mark-visible=".manage-table-container">✔️ تعيين الظاهر كمقروء</button>
+  </div>
+  <div class="manage-table-container">
+    <table class="manage-table">
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>العميل</th>
+          <th>الجوال</th>
+          <th>التتبع</th>
+          <th>الحالة</th>
+          <th>المندوب</th>
+          <th>آخر تحديث</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in items %}
+        {% manage_row_state request.user s "shipment" as ship_state %}
+        <tr class="{% if ship_state == 'new' %}manage-row--new{% elif ship_state == 'updated' %}manage-row--updated{% endif %}" data-manage-row-key="shipment:{{ s.id }}">
+          <td>
+            {% if ship_state == 'new' %}<span class="manage-row-new-dot" title="شحنة جديدة"></span>{% elif ship_state == 'updated' %}<span class="manage-row-new-dot" title="تحديث حالة الشحنة"></span>{% endif %}
+            <strong>#{{ s.order.id }}</strong>
+          </td>
+          <td>{{ s.order.customer_name }}</td>
+          <td><a href="tel:{{ s.order.customer_phone }}" style="color:#2c5f4f;">{{ s.order.customer_phone }}</a></td>
+          <td style="font-family: monospace;">{{ s.tracking_number|default:"-" }}</td>
+          <td>{{ s.get_status_display }}</td>
+          <td>
+            {% if s.courier %}
+              <strong>{{ s.courier.username }}</strong>
+              {% if s.courier.profile.is_available %}
+              <span class="badge badge-active">🟢 متوفر</span>
+              {% else %}
+              <span class="badge" style="background:#fff1e6; color:#9a3412;">⚪ غير متوفر</span>
+              {% endif %}
+            {% else %}
+              <span class="badge badge-inactive">غير مسند</span>
+            {% endif %}
+          </td>
+          <td>{{ s.updated_at|date:"Y-m-d H:i" }}</td>
+          <td>
+            <a class="btn btn-sm" href="{% url 'manage:shipment_detail_manage' s.id %}">👁️ فتح</a>
+            <a class="btn btn-sm" href="{% url 'manage:order_detail' s.order.id %}">📦 الطلب</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-msg">لا توجد شحنات.</p>
+  {% endif %}
+</div>
+
+{% if items.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=items query_string=query_string %}
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,274 @@
+<style>
+  /* مقاسات تتكيّف مع عرض الشاشة — أصغر على الهاتف دون تمرير أفقي إجباري */
+  .wh-waybill-panel {
+    font-size: clamp(0.76rem, 2.35vw, 0.95rem);
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  .wh-waybill-panel .wh-label-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: clamp(0.45rem, 2vw, 1rem);
+  }
+  @media (min-width: 768px) {
+    .wh-waybill-panel .wh-label-grid { grid-template-columns: 1.15fr 0.85fr; gap: 1rem; }
+  }
+  .wh-waybill-panel .wh-box {
+    border: 1px solid #e2e8f0;
+    border-radius: clamp(8px, 2vw, 12px);
+    padding: clamp(0.5rem, 2.8vw, 1rem);
+    background: #fff;
+    min-width: 0;
+  }
+  .wh-waybill-panel .wh-box h3 {
+    margin: 0 0 0.45rem;
+    font-size: clamp(0.82rem, 2.6vw, 1rem);
+    color: #0f172a;
+  }
+  .wh-waybill-panel .wh-kv {
+    display: grid;
+    grid-template-columns: minmax(3.5rem, 24%) 1fr;
+    gap: 0.22rem 0.45rem;
+  }
+  @media (min-width: 480px) {
+    .wh-waybill-panel .wh-kv {
+      grid-template-columns: minmax(5rem, 110px) 1fr;
+      gap: 0.3rem 0.65rem;
+    }
+  }
+  .wh-waybill-panel .wh-kv .k {
+    color: #64748b;
+    font-weight: 800;
+    font-size: clamp(0.7rem, 2.1vw, 0.85rem);
+  }
+  .wh-waybill-panel .wh-kv .v {
+    color: #0f172a;
+    font-weight: 700;
+    white-space: pre-line;
+    word-break: break-word;
+    min-width: 0;
+  }
+  .wh-waybill-panel .wh-kv--wide { grid-template-columns: minmax(3.5rem, 28%) 1fr; }
+  @media (min-width: 480px) {
+    .wh-waybill-panel .wh-kv--wide { grid-template-columns: minmax(6rem, 140px) 1fr; }
+  }
+  .wh-waybill-panel .wh-items {
+    margin: 0.4rem 0 0;
+    padding-inline-start: clamp(0.85rem, 3vw, 1.2rem);
+    font-size: clamp(0.72rem, 2.15vw, 0.88rem);
+  }
+  .wh-waybill-panel .wh-items li { margin: 0.15rem 0; }
+  .wh-waybill-panel .wh-barcode-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.35rem, 1.5vw, 0.65rem);
+    align-items: center;
+    justify-content: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: clamp(8px, 2vw, 12px);
+    padding: clamp(0.45rem, 2.5vw, 1rem);
+  }
+  .wh-waybill-panel .wh-qr {
+    width: clamp(112px, 36vw, 190px);
+    height: auto;
+    aspect-ratio: 1;
+    max-width: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+  .wh-waybill-panel .wh-code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 900;
+    letter-spacing: 0.06em;
+    font-size: clamp(0.75rem, 2.5vw, 1.05rem);
+    text-align: center;
+    word-break: break-all;
+    max-width: 100%;
+  }
+  .wh-waybill-panel .wh-code--tracking {
+    font-weight: 700;
+    font-size: clamp(0.68rem, 2vw, 0.85rem);
+    color: #64748b;
+  }
+  .wh-waybill-panel .wh-v-mono { font-family: ui-monospace, monospace; }
+  .wh-waybill-panel .wh-v-notes { white-space: pre-line; font-weight: 600; }
+  .wh-waybill-panel .wh-scan-line {
+    font-family: ui-monospace, monospace;
+    font-weight: 800;
+    font-size: clamp(0.68rem, 2.2vw, 0.95rem);
+    color: #0f172a;
+    background: #ecfdf5;
+    border: 1px solid #6ee7b7;
+    border-radius: 8px;
+    padding: clamp(0.4rem, 1.8vw, 0.75rem) clamp(0.45rem, 2vw, 1rem);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    word-break: break-all;
+    direction: ltr;
+  }
+  /* رابط gstatic القديم (v23) أصبح 404 — استخدم نسخة v25 من استجابة fonts.googleapis.com/css2 */
+  @font-face {
+    font-family: 'LibreBarcode39';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('https://fonts.gstatic.com/s/librebarcode39/v25/-nFnOHM08vwC6h8Li1eQnP_AHzI2G_Bx0g.woff2') format('woff2');
+  }
+  .wh-waybill-panel .wh-barcode-font {
+    font-family: 'LibreBarcode39', ui-monospace, monospace;
+    font-size: clamp(26px, 8.5vw, 56px);
+    line-height: 1;
+    direction: ltr;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .wh-waybill-panel .wh-waybill-summary {
+    margin-top: clamp(0.65rem, 2vw, 1rem);
+    background: #ecfdf5;
+    border: 1px solid #6ee7b7;
+    border-radius: clamp(8px, 2vw, 10px);
+    padding: clamp(0.55rem, 2.5vw, 1rem);
+    min-width: 0;
+  }
+  .wh-waybill-panel .wh-hint {
+    margin: 0.55rem 0 0;
+    font-size: clamp(0.68rem, 2vw, 0.82rem);
+    color: #64748b;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .wh-waybill-panel .wh-meta {
+    margin-top: 0.75rem;
+    display: grid;
+    gap: 0.35rem;
+    font-size: clamp(0.72rem, 2.1vw, 0.88rem);
+    color: #475569;
+  }
+  .wh-waybill-panel .wh-meta strong { color: #334155; }
+  .wh-waybill-panel .wh-actions {
+    margin-top: clamp(0.75rem, 2vw, 1.25rem);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+  }
+  .wh-waybill-panel .wh-actions a.btn,
+  .wh-waybill-panel .wh-actions button.btn {
+    text-decoration: none;
+    font-size: clamp(0.74rem, 2.1vw, 0.9rem);
+    padding: 0.4rem 0.75rem;
+  }
+  .wh-waybill-panel .wh-copy-hint { font-size: clamp(0.68rem, 2vw, 0.82rem) !important; }
+
+  /* Dark mode */
+  body.theme-dark .wh-waybill-panel .wh-box {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.24);
+  }
+  body.theme-dark .wh-waybill-panel .wh-box h3 {
+    color: #f8fafc;
+  }
+  body.theme-dark .wh-waybill-panel .wh-kv .k,
+  body.theme-dark .wh-waybill-panel .wh-hint,
+  body.theme-dark .wh-waybill-panel .wh-code--tracking {
+    color: #94a3b8;
+  }
+  body.theme-dark .wh-waybill-panel .wh-kv .v,
+  body.theme-dark .wh-waybill-panel .wh-code {
+    color: #e2e8f0;
+  }
+  body.theme-dark .wh-waybill-panel .wh-barcode-wrap {
+    background: #111827;
+    border-color: rgba(148, 163, 184, 0.24);
+  }
+  body.theme-dark .wh-waybill-panel .wh-scan-line {
+    background: #062a27;
+    border-color: #0f766e;
+    color: #99f6e4;
+  }
+  body.theme-dark .wh-waybill-panel .wh-waybill-summary {
+    background: #052b26;
+    border-color: #0f766e;
+  }
+  body.theme-dark .wh-waybill-panel .wh-meta {
+    color: #cbd5e1;
+  }
+  body.theme-dark .wh-waybill-panel .wh-meta strong {
+    color: #f8fafc;
+  }
+  body.theme-dark .wh-waybill-panel .wh-actions .btn-primary {
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    border-color: #0f766e;
+  }
+  body.theme-dark .wh-waybill-panel .wh-actions .btn-secondary {
+    background: #334155;
+    border-color: #475569;
+    color: #f8fafc;
+  }
+  body.theme-dark .wh-waybill-panel .wh-copy-hint {
+    color: #94a3b8 !important;
+  }
+</style>
+<div class="wh-waybill-panel">
+  <div class="wh-label-grid">
+    <div class="wh-box">
+      <h3>بيانات المستلم</h3>
+      <div class="wh-kv">
+        <div class="k">الاسم</div><div class="v">{{ order.customer_name }}</div>
+        <div class="k">الجوال</div><div class="v">{{ order.customer_phone }}</div>
+        <div class="k">العنوان</div><div class="v">{{ order.address }}</div>
+      </div>
+      <h3 style="margin-top:1rem;">محتويات الطلب</h3>
+      <ul class="wh-items">
+        {% for item in order.items.all %}
+        <li>
+          {{ item.display_product_name }}
+          {% if item.display_variant_label %} — {{ item.display_variant_label }}{% endif %}
+          — الكمية {{ item.quantity }}{% if item.display_sku %} — SKU: {{ item.display_sku }}{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="wh-box">
+      <h3>الباركود ورمز QR</h3>
+      <div class="wh-barcode-wrap">
+        <img class="wh-qr" alt="QR بوليصة الشحن" src="{% url 'warehouse:order_label_qr' order.id %}">
+        <div class="wh-code">{{ label.code }}</div>
+        {% if shipment and shipment.tracking_number %}
+        <div class="wh-code wh-code--tracking">{{ shipment.tracking_number }}</div>
+        {% endif %}
+        <div class="wh-barcode-font" aria-hidden="true">*{{ label.code }}*</div>
+      </div>
+      <p class="wh-hint">نص المسح للمندوب (انسخه كما هو):</p>
+      <div class="wh-scan-line" id="wh-waybill-barcode-display" dir="ltr">{{ shipping_waybill.barcode_value }}</div>
+    </div>
+  </div>
+
+  <div class="wh-waybill-summary">
+    <div class="wh-kv wh-kv--wide">
+      <div class="k">رقم البوليصة</div>
+      <div class="v wh-v-mono">{{ shipping_waybill.waybill_number }}</div>
+      {% if shipping_waybill.notes %}
+      <div class="k">ملاحظات</div>
+      <div class="v wh-v-notes">{{ shipping_waybill.notes }}</div>
+      {% endif %}
+    </div>
+    <div class="wh-meta">
+      <div><strong>أنشأها:</strong> {% if shipping_waybill.created_by %}{{ shipping_waybill.created_by.username }}{% else %}—{% endif %}</div>
+      <div><strong>تاريخ الإنشاء:</strong> {{ shipping_waybill.created_at|date:"Y-m-d H:i" }}</div>
+      <div><strong>آخر تحديث:</strong> {{ shipping_waybill.updated_at|date:"Y-m-d H:i" }}{% if shipping_waybill.updated_by %} — {{ shipping_waybill.updated_by.username }}{% endif %}</div>
+      {% if shipping_waybill.shipment_id %}
+      <div><strong>شحنة النظام:</strong> #{{ shipping_waybill.shipment_id }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="wh-actions">
+    <a class="btn btn-primary" href="{% url 'warehouse:shipping_label' order.id %}" target="_blank" rel="noopener noreferrer">🖨️ طباعة البوليصة</a>
+    <button type="button" class="btn btn-secondary js-copy-waybill-barcode" data-barcode="{{ shipping_waybill.barcode_value|default:''|escape }}">📋 نسخ الباركود</button>
+  </div>
+  <p class="wh-copy-hint" style="margin:0.35rem 0 0;color:#64748b;" aria-live="polite"></p>
+</div>

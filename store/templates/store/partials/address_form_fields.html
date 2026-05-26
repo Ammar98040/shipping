@@ -1,0 +1,34 @@
+{% comment %}
+  حقول نموذج العنوان (AddressForm) — تنسيق موحّد مع نجمة حمراء للحقول المطلوبة.
+{% endcomment %}
+<div class="unified-address-grid">
+    {% for field in form %}
+        {% if field.name == 'is_default' %}
+        <div class="unified-field unified-field--checkbox">
+            {{ field }}
+            <label for="{{ field.id_for_label }}" class="unified-field__label unified-field__label--checkbox">{{ field.label }}</label>
+        </div>
+        {% else %}
+        <div class="unified-field{% if field.name == 'additional_info' %} unified-field--full{% endif %}">
+            <label for="{{ field.id_for_label }}" class="unified-field__label">
+                <span class="unified-field__label-text">{{ field.label }}</span>
+                {% if field.field.required %}
+                <span class="req-star" aria-hidden="true">*</span>
+                <span class="sr-only">مطلوب</span>
+                {% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+            <small class="form-help">{{ field.help_text }}</small>
+            {% endif %}
+            {% if field.errors %}
+            <div class="field-errors">
+                {% for error in field.errors %}
+                <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% endfor %}
+</div>

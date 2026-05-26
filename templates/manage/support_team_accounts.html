@@ -1,0 +1,163 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}موظفو خدمة العملاء{% endblock %}
+
+{% block manage_content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem; gap:1rem; flex-wrap:wrap;">
+    <h1 class="manage-page-title" style="margin-bottom:0;">👥 موظفو خدمة العملاء</h1>
+    <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+        <a href="{% url 'manage:support_portal' %}" class="btn btn-secondary">💬 بوابة خدمة العملاء</a>
+        <a href="{% url 'manage:users_list' %}" class="btn btn-primary">👤 المستخدمون</a>
+    </div>
+</div>
+
+<div class="manage-filters">
+    <form method="get" class="filters-form">
+        <div class="filter-group" style="flex:2;">
+            <label for="search">بحث سريع:</label>
+            <input type="text" name="search" id="search" class="input filter-search" placeholder="اسم المستخدم أو البريد أو الجوال..." value="{{ search_query }}">
+        </div>
+        <div class="filter-group">
+            <label for="availability">حالة التوفر:</label>
+            <select name="availability" id="availability" class="input">
+                <option value="">الكل</option>
+                <option value="available" {% if availability_filter == 'available' %}selected{% endif %}>متوفر</option>
+                <option value="unavailable" {% if availability_filter == 'unavailable' %}selected{% endif %}>غير متوفر</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-filter">🔍 تطبيق</button>
+        {% if search_query or availability_filter %}
+        <a href="{% url 'manage:support_team_accounts' %}" class="btn btn-clear">مسح</a>
+        {% endif %}
+        <span class="results-count">📊 العدد: <strong>{{ staff_users.paginator.count }}</strong></span>
+    </form>
+</div>
+
+<div class="manage-section">
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الموظف</th>
+                    <th>الجوال</th>
+                    <th>الحالة</th>
+                    <th>جلسات منتهية</th>
+                    <th>عملاء متجاوبون</th>
+                    <th>غير مُجاب الآن</th>
+                    <th>آخر تحديث</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in staff_users %}
+                <tr data-agent-row-id="{{ u.id }}">
+                    <td><strong>{{ u.id }}</strong></td>
+                    <td>
+                        <strong>{{ u.username }}</strong>
+                        <div style="font-size:0.85rem; color:#6b7280;">{{ u.email|default:"-" }}</div>
+                    </td>
+                    <td>{{ u.profile.phone|default:"-" }}</td>
+                    <td>
+                        {% if u.profile.is_available %}
+                        <span class="badge badge-active js-agent-availability-badge">🟢 متوفر</span>
+                        {% else %}
+                        <span class="badge js-agent-availability-badge" style="background:#fff1e6; color:#9a3412;">⚪ غير متوفر</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.ended_sessions }}</td>
+                    <td>{{ u.responded_registered|add:u.responded_guests }}</td>
+                    <td style="color:#b45309; font-weight:700;">{{ u.unanswered_now }}</td>
+                    <td class="js-agent-updated-at">{% if u.profile.availability_updated_at %}{{ u.profile.availability_updated_at|date:"Y-m-d H:i" }}{% else %}-{% endif %}</td>
+                    <td>
+                        <div style="display:flex; gap:0.45rem; align-items:center; flex-wrap:wrap;">
+                        <a href="{% url 'manage:support_agent_detail' u.id %}" class="btn btn-sm btn-secondary">عرض</a>
+                        <form method="post" action="{% url 'manage:support_archive_agent' u.id %}" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('سيتم أرشفة محادثات {{ u.username }} المنتهية.');">أرشفة</button>
+                        </form>
+                        <form method="post" action="{% url 'manage:support_toggle_availability' u.id %}" class="js-agent-toggle-form" style="display:inline-flex; gap:0.5rem;">
+                            {% csrf_token %}
+                            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                            {% if u.profile.is_available %}
+                            <input type="hidden" name="is_available" value="0">
+                            <button type="submit" class="btn btn-secondary btn-sm js-agent-toggle-btn">إيقاف التوفر</button>
+                            {% else %}
+                            <input type="hidden" name="is_available" value="1">
+                            <button type="submit" class="btn btn-primary btn-sm js-agent-toggle-btn">تفعيل التوفر</button>
+                            {% endif %}
+                        </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="empty-msg">لا توجد حسابات خدمة عملاء مطابقة للفلتر.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if staff_users.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=staff_users query_string=query_string %}
+{% endif %}
+
+<script>
+(function () {
+    document.addEventListener('submit', function (e) {
+        var form = e.target.closest('form.js-agent-toggle-form');
+        if (!form) return;
+        e.preventDefault();
+
+        var row = form.closest('tr[data-agent-row-id]');
+        var badge = row ? row.querySelector('.js-agent-availability-badge') : null;
+        var updatedAt = row ? row.querySelector('.js-agent-updated-at') : null;
+        var btn = form.querySelector('.js-agent-toggle-btn');
+        var hidden = form.querySelector('input[name="is_available"]');
+        if (btn) btn.disabled = true;
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+            var ct = (r.headers.get('content-type') || '').toLowerCase();
+            if (!ct.includes('application/json')) throw new Error('session_or_redirect');
+            return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error('toggle_failed');
+            if (badge) {
+                if (data.is_available) {
+                    badge.className = 'badge badge-active js-agent-availability-badge';
+                    badge.style.background = '';
+                    badge.style.color = '';
+                } else {
+                    badge.className = 'badge js-agent-availability-badge';
+                    badge.style.background = '#fff1e6';
+                    badge.style.color = '#9a3412';
+                }
+                badge.textContent = data.badge_text || '';
+            }
+            if (btn) {
+                btn.textContent = data.button_text || '';
+                btn.classList.remove('btn-primary', 'btn-secondary');
+                btn.classList.add(data.button_class || 'btn-primary');
+                btn.disabled = false;
+            }
+            if (hidden) hidden.value = data.is_available ? '0' : '1';
+            if (updatedAt) updatedAt.textContent = data.availability_updated_at || '-';
+        })
+        .catch(function () {
+            if (btn) btn.disabled = false;
+            showManageError('تعذر تحديث حالة التوفر. حاول مرة أخرى.');
+        });
+    });
+})();
+</script>
+{% endblock %}

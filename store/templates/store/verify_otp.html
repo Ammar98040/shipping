@@ -1,0 +1,199 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}التحقق من البريد الإلكتروني{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-brand-logo" aria-hidden="true">
+                <span class="auth-logo-top"></span>
+                <span class="auth-logo-body"></span>
+                <span class="auth-logo-door auth-logo-door--left"></span>
+                <span class="auth-logo-door auth-logo-door--right"></span>
+            </div>
+            <h1 class="auth-title">تحقق من بريدك الإلكتروني</h1>
+            <p class="auth-subtitle">أدخل رمز التحقق المرسل إلى بريدك</p>
+            <div class="otp-meta-pill">{{ email }}</div>
+            <div class="otp-meta-pill">⏱️ الرمز صالح لمدة 15 دقيقة</div>
+        </div>
+
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" id="otpForm" class="auth-form">
+            {% csrf_token %}
+            <input type="hidden" name="otp_action" value="verify">
+            <input type="hidden" name="otp_code" id="otp_code_hidden">
+
+            <div class="otp-input-group">
+                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="0" autocomplete="one-time-code">
+                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="1" autocomplete="off">
+                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="2" autocomplete="off">
+                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="3" autocomplete="off">
+                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="4" autocomplete="off">
+                <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]" data-idx="5" autocomplete="off">
+            </div>
+
+            <p class="store-field-hint">أدخل الأرقام الستة كما في البريد. إن انتهى الوقت، ارجع واطلب رمزاً جديداً من صفحة النسيان.</p>
+
+            {% if turnstile_site_key %}
+            {% include 'partials/turnstile_widget.html' %}
+            {% endif %}
+
+            <button type="submit" class="btn-submit" id="verifyBtn" disabled>
+                ✅ تحقق والدخول
+            </button>
+            <div id="verify-otp-inline-msg" style="display:none; margin-top:0.7rem; font-weight:800;"></div>
+        </form>
+
+        <form method="post" class="auth-form" id="resendOtpForm">
+            {% csrf_token %}
+            <input type="hidden" name="otp_action" value="resend">
+            {% if turnstile_site_key %}
+            {% include 'partials/turnstile_widget.html' %}
+            {% endif %}
+            {% with rem=otp_sends_remaining|default:4 %}
+            <button type="submit" class="btn-secondary-auth" id="resendOtpBtn" {% if rem <= 0 %}disabled aria-disabled="true"{% endif %}>
+                🔄 إعادة إرسال الرمز
+            </button>
+            <p id="otp-resend-hint" class="otp-resend-hint" style="margin-top:0.5rem; font-size:0.9rem; color:#64748b; font-weight:700;">
+              {% if rem <= 0 %}
+                استُنفدت إعادات الإرسال لهذه الجلسة (3 إعادات بعد الرمز الأول). أعد التسجيل من البداية إن لزم.
+              {% else %}
+                متبقٍ {{ rem }} إرسال لهذه الجلسة (بحد أقصى إرسال أول + 3 إعادات).
+              {% endif %}
+            </p>
+            {% endwith %}
+        </form>
+
+        <div class="auth-links">
+            <p><a href="{% url 'user_register' %}">تسجيل بحساب مختلف</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/otp-inputs.js' %}?v=20"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const hiddenInput = document.getElementById('otp_code_hidden');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const verifyForm = document.getElementById('otpForm');
+    const resendForm = document.getElementById('resendOtpForm');
+    const msg = document.getElementById('verify-otp-inline-msg');
+
+    function showMsg(text, ok) {
+        if (!msg) return;
+        msg.style.display = 'block';
+        msg.style.color = ok ? '#065f46' : '#b91c1c';
+        msg.textContent = text;
+    }
+
+    if (verifyForm && hiddenInput && verifyBtn) {
+        initOtpInputs(verifyForm, '.otp-digit', {
+            hiddenInput: hiddenInput,
+            submitButton: verifyBtn,
+            minLength: 6
+        });
+    }
+
+    if (verifyForm) {
+        verifyForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (hiddenInput.value.length < 6) {
+                showMsg('أدخل رمزًا مكونًا من 6 أرقام.', false);
+                return;
+            }
+            verifyBtn.disabled = true;
+            fetch(getFormActionUrl(verifyForm), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': (verifyForm.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+                },
+                body: new FormData(verifyForm)
+            })
+            .then(r => {
+                const ct = (r.headers.get('content-type') || '').toLowerCase();
+                if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+                return r.json();
+            })
+            .then(data => {
+                if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر التحقق من الرمز');
+                showMsg(data.message || 'تم التحقق بنجاح.', true);
+                verifyBtn.disabled = false;
+                if (data.redirect_url) setTimeout(() => { window.location.href = data.redirect_url; }, 350);
+            })
+            .catch(err => {
+                showMsg((err && err.message) ? err.message : 'تعذر التحقق من الرمز.', false);
+                verifyBtn.disabled = false;
+            });
+        });
+    }
+
+    function updateResendUi(remaining) {
+        const resendBtn = document.getElementById('resendOtpBtn');
+        const hint = document.getElementById('otp-resend-hint');
+        const n = typeof remaining === 'number' ? remaining : NaN;
+        if (resendBtn) {
+            resendBtn.disabled = (n === 0);
+            resendBtn.setAttribute('aria-disabled', n === 0 ? 'true' : 'false');
+            if (n <= 0) resendBtn.setAttribute('data-otp-exhausted', '1');
+            else resendBtn.removeAttribute('data-otp-exhausted');
+        }
+        if (hint && !isNaN(n)) {
+            if (n <= 0) {
+                hint.textContent = 'استُنفدت إعادات الإرسال لهذه الجلسة (3 إعادات بعد الرمز الأول). أعد التسجيل من البداية إن لزم.';
+            } else {
+                hint.textContent = 'متبقٍ ' + n + ' إرسال لهذه الجلسة (بحد أقصى إرسال أول + 3 إعادات).';
+            }
+        }
+    }
+
+    if (resendForm) {
+        resendForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const resendBtn = resendForm.querySelector('button[type="submit"]');
+            if (resendBtn) resendBtn.disabled = true;
+            fetch(getFormActionUrl(resendForm), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': (resendForm.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+                },
+                body: new FormData(resendForm)
+            })
+            .then(r => {
+                const ct = (r.headers.get('content-type') || '').toLowerCase();
+                if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+                return r.json();
+            })
+            .then(data => {
+                if (!data || !data.success) {
+                    if (typeof data.otp_sends_remaining === 'number') updateResendUi(data.otp_sends_remaining);
+                    throw new Error((data && data.error) ? data.error : 'تعذر إعادة إرسال الرمز');
+                }
+                showMsg(data.message || 'تم إرسال رمز جديد.', true);
+                if (typeof data.otp_sends_remaining === 'number') updateResendUi(data.otp_sends_remaining);
+                else if (resendBtn) resendBtn.disabled = false;
+            })
+            .catch(err => {
+                showMsg((err && err.message) ? err.message : 'تعذر إعادة إرسال الرمز.', false);
+                if (resendBtn && !resendBtn.getAttribute('data-otp-exhausted')) resendBtn.disabled = false;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
+

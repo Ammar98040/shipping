@@ -1,0 +1,107 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}المفضلات{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=21">
+<link rel="stylesheet" href="{% static 'css/category3d.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}">الدولاب</a>
+    <span class="shop-checkout-step-sep" aria-hidden="true">›</span>
+    <span class="breadcrumb-current">المفضلات</span>
+</nav>
+
+<div class="category-page wishlist-category" id="wishlist-page-root">
+    <div class="store-quick-toolbar" role="navigation" aria-label="اختصارات">
+        <a href="{% url 'cart_view' %}">السلة</a>
+        <a href="{% url 'wardrobe' %}">تصفّح الدولاب</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'my_orders' %}">طلباتي</a>
+        {% endif %}
+    </div>
+    <div class="category-header">
+        <h1 class="category-title">❤️ المفضلات</h1>
+        <p class="category-desc">المنتجات التي أضفتها للمفضلات — أضفها للسلة أو أزلها بضغطة.</p>
+    </div>
+    <div class="shop-trust-strip">
+        <span>🛒 إضافة سريعة للسلة</span>
+        <span>💾 تبقى مع حسابك</span>
+    </div>
+    
+    {% if wishlist_items %}
+    <div id="wishlist-items-block">
+    <div class="products-count">
+        <span id="wishlist-product-count-label">{{ wishlist_items.count }} منتج</span>
+    </div>
+
+    <div class="products-display">
+        {% for item in wishlist_items %}
+        <div class="product-hanger">
+            <div class="hanger-hook"></div>
+            <div class="hanger-bar"></div>
+            <div class="product-item">
+                <a href="{% url 'product' item.product.id %}" class="product-item-link" aria-label="عرض {{ item.product.name_ar }}"></a>
+                <div class="product-image-wrap">
+                    {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name_ar }}" class="product-img store-media-fill">
+                    {% else %}
+                    <span class="product-placeholder">{{ item.product.name_ar|slice:":1" }}</span>
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">{{ item.product.name_ar }}</h3>
+                    <div class="product-price-row">
+                        {% if item.product.has_listing_discount %}
+                            <span class="product-price product-price--original">{{ item.product.listing_price_original }} ر.س</span>
+                            <span class="product-price product-price--discount">{{ item.product.listing_price_discounted }} ر.س</span>
+                            {% if item.product.listing_discount_label %}
+                                <span class="product-discount-badge">{{ item.product.listing_discount_label }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="product-price">{{ item.product.listing_price_original }} ر.س</span>
+                        {% endif %}
+                    </div>
+                    {% if item.product.has_storefront_variants %}
+                    {% include 'partials/product_variant_teaser.html' %}
+                    {% endif %}
+                    <div class="product-card-actions">
+                        <button type="button" class="product-icon-btn wishlist-btn btn-wishlist-ajax in-wishlist active-wishlist" data-product-id="{{ item.product.id }}" title="إزالة من المفضلات" aria-label="المفضلات">❤️</button>
+                        <a href="{% url 'product' item.product.id %}" class="product-icon-btn product-btn-details" title="تفاصيل أكثر" aria-label="تفاصيل أكثر">
+                            <span class="btn-icon" aria-hidden="true">🔍</span>
+                        </a>
+                        <button type="button" class="product-icon-btn product-btn-cart btn-add-to-cart-ajax {% if item.product.id in cart_product_ids %}in-cart active-cart{% endif %}" data-product-id="{{ item.product.id }}" title="{% if item.product.id in cart_product_ids %}في السلة{% else %}أضف للسلة{% endif %}" aria-label="أضف للسلة" {% if item.product.listing_stock < 1 %}disabled{% endif %}>
+                            <span class="btn-icon" aria-hidden="true">🛒</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    </div>
+    {% else %}
+    <div class="store-empty-state wishlist-empty" id="wishlist-static-empty">
+        <p class="store-empty-state__title">لا توجد مفضلات بعد</p>
+        <p class="store-empty-state__text">افتح أي منتج واضغط القلب 🤍 لتُحفظ هنا ومشاركتها بين الأجهزة مع حسابك.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'wardrobe' %}" class="store-btn store-btn--primary">تصفّح الدولاب</a>
+            <a href="{% url 'products_all' %}" class="store-btn store-btn--secondary">كل المنتجات</a>
+        </div>
+    </div>
+    {% endif %}
+
+    <template id="wishlist-empty-template">
+        <div class="store-empty-state wishlist-empty">
+            <p class="store-empty-state__title">لا توجد مفضلات بعد</p>
+            <p class="store-empty-state__text">افتح أي منتج واضغط القلب 🤍 لتُحفظ هنا ومشاركتها بين الأجهزة مع حسابك.</p>
+            <div class="store-empty-state__actions">
+                <a href="{% url 'wardrobe' %}" class="store-btn store-btn--primary">تصفّح الدولاب</a>
+                <a href="{% url 'products_all' %}" class="store-btn store-btn--secondary">كل المنتجات</a>
+            </div>
+        </div>
+    </template>
+</div>
+{% endblock %}
+

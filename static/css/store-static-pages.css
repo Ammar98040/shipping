@@ -1,0 +1,177 @@
+/* صفحات ثابتة: اتصل بنا، عن المتجر — متناسقة مع store-flow */
+.store-page-shell {
+    max-width: 640px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.store-page-shell--wide {
+    max-width: 800px;
+}
+
+.store-page-shell h1 {
+    color: var(--accent);
+    margin-bottom: 0.35rem;
+    font-size: 1.75rem;
+    font-weight: 800;
+    text-align: center;
+}
+
+.store-page-shell .page-subtitle {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: 600;
+    line-height: 1.6;
+}
+
+.store-page-shell .static-card {
+    background: var(--card);
+    padding: 2rem;
+    border-radius: var(--radius, 12px);
+    box-shadow: var(--shadow, 0 2px 12px rgba(0, 0, 0, 0.08));
+    border: 1px solid rgba(44, 95, 79, 0.08);
+}
+
+.store-page-shell .form-group {
+    margin-bottom: 1.25rem;
+}
+
+.store-page-shell label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.store-page-shell .input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.store-page-shell .input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(44, 95, 79, 0.12);
+}
+
+.store-page-shell textarea.input {
+    min-height: 140px;
+    resize: vertical;
+}
+
+.store-page-shell .btn-submit-static {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 0.5rem;
+    transition: background 0.2s;
+}
+
+.store-page-shell .btn-submit-static:hover {
+    background: var(--accent-light);
+}
+
+.store-page-shell .form-error {
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+.store-page-shell .static-back {
+    display: inline-block;
+    margin-top: 1.5rem;
+    color: var(--accent);
+    font-weight: 700;
+    text-decoration: none;
+    padding: 0.5rem 0;
+}
+
+.store-page-shell .static-back:hover {
+    text-decoration: underline;
+}
+
+/* عن المتجر — محتوى داخل البطاقة */
+.page-static-inner .shop-trust-strip {
+    justify-content: flex-start;
+    margin: 0 0 1.25rem;
+    padding: 0;
+}
+
+.page-static-inner h1 {
+    text-align: right;
+    margin-bottom: 0.35rem;
+    color: var(--accent);
+    font-size: 1.75rem;
+    font-weight: 800;
+}
+
+.page-static-inner .page-subtitle {
+    text-align: right;
+    margin-bottom: 1rem;
+}
+
+.page-static-inner h2 {
+    color: var(--text);
+    margin: 1.5rem 0 0.75rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.page-static-inner p {
+    line-height: 1.85;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.page-static-inner .lead {
+    font-size: 1.08rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.page-static-inner ul {
+    margin: 0.5rem 0 1rem 1.25rem;
+    color: var(--text-muted);
+    line-height: 1.75;
+}
+
+.page-static-inner a {
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.page-static-inner .btn-wardrobe {
+    display: inline-block;
+    margin-top: 1.5rem;
+    padding: 0.85rem 1.5rem;
+    background: var(--accent);
+    color: #fff !important;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 700;
+    transition: background 0.2s;
+}
+
+.page-static-inner .btn-wardrobe:hover {
+    background: var(--accent-light);
+}
+
+.contact-channel-hint {
+    text-align: center;
+    margin: -0.2rem auto 1.35rem;
+    max-width: 34rem;
+    line-height: 1.6;
+}

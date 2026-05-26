@@ -1,0 +1,151 @@
+{% extends "manage/base_manage.html" %}
+{% load manage_seen_tags %}
+{% block title %}إدارة المستخدمين{% endblock %}
+
+{% block manage_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+    <h1 class="manage-page-title" style="margin-bottom: 0;">👥 المستخدمون العاديون</h1>
+    <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <a href="{% url 'manage:admins_list' %}" class="btn btn-primary">🛡️ عرض المسؤولين</a>
+        <a href="{% url 'manage:shipping_managers_list' %}" class="btn btn-primary">🚛 مسؤولو الشحن</a>
+        <a href="{% url 'manage:warehouse_managers_list' %}" class="btn btn-primary">📦 مسؤولو المستودع</a>
+        <a href="{% url 'manage:customer_service_accounts_list' %}" class="btn btn-primary">💬 موظفو خدمة العملاء</a>
+        <a href="{% url 'manage:customer_service_managers_list' %}" class="btn btn-primary">🧭 مسؤولو خدمة العملاء</a>
+        <a href="{% url 'manage:couriers_list' %}" class="btn btn-primary">🚚 مناديب الشحن</a>
+        <a href="{% url 'manage:packers_list' %}" class="btn btn-primary">🧰 مناديب المستودع</a>
+    </div>
+</div>
+
+<div class="manage-filters">
+    <form method="get" class="filters-form">
+        <div class="filter-group" style="flex: 2;">
+            <label for="search">بحث:</label>
+            <input type="text" name="search" id="search" placeholder="ابحث باسم المستخدم أو البريد..." value="{{ search_query }}" class="input filter-search">
+        </div>
+        <button type="submit" class="btn btn-primary btn-filter">🔍 بحث</button>
+        {% if search_query %}
+        <a href="{% url 'manage:users_list' %}" class="btn btn-clear">مسح</a>
+        {% endif %}
+        <span class="results-count">📊 عدد المستخدمين: <strong>{{ users.paginator.count }}</strong></span>
+    </form>
+</div>
+
+<div class="manage-section">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:0.65rem;">
+        <button type="button" class="btn btn-secondary btn-sm manage-mark-visible-btn" data-manage-mark-visible=".manage-table-container">✔️ تعيين الظاهر كمقروء</button>
+    </div>
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم المستخدم</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>الاسم</th>
+                    <th>الطلبات</th>
+                    <th>المفضلات</th>
+                    <th>الحالة</th>
+                    <th>تاريخ التسجيل</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                {% manage_row_state request.user u "user" as u_state %}
+                <tr class="{% if u_state == 'new' %}manage-row--new{% elif u_state == 'updated' %}manage-row--updated{% endif %}" data-manage-row-key="user:{{ u.id }}">
+                    <td>
+                        {% if u_state == 'new' %}<span class="manage-row-new-dot" title="حساب جديد"></span>{% elif u_state == 'updated' %}<span class="manage-row-new-dot" title="تحديث جديد"></span>{% endif %}
+                        <strong>{{ u.id }}</strong>
+                    </td>
+                    <td>
+                        <strong>{{ u.username }}</strong>
+                        {% if u.is_superuser %}<span class="badge badge-admin">👑 مدير</span>{% endif %}
+                        {% if u.is_staff and not u.is_superuser %}<span class="badge badge-staff">⚙️ موظف</span>{% endif %}
+                    </td>
+                    <td>{{ u.email|default:"-" }}</td>
+                    <td>{{ u.get_full_name|default:"-" }}</td>
+                    <td><strong style="color: #2c5f4f;">{{ u.orders_count }}</strong></td>
+                    <td><strong style="color: #dc3545;">{{ u.wishlist_count }}</strong></td>
+                    <td>
+                        {% if u.is_active %}
+                        <span class="badge badge-active js-user-status-badge">✓ نشط</span>
+                        {% else %}
+                        <span class="badge badge-inactive js-user-status-badge">✗ معطل</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.date_joined|date:"Y-m-d" }}</td>
+                    <td>
+                        <a href="{% url 'manage:user_detail' u.id %}" class="btn btn-sm">👁️ عرض</a>
+                        {% if not u.is_superuser %}
+                        <a href="{% url 'manage:user_profile_edit' u.id %}" class="btn btn-sm btn-secondary">✏️ تعديل</a>
+                        {% endif %}
+                        {% if not u.is_superuser %}
+                        <form method="post" action="{% url 'manage:user_toggle_active' u.id %}" class="js-toggle-user-active-form" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm js-toggle-user-active-btn {% if u.is_active %}btn-danger{% else %}btn-success{% endif %}">
+                                {% if u.is_active %}🔒 تعطيل{% else %}✅ تفعيل{% endif %}
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="empty-msg">لا توجد نتائج</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if users.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=users query_string=query_string %}
+{% endif %}
+
+<script>
+    (function () {
+        document.addEventListener('submit', function (e) {
+            var form = e.target.closest('form.js-toggle-user-active-form');
+            if (!form) return;
+            e.preventDefault();
+
+            var tr = form.closest('tr');
+            var btn = form.querySelector('.js-toggle-user-active-btn');
+            var badge = tr ? tr.querySelector('.js-user-status-badge') : null;
+            if (btn) btn.disabled = true;
+
+            fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+                },
+                body: new FormData(form)
+            })
+                .then(function (r) {
+                    var ct = (r.headers.get('content-type') || '').toLowerCase();
+                    if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+                    return r.json();
+                })
+                .then(function (data) {
+                    if (!data || !data.success) throw new Error('toggle_failed');
+                    if (badge) {
+                        badge.classList.remove('badge-active', 'badge-inactive');
+                        badge.classList.add(data.badge_class || 'badge-inactive');
+                        badge.textContent = data.badge_text || '';
+                    }
+                    if (btn) {
+                        btn.textContent = data.button_text || '';
+                        btn.classList.remove('btn-danger', 'btn-success');
+                        btn.classList.add(data.button_class || 'btn-success');
+                        btn.disabled = false;
+                    }
+                })
+                .catch(function () {
+                    if (btn) btn.disabled = false;
+                    showManageError('تعذر تنفيذ العملية. حاول مرة أخرى.');
+                });
+        });
+    })();
+</script>
+{% endblock %}

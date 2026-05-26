@@ -1,0 +1,587 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}مرحباً بك | {{ store_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ===== صفحة الترحيب ===== */
+.welcome-hero {
+    background: linear-gradient(135deg, #153d32 0%, #1e5545 42%, #2c6f5c 100%);
+    color: white;
+    padding: clamp(72px, 18vw, 120px) 0 clamp(52px, 12vw, 80px);
+    min-height: clamp(380px, 78vh, 680px);
+    display: flex;
+    align-items: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.welcome-hero__bg-layer {
+    --hero-image: none;
+    position: absolute;
+    inset: 0;
+    background-color: #0a1814;
+    opacity: 0;
+    z-index: 1;
+    transform: translateY(-8%) scale(1.05);
+}
+
+.welcome-hero__bg-layer::before,
+.welcome-hero__bg-layer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--hero-image);
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* طبقة تعبئة ناعمة للحواف عندما تكون أبعاد الصورة مختلفة */
+.welcome-hero__bg-layer::before {
+    background-size: cover;
+    filter: blur(10px) saturate(1.08);
+    transform: scale(1.08);
+    opacity: 0.5;
+}
+
+/* الطبقة الأساسية: تعرض الصورة كاملة بوضوح */
+.welcome-hero__bg-layer::after {
+    background-size: contain;
+}
+
+.welcome-hero__bg-layer.is-active {
+    animation: heroDropIn 1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.welcome-hero__bg-layer.is-exit {
+    animation: heroFadeOut 0.9s ease forwards;
+}
+
+.welcome-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        160deg,
+        rgba(8, 32, 26, 0.55) 0%,
+        rgba(21, 61, 50, 0.42) 48%,
+        rgba(6, 18, 16, 0.58) 100%
+    );
+    z-index: 2;
+}
+
+.welcome-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(transparent, transparent);
+    opacity: 0;
+    z-index: 3;
+}
+
+.welcome-hero .container {
+    position: relative;
+    z-index: 4;
+}
+
+.welcome-hero h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.9s ease-out both;
+}
+
+.welcome-hero .subtitle {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+    opacity: 0.9;
+    animation: fadeInUp 0.9s ease-out 0.15s both;
+}
+
+.welcome-description {
+    max-width: 800px;
+    margin: 0 auto 40px;
+    font-size: 1.2rem;
+    line-height: 1.9;
+    opacity: 0.95;
+    animation: fadeInUp 0.9s ease-out 0.3s both;
+}
+
+.cta-buttons {
+    animation: fadeInUp 0.9s ease-out 0.45s both;
+}
+
+.cta-quick-links {
+    margin-top: 1.75rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem 1.25rem;
+    justify-content: center;
+    align-items: center;
+    animation: fadeInUp 0.9s ease-out 0.55s both;
+}
+
+.cta-quick-links a {
+    color: rgba(255, 255, 255, 0.94);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.35rem 0.45rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.35);
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.cta-quick-links a:hover {
+    border-bottom-color: #fff;
+    color: #fff;
+}
+
+.cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 38px;
+    margin: 8px;
+    border: 2px solid white;
+    border-radius: 50px;
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.05rem;
+    transition: all 0.28s ease;
+    background: transparent;
+}
+
+.cta-button:hover {
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--accent-dark, #153d32);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.22);
+}
+
+.cta-button.primary {
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--accent-dark, #153d32);
+}
+
+.cta-button.primary:hover {
+    background: transparent;
+    color: white;
+}
+
+/* ===== قسم المميزات ===== */
+.features-section {
+    padding: 80px 0;
+    background: var(--bg, #fff);
+}
+
+.section-title {
+    text-align: center;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--text, #1a202c);
+    margin-bottom: 16px;
+}
+
+.section-subtitle {
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--text-muted, #6b7280);
+    max-width: 600px;
+    margin: 0 auto 56px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+    margin-top: 40px;
+}
+
+.feature-card {
+    text-align: center;
+    padding: 36px 28px;
+    border-radius: 16px;
+    background: var(--card, #f8f9fa);
+    transition: all 0.28s ease;
+    border: 1px solid transparent;
+}
+
+.feature-card:hover {
+    background: var(--bg, #fff);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.09);
+    transform: translateY(-5px);
+    border-color: var(--accent, #2c5f4f);
+}
+
+.feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, rgba(44, 95, 79, 0.14), rgba(61, 122, 104, 0.1));
+    border-radius: 50%;
+    color: var(--accent, #2c5f4f);
+}
+
+.feature-icon svg {
+    width: 30px;
+    height: 30px;
+}
+
+.feature-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text, #1a202c);
+    margin-bottom: 10px;
+}
+
+.feature-description {
+    font-size: 1rem;
+    color: var(--text, #374151);
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.feature-detail {
+    font-size: 0.95rem;
+    color: var(--text-muted, #6b7280);
+}
+
+/* ===== قسم عن المتجر ===== */
+.store-description-section {
+    padding: 80px 0;
+    background: var(--card, #f3f4f6);
+}
+
+.description-content {
+    max-width: 980px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.description-text {
+    font-size: 1.15rem;
+    line-height: 1.9;
+    color: var(--text, #374151);
+    margin-bottom: 40px;
+}
+
+.mission-vision {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+    margin-top: 48px;
+}
+
+.mv-card {
+    background: var(--bg, #fff);
+    padding: 36px 32px;
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.07);
+    text-align: right;
+    border-top: 4px solid var(--accent, #2c5f4f);
+}
+
+.mv-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--accent, #2c5f4f);
+    margin-bottom: 16px;
+}
+
+.mv-text {
+    font-size: 1.05rem;
+    line-height: 1.8;
+    color: var(--text, #374151);
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .features-section {
+    background: var(--bg);
+}
+
+body.theme-dark .feature-card {
+    background: var(--card);
+    border-color: rgba(255,255,255,0.06);
+}
+
+body.theme-dark .feature-card:hover {
+    background: rgba(45, 212, 191, 0.06);
+    border-color: var(--accent);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+}
+
+body.theme-dark .feature-icon {
+    background: rgba(45, 212, 191, 0.14);
+    color: var(--accent);
+}
+
+body.theme-dark .store-description-section {
+    background: #080e1a;
+}
+
+body.theme-dark .mv-card {
+    background: var(--card);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+}
+
+/* ===== حركات ===== */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroDropIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10%) scale(1.07);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1.01);
+    }
+}
+
+@keyframes heroFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1.01);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(4%) scale(1.04);
+    }
+}
+
+/* ===== تجاوب ===== */
+@media (max-width: 768px) {
+    .welcome-hero h1       { font-size: clamp(2rem, 10vw, 2.3rem); }
+    .welcome-hero .subtitle { font-size: clamp(1.15rem, 6vw, 1.35rem); }
+    .welcome-description   { font-size: 1rem; padding: 0 14px; line-height: 1.8; }
+    .cta-button            { padding: 13px 26px; font-size: 0.95rem; }
+    .section-title         { font-size: 1.9rem; }
+    .features-grid,
+    .mission-vision        { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .welcome-hero__bg-layer,
+    .welcome-hero__bg-layer.is-active,
+    .welcome-hero__bg-layer.is-exit,
+    .welcome-hero h1,
+    .welcome-hero .subtitle,
+    .welcome-description,
+    .cta-buttons,
+    .cta-quick-links {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- قسم الترحيب الرئيسي -->
+<section class="welcome-hero">
+    <div class="welcome-hero__bg-layer welcome-hero__bg-layer--a" data-hero-bg-layer></div>
+    <div class="welcome-hero__bg-layer welcome-hero__bg-layer--b" data-hero-bg-layer></div>
+    <div class="container">
+        <h1>مرحباً بك في {{ store_name }}</h1>
+        <p class="subtitle">تسوق بطمأنينة، وتوصيل يُعتمد عليه، ودعم بجانبك</p>
+        <p class="welcome-description">
+            دولابك يجمع بين تصفّح شبيه بالمتجر الحقيقي عبر تجربة «الدولاب» التفاعلية وبين راحة التسوق الإلكتروني.
+            اكتشف أصنافك المفضّلة، واحفظ المنتجات، وتتبّع طلبك حتى الباب بلمسات بصرية مركّزة على الوضوح.
+        </p>
+        <div class="cta-buttons">
+            <a href="{% url 'wardrobe' %}" class="cta-button primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12L4 4H1"/><circle cx="9" cy="20" r="1.5" fill="currentColor"/><circle cx="18" cy="20" r="1.5" fill="currentColor"/></svg>
+                ابدأ التسوق
+            </a>
+            <a href="#about" class="cta-button">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                اكتشف المزيد
+            </a>
+        </div>
+        <nav class="cta-quick-links" aria-label="اختصارات سريعة">
+            <a href="{% url 'products_all' %}">كل المنتجات</a>
+            <a href="{% url 'order_track' %}">تتبع الطلب</a>
+            <a href="{% url 'support_chat' %}">خدمة العملاء</a>
+        </nav>
+    </div>
+</section>
+{{ hero_images|json_script:"welcome-hero-images" }}
+
+<!-- قسم المميزات -->
+<section class="features-section">
+    <div class="container">
+        <h2 class="section-title">لماذا تختار دولابك؟</h2>
+        <p class="section-subtitle">اكتشف الفرق مع مميزات تسوق استثنائية</p>
+
+        <div class="features-grid">
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                </div>
+                <h3 class="feature-title">الشحن</h3>
+                <p class="feature-description">توصيل سريع لجميع المناطق</p>
+                <p class="feature-detail">توصيل آمن وسريع إلى باب منزلك</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                </div>
+                <h3 class="feature-title">الدفع الآمن</h3>
+                <p class="feature-description">طرق دفع آمنة بنسبة 100%</p>
+                <p class="feature-detail">خيارات دفع متعددة بأمان تام</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2v6h6"/><path d="M3 8A9 9 0 1 1 5.6 5.4"/></svg>
+                </div>
+                <h3 class="feature-title">إرجاع سهل</h3>
+                <p class="feature-description">سياسة إرجاع خلال 30 يوماً</p>
+                <p class="feature-detail">إرجاع واستبدال بلا أي تعقيدات</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a4 4 0 01-4 4H8l-5 3V7a4 4 0 014-4h10a4 4 0 014 4z"/></svg>
+                </div>
+                <h3 class="feature-title">دعم على مدار الساعة</h3>
+                <p class="feature-description">خدمة عملاء متوفرة دائماً</p>
+                <p class="feature-detail">نحن هنا للمساعدة في أي وقت</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+                </div>
+                <h3 class="feature-title">أفضل الأسعار</h3>
+                <p class="feature-description">أسعار تنافسية مضمونة</p>
+                <p class="feature-detail">منتجات عالية الجودة بأسعار مناسبة</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="6"/><path d="M12 14v8"/><path d="M8 18h8"/></svg>
+                </div>
+                <h3 class="feature-title">جودة مضمونة</h3>
+                <p class="feature-description">منتجات بجودة فائقة</p>
+                <p class="feature-detail">جميع المنتجات مختارة بعناية واحترافية</p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- قسم عن المتجر -->
+<section id="about" class="store-description-section">
+    <div class="container">
+        <div class="description-content">
+            <h2 class="section-title">عن متجرنا</h2>
+            <p class="section-subtitle">نُحدث ثورة في التسوق الإلكتروني بتقنية ثلاثية الأبعاد</p>
+
+            <p class="description-text">
+                في دولابك، أعدنا ابتكار تجربة التسوق الإلكتروني من خلال نظام الدولاب التفاعلي ثلاثي الأبعاد.
+                تصفح الخانات، وافتح الرفوف، واستكشف الأصناف، واكتشف المنتجات بطريقة طبيعية وسلسة.
+                كل خانة تمثّل فئة مختلفة — من الملابس والشنط إلى الأحذية والإكسسوارات — وكلها منظّمة
+                في واجهة بصرية مذهلة ثلاثية الأبعاد.
+                <br><br>
+                مجموعتنا المنتقاة بعناية تضم منتجات عالية الجودة، نضمن أن كل قطعة ترقى إلى معاييرنا العالية
+                في الجودة والأناقة والمتانة. سواء كنت تبحث عن الأساسيات اليومية أو القطع المميزة،
+                ستجد لدينا ما يناسبك.
+            </p>
+
+            <div class="mission-vision">
+                <div class="mv-card">
+                    <h3 class="mv-title">رسالتنا</h3>
+                    <p class="mv-text">تقديم تجربة تسوق استثنائية تجمع بين راحة التسوق الإلكتروني والإحساس الحقيقي بالتصفح داخل متجر فعلي.</p>
+                </div>
+                <div class="mv-card">
+                    <h3 class="mv-title">رؤيتنا</h3>
+                    <p class="mv-text">أن نصبح الوجهة الأولى لعشّاق الموضة الباحثين عن الجودة والأناقة والابتكار في رحلة تسوقهم.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var imageDataNode = document.getElementById('welcome-hero-images');
+    var layers = document.querySelectorAll('[data-hero-bg-layer]');
+    if (!imageDataNode || layers.length < 2) return;
+
+    var images = [];
+    try {
+        images = JSON.parse(imageDataNode.textContent || '[]');
+    } catch (error) {
+        images = [];
+    }
+    if (!Array.isArray(images) || images.length === 0) return;
+
+    var reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var activeLayerIndex = 0;
+    var lastImageIndex = -1;
+    var SWITCH_INTERVAL_MS = 5000;
+
+    function nextImageIndex() {
+        if (images.length === 1) return 0;
+        var idx = Math.floor(Math.random() * images.length);
+        while (idx === lastImageIndex) {
+            idx = Math.floor(Math.random() * images.length);
+        }
+        lastImageIndex = idx;
+        return idx;
+    }
+
+    function applyImage(layer, imageUrl) {
+        layer.style.setProperty('--hero-image', 'url("' + imageUrl + '")');
+    }
+
+    function swapToNextImage(isInitial) {
+        var incomingLayerIndex = isInitial ? activeLayerIndex : (activeLayerIndex === 0 ? 1 : 0);
+        var outgoingLayerIndex = incomingLayerIndex === 0 ? 1 : 0;
+        var incomingLayer = layers[incomingLayerIndex];
+        var outgoingLayer = layers[outgoingLayerIndex];
+        var imageUrl = images[nextImageIndex()];
+        if (!imageUrl) return;
+
+        applyImage(incomingLayer, imageUrl);
+
+        if (reducedMotion) {
+            incomingLayer.style.opacity = '1';
+            outgoingLayer.style.opacity = '0';
+            incomingLayer.classList.remove('is-active', 'is-exit');
+            outgoingLayer.classList.remove('is-active', 'is-exit');
+        } else {
+            incomingLayer.classList.remove('is-exit');
+            void incomingLayer.offsetWidth;
+            incomingLayer.classList.add('is-active');
+            outgoingLayer.classList.remove('is-active');
+            outgoingLayer.classList.add('is-exit');
+        }
+
+        activeLayerIndex = incomingLayerIndex;
+    }
+
+    swapToNextImage(true);
+    window.setInterval(function () {
+        swapToNextImage(false);
+    }, SWITCH_INTERVAL_MS);
+})();
+</script>
+{% endblock %}

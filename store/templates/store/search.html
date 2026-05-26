@@ -1,0 +1,205 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% load store_tags %}
+{% block title %}نتائج البحث{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/search.css' %}">
+<style>
+.price-filters-labels,
+.price-filters-inputs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+.price-filters-labels {
+    margin-bottom: 0.45rem;
+}
+
+.price-filter-label {
+    font-weight: 800;
+    color: #d9e7ff;
+    font-size: 0.95rem;
+}
+
+.search-actions-row {
+    margin-top: 0.95rem;
+    display: flex;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.search-btn-modern,
+.clear-btn-modern {
+    border: 0;
+    border-radius: 12px;
+    padding: 0.68rem 1rem;
+    font-weight: 800;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    text-decoration: none;
+}
+
+.search-btn-modern {
+    background: linear-gradient(135deg, #1e5545 0%, #2c5f4f 55%, #3d7a68 100%);
+    color: #fff;
+    box-shadow: 0 8px 20px rgba(44, 95, 79, 0.32);
+}
+
+.search-btn-modern:hover,
+.clear-btn-modern:hover {
+    transform: translateY(-1px);
+}
+
+.clear-btn-modern {
+    background: rgba(255, 255, 255, 0.12);
+    color: #e9f1ff;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+.btn-icon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}">الدولاب</a>
+    <span class="shop-checkout-step-sep" aria-hidden="true">›</span>
+    <span class="breadcrumb-current">البحث</span>
+</nav>
+<div class="search-page">
+    <h1 class="page-title">نتائج البحث</h1>
+    <p class="page-subtitle search-page-subtitle">صفِّ النتائج بالسعر، ثم افتح أي منتج للتفاصيل.</p>
+    <div class="shop-trust-strip">
+        <span>🔍 بحث في كل الأصناف</span>
+        <span>📦 عرض المخزون</span>
+    </div>
+    
+    {% if query %}
+    <div class="search-info">
+        <p>البحث عن: <strong>{{ query }}</strong></p>
+        <p>عدد النتائج: <strong>{{ count }}</strong></p>
+    </div>
+    
+    <form method="get" class="filters-form">
+        <input type="hidden" name="q" value="{{ query }}">
+        <div class="price-filters-labels" aria-hidden="true">
+            <span class="price-filter-label">السعر من:</span>
+            <span class="price-filter-label">السعر إلى:</span>
+        </div>
+
+        <div class="price-filters-inputs">
+            <div class="filter-group">
+                <input type="number" name="min_price" value="{{ min_price }}" placeholder="الحد الأدنى" step="0.01">
+            </div>
+
+            <div class="filter-group">
+                <input type="number" name="max_price" value="{{ max_price }}" placeholder="الحد الأقصى" step="0.01">
+            </div>
+        </div>
+
+        <div class="search-actions-row">
+            <button type="submit" class="search-btn-modern">
+                <span class="btn-icon" aria-hidden="true">🔎</span>
+                <span>بحث</span>
+            </button>
+            {% if min_price or max_price %}
+            <a href="{% url 'search' %}?q={{ query }}" class="clear-btn-modern">
+                <span class="btn-icon" aria-hidden="true">🧹</span>
+                <span>إزالة البحث</span>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+    
+    {% if products %}
+    <div class="search-results">
+        {% for product in products %}
+        <div class="result-item">
+            <a href="{% url 'product' product.id %}" class="result-link">
+                <div class="result-image">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name_ar }}" class="store-media-fill">
+                    {% else %}
+                    <div class="image-placeholder">{{ product.name_ar|slice:":1" }}</div>
+                    {% endif %}
+                </div>
+                <div class="result-details">
+                    <h3 class="result-name">{{ product.name_ar|highlight_term:query }}</h3>
+                    <p class="result-path">
+                        {{ product.category.shelf.compartment.name_ar }} 
+                        → {{ product.category.shelf.name_ar }} 
+                        → {{ product.category.name_ar }}
+                    </p>
+                    <p class="result-price">
+                        {% if product.has_listing_discount %}
+                            <span class="product-price product-price--original">{{ product.listing_price_original }} ر.س</span>
+                            <span class="product-price product-price--discount">{{ product.listing_price_discounted }} ر.س</span>
+                            {% if product.listing_discount_label %}
+                                <span class="product-discount-badge">{{ product.listing_discount_label }}</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="product-price">{{ product.listing_price_original }} ر.س</span>
+                        {% endif %}
+                    </p>
+                    {% if product.has_storefront_variants %}
+                    {% include 'partials/product_variant_teaser.html' %}
+                    {% endif %}
+                    <p class="result-stock {% if product.listing_stock > 10 %}stock-good{% elif product.listing_stock > 0 %}stock-low{% else %}stock-out{% endif %}">
+                        المتوفر: {{ product.listing_stock }}
+                    </p>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    
+    {% if products.has_other_pages %}
+    <div class="pagination">
+        {% if products.has_previous %}
+        <a href="?q={{ query }}&page=1{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="page-link">«</a>
+        <a href="?q={{ query }}&page={{ products.previous_page_number }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="page-link">‹</a>
+        {% endif %}
+        
+        <span class="page-info">صفحة {{ products.number }} من {{ products.paginator.num_pages }}</span>
+        
+        {% if products.has_next %}
+        <a href="?q={{ query }}&page={{ products.next_page_number }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="page-link">›</a>
+        <a href="?q={{ query }}&page={{ products.paginator.num_pages }}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}" class="page-link">»</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="store-empty-state no-results">
+        <p class="store-empty-state__title">لا توجد نتائج مطابقة</p>
+        <p class="store-empty-state__text">جرّب كلمات أوسع أو راجع الهجاء. يمكنك تصفّح كل المنتجات أو العودة للدولاب.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'products_all' %}" class="store-btn store-btn--primary">كل المنتجات</a>
+            <a href="{% url 'wardrobe' %}" class="store-btn store-btn--secondary">الدولاب</a>
+            <a href="{% url 'support_chat' %}" class="store-btn store-btn--ghost">تواصل معنا</a>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="store-empty-state no-query">
+        <p class="store-empty-state__title">أدخل كلمة بحث</p>
+        <p class="store-empty-state__text">استخدم شريط البحث أعلى الصفحة للبحث بالاسم أو الرقم أو لصق رابط المنتج. اختصار لوحة المفاتيح: <kbd>/</kbd> لتركيز البحث.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'products_all' %}" class="store-btn store-btn--primary">تصفّح كل المنتجات</a>
+            <a href="{% url 'wardrobe' %}" class="store-btn store-btn--secondary">الدولاب</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

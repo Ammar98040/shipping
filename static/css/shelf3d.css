@@ -1,0 +1,273 @@
+/* صفحة الرف - الأصناف كصناديق ثلاثية الأبعاد */
+
+.page-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.25rem;
+}
+
+.page-subtitle {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color .2s;
+}
+
+.back-link:hover {
+    color: var(--accent-light);
+}
+
+.breadcrumb {
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.breadcrumb a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+/* منظر الرف */
+.shelf-view {
+    position: relative;
+    max-width: 700px;
+    margin: 0 auto;
+    perspective: 1200px;
+}
+
+/* لوح الرف */
+.shelf-board {
+    position: relative;
+    height: 12px;
+    background: linear-gradient(180deg, #8b7a5f 0%, #7a6b52 100%);
+    border: 2px solid #6b5d4a;
+    border-radius: 4px;
+    margin-bottom: 1.5rem;
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,.2),
+        0 4px 12px rgba(0,0,0,.2);
+}
+
+.shelf-board::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 5%;
+    right: 5%;
+    height: 8px;
+    background: radial-gradient(ellipse at top, rgba(0,0,0,.15) 0%, transparent 100%);
+}
+
+/* صناديق الأصناف على الرف */
+.categories-on-shelf {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 0 0.5rem;
+}
+
+/* صندوق صنف واحد */
+.category-box {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    perspective: 1000px;
+}
+
+.box-3d {
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 140px;
+}
+
+.category-box:hover .box-3d {
+    transform: translateY(-8px) rotateX(5deg);
+}
+
+.category-box:active .box-3d {
+    transform: translateY(-4px) scale(0.98);
+}
+
+/* وجه الصندوق */
+.box-front {
+    position: relative;
+    background: linear-gradient(135deg, #f8f3eb 0%, #e8dfd0 100%);
+    border: 3px solid #a89880;
+    border-radius: 8px;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    box-shadow: 
+        inset 0 2px 0 rgba(255,255,255,.7),
+        0 6px 20px rgba(0,0,0,.2);
+    overflow: hidden;
+}
+
+.box-front img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.box-icon {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: .7;
+    margin-bottom: 0.5rem;
+}
+
+/* غطاء الصندوق */
+.box-top {
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(180deg, #c8bba8 0%, #b8ab98 100%);
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 -2px 4px rgba(0,0,0,.15);
+    transform: translateZ(6px);
+}
+
+/* جانب الصندوق */
+.box-side-right {
+    position: absolute;
+    top: 0;
+    right: -6px;
+    bottom: 0;
+    width: 6px;
+    background: linear-gradient(90deg, #b8ab98 0%, #a89a88 100%);
+    box-shadow: inset -1px 0 2px rgba(0,0,0,.2);
+    transform-origin: left center;
+    transform: rotateY(90deg);
+}
+
+/* التسمية */
+.box-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.5rem;
+    background: rgba(255,255,255,.9);
+    border-top: 2px solid rgba(168,152,128,.4);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 0 0 5px 5px;
+}
+
+.empty-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+/* أنيميشن دخول الصناديق */
+.category-box {
+    animation: boxAppear 0.5s ease-out backwards;
+}
+
+.category-box:nth-child(1) { animation-delay: 0.1s; }
+.category-box:nth-child(2) { animation-delay: 0.2s; }
+.category-box:nth-child(3) { animation-delay: 0.3s; }
+.category-box:nth-child(4) { animation-delay: 0.4s; }
+.category-box:nth-child(5) { animation-delay: 0.5s; }
+.category-box:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes boxAppear {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (min-width: 640px) {
+    .categories-on-shelf {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (min-width: 768px) {
+    .categories-on-shelf {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.75rem;
+    }
+    .box-3d {
+        min-height: 160px;
+    }
+    .box-front {
+        min-height: 160px;
+    }
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .shelf-board {
+    background: linear-gradient(180deg, #1e150a 0%, #150e06 100%);
+    border-color: #3a2e22;
+}
+
+body.theme-dark .box-front {
+    background: linear-gradient(135deg, #1a1410 0%, #120e0a 100%);
+    border-color: #3a2e22;
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.05),
+        0 6px 20px rgba(0,0,0,0.5);
+}
+
+body.theme-dark .category-box:hover .box-front {
+    border-color: var(--accent);
+}
+
+body.theme-dark .box-top {
+    background: linear-gradient(180deg, #2a2018 0%, #1e1610 100%);
+}
+
+body.theme-dark .box-side-right {
+    background: linear-gradient(90deg, #1a1410 0%, #120e0a 100%);
+}
+
+body.theme-dark .box-label {
+    background: rgba(15, 27, 45, 0.92);
+    border-top-color: rgba(255,255,255,0.1);
+    color: var(--text);
+}
+
+.shelf-products-all-link {
+    text-align: center;
+    margin: 0 auto 1.1rem;
+}
+
+.shelf-products-all-link .shelf-all-products {
+    display: inline-block;
+    margin-bottom: 0;
+    font-weight: 700;
+    font-size: 0.9rem;
+}

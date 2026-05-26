@@ -1,0 +1,352 @@
+/* تعديل الملف الشخصي — حقول بأيقونات + منطقة سحب وإفلات + أزرار موحّدة */
+.profile-edit-page {
+    padding-top: 1rem;
+    padding-bottom: 2.5rem;
+}
+
+.profile-edit-page .auth-container,
+.profile-edit-card {
+    max-width: 640px;
+    width: 100%;
+    margin: 0 auto;
+    background: var(--card, #fff);
+    padding: 2rem 2rem 2.25rem;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(44, 95, 79, 0.08);
+}
+
+.profile-edit-page .auth-title {
+    margin-bottom: 1.75rem;
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: var(--accent, #2c5f4f);
+}
+
+.profile-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+}
+
+.profile-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.profile-edit-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    color: var(--text, #1a1a1a);
+    font-size: 0.98rem;
+}
+
+.profile-edit-label-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 10px;
+    background: rgba(44, 95, 79, 0.1);
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.profile-edit-hint {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--text-muted, #666);
+    line-height: 1.45;
+    padding-inline-start: 2.5rem;
+}
+
+.profile-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.profile-input-wrap .profile-input-icon {
+    position: absolute;
+    inset-inline-end: 0.85rem;
+    pointer-events: none;
+    opacity: 0.45;
+    font-size: 1rem;
+}
+
+/* عربي: النص من اليمين؛ الأيقونة على اليسار (نهاية السطر) */
+.profile-input-wrap:not(.profile-input-wrap--ltr) .profile-input {
+    direction: rtl;
+    text-align: right;
+}
+
+/* بريد / جوال: LTR — الأيقونة على يمين الحقل (بداية السطر) حتى لا تتعارض مع الكتابة */
+.profile-input-wrap--ltr .profile-input-icon {
+    inset-inline-end: auto;
+    inset-inline-start: 0.85rem;
+}
+
+.profile-input-wrap--ltr .profile-input {
+    direction: ltr;
+    text-align: left;
+    padding-inline-start: 2.5rem;
+    padding-inline-end: 1rem;
+}
+
+.profile-input {
+    width: 100%;
+    padding: 0.8rem 1rem;
+    padding-inline-end: 2.5rem;
+    border: 2px solid #e5e8eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    background: #fafbfc;
+}
+
+.profile-input:focus {
+    outline: none;
+    border-color: var(--accent, #2c5f4f);
+    box-shadow: 0 0 0 3px rgba(44, 95, 79, 0.12);
+    background: #fff;
+}
+
+.profile-input[type="date"] {
+    padding-inline-end: 1rem;
+}
+
+.profile-edit-field input[type="password"].profile-input {
+    direction: rtl;
+    text-align: right;
+}
+
+/* ——— منطقة الصورة ——— */
+.profile-edit-field--avatar {
+    gap: 0.5rem;
+}
+
+.profile-dropzone {
+    position: relative;
+    border: 2px dashed rgba(44, 95, 79, 0.35);
+    border-radius: 16px;
+    background: linear-gradient(180deg, rgba(44, 95, 79, 0.04) 0%, rgba(44, 95, 79, 0.02) 100%);
+    min-height: 168px;
+    overflow: hidden;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.profile-dropzone.is-dragover {
+    border-color: var(--accent, #2c5f4f);
+    border-style: solid;
+    background: rgba(44, 95, 79, 0.08);
+    box-shadow: inset 0 0 0 2px rgba(44, 95, 79, 0.15);
+}
+
+.profile-dropzone-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    padding: 1.25rem 1rem;
+    pointer-events: none;
+    min-height: 168px;
+}
+
+.profile-dropzone-preview {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #fff;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+    background: #e8ecf0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-dropzone-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-dropzone-placeholder {
+    font-size: 2.25rem;
+    opacity: 0.55;
+}
+
+.profile-dropzone-text {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.profile-dropzone-text strong {
+    color: var(--text, #1a1a1a);
+    font-size: 0.98rem;
+}
+
+.profile-dropzone-text span {
+    font-size: 0.85rem;
+    color: var(--text-muted, #666);
+}
+
+.profile-dropzone-meta {
+    font-size: 0.78rem !important;
+    color: #888 !important;
+}
+
+.profile-file-native {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    cursor: pointer !important;
+    z-index: 5 !important;
+    font-size: 0 !important;
+}
+
+.profile-avatar-slot {
+    position: relative;
+    min-height: 168px;
+}
+
+.profile-avatar-slot .profile-dropzone {
+    position: absolute;
+    inset: 0;
+}
+
+/* ——— أزرار ——— */
+.profile-form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #eee;
+}
+
+.profile-btn {
+    flex: 1;
+    min-width: 140px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.95rem 1.25rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+    border: 2px solid transparent;
+    transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+}
+
+.profile-btn-icon {
+    font-size: 1.15rem;
+    line-height: 1;
+}
+
+.profile-btn--primary {
+    background: var(--accent, #2c5f4f);
+    color: #fff;
+    border-color: var(--accent, #2c5f4f);
+}
+
+.profile-btn--primary:hover {
+    background: var(--accent-light, #3d7a68);
+    border-color: var(--accent-light, #3d7a68);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(44, 95, 79, 0.35);
+}
+
+.profile-btn--secondary {
+    background: #f1f3f5;
+    color: #495057;
+    border-color: #dee2e6;
+}
+
+.profile-btn--secondary:hover {
+    background: #e9ecef;
+    border-color: #ced4da;
+    color: #343a40;
+}
+
+.field-errors .error-text {
+    color: #c92a2a;
+    font-size: 0.85rem;
+    margin: 0.15rem 0 0;
+}
+
+@media (max-width: 520px) {
+    .profile-form-actions {
+        flex-direction: column;
+    }
+
+    .profile-btn {
+        width: 100%;
+    }
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .profile-edit-page .auth-container,
+body.theme-dark .profile-edit-card {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-dark .profile-input {
+    background: var(--bg);
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text);
+}
+
+body.theme-dark .profile-input:focus {
+    background: var(--bg);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15);
+}
+
+body.theme-dark .profile-dropzone {
+    border-color: rgba(45, 212, 191, 0.25);
+    background: rgba(45, 212, 191, 0.03);
+}
+
+body.theme-dark .profile-dropzone.is-dragover {
+    background: rgba(45, 212, 191, 0.07);
+    border-color: var(--accent);
+}
+
+body.theme-dark .profile-dropzone-preview {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+body.theme-dark .profile-form-actions {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-dark .profile-btn--secondary {
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.theme-dark .profile-btn--secondary:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: var(--text);
+}

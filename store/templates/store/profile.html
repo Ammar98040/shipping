@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}ملفي الشخصي{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="profile-page">
+    <h1 class="page-title store-page-heading">ملفي الشخصي</h1>
+    <p class="store-page-lede profile-intro-lede">نظرة سريعة على حسابك، عناوينك، ومختصر طلباتك. التعديلات تُحفظ من صفحة تعديل الملف.</p>
+    
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <div class="profile-container">
+        <div class="profile-card">
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    {% if profile.avatar %}
+                    <img src="{{ profile.avatar.url }}" alt="{{ user.username }}">
+                    {% else %}
+                    <div class="avatar-placeholder">{{ user.username|slice:":1"|upper }}</div>
+                    {% endif %}
+                </div>
+                <div class="profile-info">
+                    <h2>{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="username">@{{ user.username }}</p>
+                    {% if profile.phone %}
+                    <p class="contact-info">📱 {{ profile.phone }}</p>
+                    {% endif %}
+                    {% if user.email %}
+                    <p class="contact-info">✉️ {{ user.email }}</p>
+                    {% endif %}
+                </div>
+                <a href="{% url 'profile_edit' %}" class="btn-edit-profile">تعديل الملف الشخصي</a>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-value">{{ stats.total_orders }}</div>
+                    <div class="stat-label">الطلبات</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ stats.wishlist_count }}</div>
+                    <div class="stat-label">المفضلات</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value">{{ stats.addresses_count }}</div>
+                    <div class="stat-label">العناوين</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="profile-sections">
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>عناويني</h3>
+                    <a href="{% url 'addresses_list' %}" class="btn-link">عرض الكل</a>
+                </div>
+                {% if addresses %}
+                <div class="addresses-preview">
+                    {% for address in addresses|slice:":2" %}
+                    <div class="address-item">
+                        <div class="address-title">
+                            <strong>{{ address.title }}</strong>
+                            {% if address.is_default %}<span class="badge badge-default">افتراضي</span>{% endif %}
+                        </div>
+                        <p class="address-text">{{ address.full_address }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-message">لا توجد عناوين محفوظة</p>
+                <a href="{% url 'address_add' %}" class="btn-secondary">إضافة عنوان</a>
+                {% endif %}
+            </div>
+            
+            <div class="section-card">
+                <div class="section-header">
+                    <h3>آخر الطلبات</h3>
+                    <a href="{% url 'my_orders' %}" class="btn-link">عرض الكل</a>
+                </div>
+                {% if recent_orders %}
+                <div class="orders-preview">
+                    {% for order in recent_orders %}
+                    <div class="order-item">
+                        <div class="order-info">
+                            <strong>طلب #{{ order.id }}</strong>
+                            <span class="order-date">{{ order.created_at|date:"Y-m-d" }}</span>
+                        </div>
+                        <span class="order-status status-{{ order.status }}">{{ order.get_status_display }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="empty-message">لم تقم بأي طلبات بعد</p>
+                <a href="{% url 'wardrobe' %}" class="btn-secondary">ابدأ التسوق</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

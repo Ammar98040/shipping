@@ -1,0 +1,34 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}حذف النظام بالكامل{% endblock %}
+
+{% block manage_content %}
+<div style="max-width:920px; margin:0 auto; padding:0 1rem;">
+    <h1 style="margin-top:0; color:#7f1d1d;">حذف النظام بالكامل</h1>
+    <p style="color:#64748b;">صفحة مستقلة عن النسخ الاحتياطي. لل<b>المدير الرئيسي فقط</b>.</p>
+
+    <div class="manage-section" style="border-color:#7f1d1d; background:#fef2f2;">
+        <p style="color:#991b1b; margin-top:0;">
+            يمسح <strong>كل</strong> بيانات المتجر، و<strong>جميع</strong> حسابات المستخدمين بلا استثناء، والجلسات، وسجل لوحة الإدارة، و<strong>جميع ملفات مجلد الوسائط</strong> على هذا الخادم.
+            لا يمكن التراجع. لا تُستخدم على الإنتاج إلا بعد نسخ خارجي موثوق.
+        </p>
+        <p style="font-size:0.88rem; color:#64748b;">
+            حساب النظام <code>ammar</code> لا يُحذف ولا يُستبدل من النسخة. كلمة مروره تُدار من الشيفرة/البيئة فقط.
+        </p>
+        {% if web_restore_blocked %}
+        <p style="color:#b45309; font-weight:700;">غير متاح من الويب مع إعدادات القاعدة الحالية (مثل استيراد الويب).</p>
+        {% elif not wipe_secret_configured %}
+        <p style="color:#64748b;">الميزة معطّلة: لم يُعرَّف <code>FULL_SITE_WIPE_SECRET</code> في البيئة.</p>
+        {% else %}
+        <form method="post" style="margin:0;">
+            {% csrf_token %}
+            <div style="margin-bottom:0.75rem;">
+                <label for="wipe_secret">كلمة سر الحذف الكامل (قيمة FULL_SITE_WIPE_SECRET من البيئة)</label><br>
+                <input id="wipe_secret" type="password" name="wipe_secret" autocomplete="off" required>
+            </div>
+            <button type="submit" class="btn btn-danger" onclick="return confirm('تأكيد نهائي: سيتم مسح كل البيانات وجميع الحسابات والوسائط. هل أنت متأكد؟');">تنفيذ الحذف الكامل</button>
+        </form>
+        <p style="font-size:0.88rem; color:#64748b; margin-bottom:0;">قبل التنفيذ يُحاول النظام حفظ نسخة ZIP أمان على الخادم (إن أمكن).</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

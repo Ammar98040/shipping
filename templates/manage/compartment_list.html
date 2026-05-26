@@ -1,0 +1,60 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}الخانات{% endblock %}
+{% block manage_content %}
+<h1 class="manage-page-title">📦 الخانات</h1>
+<div class="list-actions">
+    <a href="{% url 'manage:compartment_add' %}" class="btn btn-primary">➕ إضافة خانة جديدة</a>
+</div>
+<div class="manage-section">
+    {% if items %}
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الصورة</th>
+                    <th>الترتيب</th>
+                    <th>الاسم</th>
+                    <th>عدد الرفوف</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><strong>{{ forloop.counter }}</strong></td>
+                    <td>
+                        {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name_ar }}" class="table-thumbnail">
+                        {% else %}
+                        <div class="table-placeholder">{{ item.name_ar|slice:":1" }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.order }}</td>
+                    <td><strong>{{ item.name_ar }}</strong></td>
+                    <td><span class="badge badge-shelf">{{ item.shelves_count }}</span></td>
+                    <td>
+                        {% if item.is_active %}
+                        <span class="badge badge-active">✓ نشط</span>
+                        {% else %}
+                        <span class="badge badge-inactive">✗ غير نشط</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'manage:compartment_edit' item.pk %}" class="btn btn-sm">✏️ تعديل</a>
+                        <a href="{% url 'manage:compartment_delete' item.pk %}" class="btn btn-sm btn-danger">🗑️ حذف</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">لا توجد خانات بعد. <a href="{% url 'manage:compartment_add' %}">إضافة أول خانة الآن</a></p>
+    {% endif %}
+</div>
+{% if items.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=items query_string=query_string %}
+{% endif %}
+{% endblock %}

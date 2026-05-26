@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}غير مصرح{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-card">
+        <p class="error-code">403</p>
+        <h1>نعتذر، لا تملك صلاحية الوصول</h1>
+        <p>لا يمكن فتح هذه الصفحة من حسابك الحالي. سجّل الدخول بالحساب المناسب أو تواصل مع الدعم.</p>
+        <div class="error-actions">
+            <a href="{% url 'user_login' %}" class="error-btn error-btn--primary">تسجيل الدخول</a>
+            <a href="{% url 'wardrobe' %}" class="error-btn error-btn--secondary">العودة للرئيسية</a>
+            <a href="{% url 'support_chat' %}" class="error-btn error-btn--ghost">التواصل مع الدعم</a>
+        </div>
+    </div>
+</div>
+
+<style>
+.error-page { min-height: 60vh; display: grid; place-items: center; padding: 2rem 1rem; }
+.error-card { width: min(680px, 100%); border-radius: 18px; padding: 2rem 1.25rem; text-align: center; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); }
+.error-code { margin: 0 0 .5rem; font-size: clamp(3rem, 10vw, 5rem); font-weight: 900; color: #f97316; line-height: 1; }
+.error-card h1 { margin: .25rem 0 .75rem; font-size: 1.6rem; }
+.error-card p { margin: 0 auto; max-width: 540px; opacity: .9; line-height: 1.7; }
+.error-actions { margin-top: 1.5rem; display: flex; gap: .6rem; justify-content: center; flex-wrap: wrap; }
+.error-btn { text-decoration: none; border-radius: 11px; padding: .7rem 1rem; font-weight: 800; border: 1px solid transparent; }
+.error-btn--primary { background: #f97316; color: #fff; }
+.error-btn--secondary { background: #2dc7af; color: #fff; }
+.error-btn--ghost { color: inherit; border-color: rgba(255,255,255,.25); }
+</style>
+{% endblock %}

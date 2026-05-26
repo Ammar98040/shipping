@@ -1,0 +1,164 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block body_class %} page-order-detail{% endblock %}
+{% block title %}تفاصيل المرتجع #{{ return_obj.id }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/order_detail.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/return-timeline.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="order-detail-page">
+    <div class="page-header">
+        <h1 class="page-title">تفاصيل المرتجع #{{ return_obj.id }}</h1>
+        <a href="{% url 'my_returns' %}" class="btn-back">← العودة للمرتجعات</a>
+    </div>
+    
+    <div class="order-detail-container">
+        <div class="order-info-card">
+            <h2>معلومات المرتجع</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">رقم المرتجع:</span>
+                    <span class="info-value">#{{ return_obj.id }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">الطلب الأصلي:</span>
+                    <a href="{% url 'order_detail' return_obj.order.id %}" class="info-value info-value--link">#{{ return_obj.order.id }}</a>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">التاريخ:</span>
+                    <span class="info-value">{{ return_obj.created_at|date:"Y-m-d H:i" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">الحالة:</span>
+                    <span class="status-badge status-{{ return_obj.status }}" id="return-status-badge">{{ return_obj.get_status_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">السبب:</span>
+                    <span class="info-value">{{ return_obj.get_reason_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">مبلغ الاسترجاع:</span>
+                    <span class="info-value total-price">{{ return_obj.refund_amount }} ر.س</span>
+                </div>
+            </div>
+            
+            {% if return_obj.reason_details %}
+            <div class="reason-details">
+                <h3>تفاصيل السبب:</h3>
+                <p>{{ return_obj.reason_details|linebreaks }}</p>
+            </div>
+            {% endif %}
+            
+            {% if return_obj.admin_notes %}
+            <div class="admin-notes">
+                <h3>ملاحظات الإدارة:</h3>
+                <p>{{ return_obj.admin_notes|linebreaks }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="status-timeline-card order-info-card" id="return-journey">
+            <h2>مسار المرتجع</h2>
+            <p class="timeline-intro">يتم تحديث هذه المراحل عند كل خطوة تنفّذها الإدارة (قيد المراجعة، الموافقة، الاستلام، الإكمال، أو الرفض).</p>
+            <div id="return-timeline-slot">
+            {% include 'store/partials/return_timeline.html' %}
+            </div>
+        </div>
+        
+        <div class="products-card">
+            <h2>المنتجات المرتجعة ({{ return_obj.items.count }})</h2>
+            <div class="products-list">
+                {% for item in return_obj.items.all %}
+                <div class="product-item">
+                    <div class="product-image">
+                        {% if item.product_id and item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.display_product_name }}">
+                        {% else %}
+                        <div class="image-placeholder">{{ item.display_product_name|slice:":1"|default:"?" }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="product-info">
+                        <h3 class="product-name">
+                            {% if item.product_id %}
+                            <a href="{% url 'product' item.product_id %}">{{ item.display_product_name }}</a>
+                            {% else %}
+                            <span>{{ item.display_product_name }}</span>
+                            {% endif %}
+                        </h3>
+                        <p class="product-category">تفاصيل المنتج</p>
+                        {% if item.condition %}
+                        <p class="product-condition">
+                            الحالة: {{ item.condition }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="product-pricing">
+                        <div class="quantity">الكمية: {{ item.quantity }}</div>
+                        <div class="price">{{ item.price_at_purchase }} ر.س × {{ item.quantity }}</div>
+                        <div class="subtotal">{{ item.subtotal }} ر.س</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="order-summary">
+                <div class="summary-row">
+                    <span>إجمالي المبلغ المسترجع:</span>
+                    <span class="summary-total">{{ return_obj.refund_amount }} ر.س</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  'use strict';
+  var pollUrl = "{% url 'return_detail_poll' return_obj.id %}";
+  var lastSig = "{{ return_obj.status }}|{{ return_obj.refund_status|default:'' }}|{{ return_obj.stock_status|default:'' }}|{{ return_obj.updated_at|date:'c' }}";
+
+  function applyUpdate(data) {
+    /* شارة الحالة */
+    var badge = document.getElementById('return-status-badge');
+    if (badge && data.status_display) {
+      badge.textContent = data.status_display;
+      badge.className = 'status-badge status-' + (data.status || '');
+    }
+    /* الجدول الزمني */
+    var slot = document.getElementById('return-timeline-slot');
+    if (slot && data.timeline_html) {
+      slot.innerHTML = data.timeline_html;
+    }
+  }
+
+  function poll() {
+    if (document.hidden) return;
+    fetch(pollUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var sig = data.signature || '';
+        if (sig && sig !== lastSig) {
+          lastSig = sig;
+          applyUpdate(data);
+        }
+      })
+      .catch(function () {});
+  }
+
+  setInterval(poll, 8000);
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'visible') poll();
+  });
+})();
+</script>
+{% endblock %}
+

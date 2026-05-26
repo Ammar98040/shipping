@@ -1,0 +1,144 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}تعديل الملف الشخصي{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+<link rel="stylesheet" href="{% static 'css/profile_edit.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="auth-page profile-edit-page">
+    <div class="profile-edit-card">
+        <h1 class="auth-title">تعديل الملف الشخصي</h1>
+        <p class="profile-edit-lead" style="text-align:center;color:var(--text-muted);font-size:0.95rem;margin:-1rem 0 1.25rem;line-height:1.5;">حدّث بياناتك وصورتك الظاهرة في حسابك.</p>
+
+        {% if messages %}
+        <div class="messages" style="margin-bottom:1rem;">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if form.non_field_errors %}
+        <div class="field-errors" style="margin-bottom:1rem;">
+            {% for err in form.non_field_errors %}<p class="error-text">{{ err }}</p>{% endfor %}
+        </div>
+        {% endif %}
+
+        <form method="post" enctype="multipart/form-data" class="profile-edit-form" id="profile-edit-form">
+            {% csrf_token %}
+            {% include 'partials/profile_account_form_fields.html' with form=form profile=profile %}
+
+            <div class="profile-form-actions">
+                <button type="submit" class="profile-btn profile-btn--primary" id="profile-edit-submit-btn">
+                    <span class="profile-btn-icon" aria-hidden="true">💾</span>
+                    حفظ التغييرات
+                </button>
+                <a href="{% url 'profile_view' %}" class="profile-btn profile-btn--secondary">
+                    <span class="profile-btn-icon" aria-hidden="true">↩️</span>
+                    إلغاء
+                </a>
+            </div>
+            <div id="profile-edit-inline-msg" style="display:none; margin-top:0.8rem; font-weight:800;"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+(function () {
+    var dz = document.getElementById('avatar-dropzone');
+    var input = document.querySelector('#id_avatar');
+    var img = document.getElementById('avatar-preview-img');
+    var ph = document.getElementById('avatar-placeholder');
+    if (!dz || !input) return;
+
+    function showPreview(file) {
+        if (!file || !file.type || !file.type.match(/^image\//)) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            if (img) {
+                img.src = ev.target.result;
+                img.removeAttribute('hidden');
+                img.style.display = '';
+            }
+            if (ph) ph.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    input.addEventListener('change', function () {
+        if (input.files && input.files[0]) showPreview(input.files[0]);
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function (evName) {
+        dz.addEventListener(evName, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+    dz.addEventListener('dragenter', function () { dz.classList.add('is-dragover'); });
+    dz.addEventListener('dragover', function () { dz.classList.add('is-dragover'); });
+    dz.addEventListener('dragleave', function (e) {
+        if (!dz.contains(e.relatedTarget)) dz.classList.remove('is-dragover');
+    });
+    dz.addEventListener('drop', function (e) {
+        dz.classList.remove('is-dragover');
+        var files = e.dataTransfer && e.dataTransfer.files;
+        if (!files || !files.length) return;
+        var f = files[0];
+        if (!f.type.match(/^image\//)) return;
+        var dt = new DataTransfer();
+        dt.items.add(f);
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+})();
+
+(function () {
+    var form = document.getElementById('profile-edit-form');
+    var btn = document.getElementById('profile-edit-submit-btn');
+    var msg = document.getElementById('profile-edit-inline-msg');
+    if (!form || !btn || !msg) return;
+
+    function showMsg(text, ok) {
+        msg.style.display = 'block';
+        msg.style.color = ok ? '#065f46' : '#b91c1c';
+        msg.textContent = text;
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        btn.disabled = true;
+        msg.style.display = 'none';
+
+        fetch(form.action || window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر حفظ الملف الشخصي');
+            showMsg(data.message || 'تم الحفظ بنجاح.', true);
+            btn.disabled = false;
+            if (data.redirect_url) {
+                setTimeout(function () { window.location.href = data.redirect_url; }, 500);
+            }
+        })
+        .catch(function (err) {
+            showMsg((err && err.message) ? err.message : 'تعذر حفظ التغييرات.', false);
+            btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}
+

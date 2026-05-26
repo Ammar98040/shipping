@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}بوابة الشحن{% endblock %}</title>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/base.css' %}">
+  <link rel="stylesheet" href="{% static 'css/manage.css' %}?v=20">
+  <link rel="stylesheet" href="{% static 'css/portal_header.css' %}?v=20">
+  <script src="{% static 'js/form-helpers.js' %}?v=20"></script>
+  <script src="{% static 'js/manage-flash.js' %}?v=20"></script>
+  <script>window.SHIPPING_CSRF_TOKEN = "{{ csrf_token }}";</script>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="manage-body dir-rtl">
+  {% if user.is_authenticated %}
+  <header class="ship-portal-header">
+    <div class="portal-inner">
+      <a class="portal-logo" href="{% url 'shipping:dashboard' %}">
+        <span class="portal-logo-mark" aria-hidden="true">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 12h15M16 12l4-3M16 12l4 3M5 12v8a2 2 0 002 2h10a2 2 0 002-2v-8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="7" cy="17" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="17" r="2" stroke="currentColor" stroke-width="1.6"/></svg>
+        </span>
+        <span>بوابة الشحن</span>
+      </a>
+
+      <div class="warehouse-status-indicator{% if request.user.profile.is_available %} warehouse-status-indicator--on{% else %} warehouse-status-indicator--off{% endif %}" id="shipping-header-status-indicator" aria-live="polite">
+        <span class="warehouse-status-dot" aria-hidden="true"></span>
+        <span class="warehouse-status-content">
+          <span class="warehouse-status-caption">حالة المندوب</span>
+          <span class="warehouse-status-text" id="shipping-header-status-text">
+            {% if request.user.profile.is_available %}متوفر الآن{% else %}غير متوفر{% endif %}
+          </span>
+        </span>
+      </div>
+
+      <div class="portal-right">
+        <div class="portal-dropdown" id="shippingMenuWrap">
+          <button type="button" class="portal-menu-btn" id="shippingMenuBtn" onclick="toggleShippingMenu()" aria-expanded="false" aria-haspopup="true">
+            <span class="portal-menu-avatar">
+              {% if request.user.profile.avatar %}
+                <img src="{{ request.user.profile.avatar.url }}" alt="">
+              {% else %}
+                {{ request.user.username|slice:":1"|upper }}
+              {% endif %}
+            </span>
+            <span class="portal-menu-name">{{ request.user.get_full_name|default:request.user.username }}</span>
+            <svg class="portal-menu-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="portal-menu" id="shippingPortalMenu" role="menu">
+            <a href="{% url 'shipping:profile' %}" class="portal-menu-link portal-menu-link--profile" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#e0f2fe;--icon-fg:#0369a1;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0z"/><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M5 21v-1a7 7 0 0114 0v1"/></svg></span>
+              <span class="portal-menu-label">الملف الشخصي</span>
+            </a>
+
+            {% if request.user.profile.account_type == 'shipping_manager' %}
+            {# ── قائمة مسؤول الشحن ── #}
+            <a href="{% url 'shipping:manager_dashboard' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#dbeafe;--icon-fg:#1d4ed8;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></span>
+              <span class="portal-menu-label">لوحة التحكم</span>
+            </a>
+            <a href="{% url 'shipping:manager_shipments' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#dcfce7;--icon-fg:#166534;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></span>
+              <span class="portal-menu-label">إدارة الشحنات</span>
+            </a>
+            <a href="{% url 'shipping:manager_couriers' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#fef3c7;--icon-fg:#b45309;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
+              <span class="portal-menu-label">فريق التوصيل</span>
+            </a>
+            <a href="{% url 'shipping:internal_chat' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#ede9fe;--icon-fg:#5b21b6;" aria-hidden="true">💬</span>
+              <span class="portal-menu-label">محادثات داخلية</span>
+            </a>
+            {% else %}
+            {# ── قائمة مندوب الشحن (courier) ── #}
+            <a href="{% url 'shipping:dashboard' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#dbeafe;--icon-fg:#1d4ed8;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></span>
+              <span class="portal-menu-label">الرئيسية</span>
+            </a>
+            <a href="{% url 'shipping:available_jobs' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#fef3c7;--icon-fg:#b45309;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg></span>
+              <span class="portal-menu-label">طلبات جديدة</span>
+            </a>
+            <a href="{% url 'shipping:shipments_list' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#dcfce7;--icon-fg:#166534;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg></span>
+              <span class="portal-menu-label">الشحنات</span>
+            </a>
+            <a href="{% url 'shipping:scan' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#ede9fe;--icon-fg:#5b21b6;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2"/><rect x="7" y="7" width="10" height="10" rx="1" stroke="currentColor" stroke-width="1.6"/></svg></span>
+              <span class="portal-menu-label">مسار البوليصة</span>
+            </a>
+            <a href="{% url 'shipping:internal_chat' %}" class="portal-menu-link" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#ede9fe;--icon-fg:#5b21b6;" aria-hidden="true">💬</span>
+              <span class="portal-menu-label">التواصل مع المسؤول</span>
+            </a>
+            {% endif %}
+
+            <a href="{% url 'wardrobe' %}" class="portal-menu-link" role="menuitem" target="_blank" rel="noopener">
+              <span class="portal-menu-icon" style="--icon-bg:#fce7f3;--icon-fg:#be185d;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg></span>
+              <span class="portal-menu-label">المتجر</span>
+            </a>
+            <button type="button" class="portal-menu-link portal-menu-link--button" id="shippingThemeToggle" role="menuitem" aria-pressed="false">
+              <span class="portal-menu-icon" style="--icon-bg:#e2e8f0;--icon-fg:#334155;" aria-hidden="true">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.36 6.36-1.41-1.41M7.05 7.05 5.64 5.64m12.72 0-1.41 1.41M7.05 16.95l-1.41 1.41"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.7"/></svg>
+              </span>
+              <span class="portal-menu-label">🌙 مود الليل</span>
+            </button>
+            <hr class="portal-menu-sep">
+            <a href="{% url 'shipping:logout' %}" class="portal-menu-link portal-menu-link--logout" role="menuitem">
+              <span class="portal-menu-icon" style="--icon-bg:#fee2e2;--icon-fg:#b91c1c;" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg></span>
+              <span class="portal-menu-label">تسجيل الخروج</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+  {% endif %}
+
+  <main class="ship-main">
+    {% if messages %}
+    <ul class="manage-messages">
+      {% for message in messages %}
+      <li class="manage-message {{ message.tags }}">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+  function toggleShippingMenu() {
+    var menu = document.getElementById('shippingPortalMenu');
+    var btn = document.getElementById('shippingMenuBtn');
+    if (!menu) return;
+    var open = menu.style.display === 'flex';
+    menu.style.display = open ? 'none' : 'flex';
+    if (btn) btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+  }
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('shippingMenuWrap');
+    var menu = document.getElementById('shippingPortalMenu');
+    var btn = document.getElementById('shippingMenuBtn');
+    if (wrap && menu && !wrap.contains(e.target)) {
+      menu.style.display = 'none';
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', function() {
+    var themeBtn = document.getElementById('shippingThemeToggle');
+    var THEME_KEY = 'shipping_theme_mode';
+
+    function preferredTheme() {
+      try {
+        var stored = localStorage.getItem(THEME_KEY);
+        if (stored === 'dark' || stored === 'light') return stored;
+      } catch (e) {}
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+      return 'light';
+    }
+    function applyTheme(mode) {
+      var dark = mode === 'dark';
+      document.body.classList.toggle('theme-dark', dark);
+      if (themeBtn) {
+        var label = themeBtn.querySelector('.portal-menu-label');
+        themeBtn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+        if (label) label.textContent = dark ? '☀️ مود النهار' : '🌙 مود الليل';
+      }
+      try { localStorage.setItem(THEME_KEY, mode); } catch (e2) {}
+    }
+    applyTheme(preferredTheme());
+    if (themeBtn) {
+      themeBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var next = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+        applyTheme(next);
+      });
+    }
+  });
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
+

@@ -1,0 +1,24 @@
+{# مسار المرتجع — مشترك بين العميل ولوحة الإدارة #}
+<div class="return-timeline" role="list" aria-label="مسار حالة المرتجع">
+    <ol class="return-timeline__track">
+        {% for step in return_timeline.steps %}
+        <li class="return-timeline__step return-timeline__step--{{ step.state }}"
+            style="--step-accent: {{ step.color }};"
+            role="listitem">
+            <div class="return-timeline__node" aria-hidden="true">
+                <span class="return-timeline__icon">{{ step.icon }}</span>
+            </div>
+            <div class="return-timeline__body">
+                <div class="return-timeline__label">{{ step.label }}</div>
+                {% if step.at %}
+                <time class="return-timeline__time" datetime="{{ step.at|date:'c' }}">{{ step.at|date:"Y-m-d H:i" }}</time>
+                {% elif step.state == 'pending' %}
+                <span class="return-timeline__muted">—</span>
+                {% elif step.state == 'skipped' %}
+                <span class="return-timeline__muted">لم يُستكمل</span>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ol>
+</div>

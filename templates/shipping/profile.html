@@ -1,0 +1,227 @@
+﻿{% extends "shipping/base_shipping.html" %}
+{% load static %}
+{% block title %}ملف المندوب | بوابة الشحن{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/profile_edit.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/portal_profile_edit.css' %}?v=20">
+<style>
+  body.theme-dark .portal-profile-intro h1,
+  body.theme-dark .portal-profile-card-title {
+    color: #f8fafc;
+  }
+  body.theme-dark .portal-profile-intro p,
+  body.theme-dark .portal-profile-note,
+  body.theme-dark .profile-edit-label {
+    color: #cbd5e1;
+  }
+  body.theme-dark .profile-edit-card {
+    background: #0f172a;
+    border-color: rgba(148, 163, 184, 0.24);
+    box-shadow: 0 14px 28px rgba(2, 6, 23, 0.45);
+  }
+  body.theme-dark .profile-edit-field input,
+  body.theme-dark .profile-edit-field select,
+  body.theme-dark .profile-edit-field textarea {
+    background: #111827;
+    color: #f8fafc;
+    border-color: rgba(148, 163, 184, 0.35);
+  }
+  body.theme-dark .profile-edit-field input::placeholder,
+  body.theme-dark .profile-edit-field textarea::placeholder {
+    color: #94a3b8;
+  }
+  body.theme-dark .portal-back-link {
+    background: #1e3a8a;
+    border-color: #1d4ed8;
+    color: #dbeafe;
+  }
+  body.theme-dark .profile-btn--primary {
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+    border-color: #1d4ed8;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="portal-profile-page portal-profile--shipping">
+    <div class="portal-profile-intro">
+        <div>
+            <h1>تعديل الملف الشخصي</h1>
+            <p>حدّث بياناتك وصورتك أو غيّر كلمة المرور من مكان واحد.</p>
+        </div>
+        <a class="portal-back-link" href="{% url 'shipping:dashboard' %}">🏠 الرئيسية</a>
+    </div>
+
+    {% if messages %}
+    <ul class="manage-messages" style="margin-bottom:1rem;">
+        {% for message in messages %}
+        <li class="manage-message {{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="portal-profile-grid">
+        <div class="profile-edit-card">
+            <h2 class="portal-profile-card-title">بيانات الحساب</h2>
+            <form method="post" action="{% url 'shipping:profile' %}" enctype="multipart/form-data" class="profile-edit-form js-portal-profile-form" id="shipping-profile-form" data-form-kind="profile">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="profile">
+                {% include 'partials/profile_account_form_fields.html' with form=profile_form profile=profile_obj %}
+                <div class="profile-form-actions" style="border-top:none;padding-top:0.75rem;margin-top:0.5rem;">
+                    <button type="submit" class="profile-btn profile-btn--primary js-portal-profile-submit-btn">
+                        <span class="profile-btn-icon" aria-hidden="true">💾</span>
+                        حفظ التغييرات
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="profile-edit-card profile-edit-card--password">
+            <h2 class="portal-profile-card-title">أمان الحساب</h2>
+            <p class="portal-profile-note">لتغيير كلمة المرور أدخل كلمة المرور الحالية ثم الجديدة.</p>
+            <form method="post" action="{% url 'shipping:profile' %}" class="profile-edit-form js-portal-profile-form" data-form-kind="password">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="password">
+
+                <div class="profile-edit-field">
+                    <label class="profile-edit-label" for="{{ password_form.old_password.id_for_label }}">
+                        <span class="profile-edit-label-icon" aria-hidden="true">🔑</span>
+                        كلمة المرور الحالية
+                    </label>
+                    {{ password_form.old_password }}
+                    {% if password_form.old_password.errors %}<div class="field-errors">{% for e in password_form.old_password.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+                </div>
+                <div class="profile-edit-field">
+                    <label class="profile-edit-label" for="{{ password_form.new_password1.id_for_label }}">
+                        <span class="profile-edit-label-icon" aria-hidden="true">🔐</span>
+                        كلمة المرور الجديدة
+                    </label>
+                    {{ password_form.new_password1 }}
+                    {% if password_form.new_password1.errors %}<div class="field-errors">{% for e in password_form.new_password1.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+                </div>
+                <div class="profile-edit-field">
+                    <label class="profile-edit-label" for="{{ password_form.new_password2.id_for_label }}">
+                        <span class="profile-edit-label-icon" aria-hidden="true">✔️</span>
+                        تأكيد كلمة المرور الجديدة
+                    </label>
+                    {{ password_form.new_password2 }}
+                    {% if password_form.new_password2.errors %}<div class="field-errors">{% for e in password_form.new_password2.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+                </div>
+
+                <div class="profile-form-actions" style="border-top:none;padding-top:0.75rem;">
+                    <button type="submit" class="profile-btn profile-btn--primary js-portal-profile-submit-btn">
+                        <span class="profile-btn-icon" aria-hidden="true">🔒</span>
+                        تغيير كلمة المرور
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<div id="shipping-profile-inline-msg" style="display:none; margin-top:0.8rem; font-weight:800;"></div>
+
+<script>
+(function () {
+    var dz = document.getElementById('avatar-dropzone');
+    var input = document.querySelector('#shipping-profile-form #id_avatar') || document.querySelector('#id_avatar');
+    var img = document.getElementById('avatar-preview-img');
+    var ph = document.getElementById('avatar-placeholder');
+    if (!dz || !input) return;
+
+    function showPreview(file) {
+        if (!file || !file.type || !file.type.match(/^image\//)) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            if (img) {
+                img.src = ev.target.result;
+                img.removeAttribute('hidden');
+                img.style.display = '';
+            }
+            if (ph) ph.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    input.addEventListener('change', function () {
+        if (input.files && input.files[0]) showPreview(input.files[0]);
+    });
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function (evName) {
+        dz.addEventListener(evName, function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }, false);
+    });
+    dz.addEventListener('dragenter', function () { dz.classList.add('is-dragover'); });
+    dz.addEventListener('dragover', function () { dz.classList.add('is-dragover'); });
+    dz.addEventListener('dragleave', function (e) {
+        if (!dz.contains(e.relatedTarget)) dz.classList.remove('is-dragover');
+    });
+    dz.addEventListener('drop', function (e) {
+        dz.classList.remove('is-dragover');
+        var files = e.dataTransfer && e.dataTransfer.files;
+        if (!files || !files.length) return;
+        var f = files[0];
+        if (!f.type.match(/^image\//)) return;
+        var dt = new DataTransfer();
+        dt.items.add(f);
+        input.files = dt.files;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+})();
+</script>
+<script>
+(function () {
+    var msg = document.getElementById('shipping-profile-inline-msg');
+    function showMsg(text, ok) {
+        if (!msg) return;
+        msg.style.display = 'block';
+        msg.style.color = ok ? '#065f46' : '#b91c1c';
+        msg.textContent = text;
+        setTimeout(function () { msg.style.display = 'none'; }, 2800);
+    }
+    document.addEventListener('submit', function (e) {
+        var form = e.target.closest('form.js-portal-profile-form');
+        if (!form) return;
+        e.preventDefault();
+        var btn = form.querySelector('.js-portal-profile-submit-btn');
+        if (btn) btn.disabled = true;
+        fetch(getFormActionUrl(form), {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر حفظ التحديث');
+            showMsg(data.message || 'تم الحفظ بنجاح.', true);
+            if (data.action === 'profile') {
+                var previewImg = document.getElementById('avatar-preview-img');
+                var previewPh = document.getElementById('avatar-placeholder');
+                if (data.avatar_url && previewImg) {
+                    previewImg.src = data.avatar_url + (data.avatar_url.indexOf('?') === -1 ? '?v=' + Date.now() : '&v=' + Date.now());
+                    previewImg.removeAttribute('hidden');
+                    previewImg.style.display = '';
+                    if (previewPh) previewPh.style.display = 'none';
+                }
+            }
+            if (form.getAttribute('data-form-kind') === 'password') form.reset();
+            if (btn) btn.disabled = false;
+        })
+        .catch(function (err) {
+            showMsg((err && err.message) ? err.message : 'تعذر تنفيذ العملية.', false);
+            if (btn) btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}
+

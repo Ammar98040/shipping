@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}مراجعاتي{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/reviews.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="my-reviews-page">
+    <h1 class="page-title">مراجعاتي</h1>
+    
+    {% if reviews %}
+    <div class="reviews-grid">
+        {% for review in reviews %}
+        <div class="review-card" data-review-id="{{ review.id }}">
+            <div class="product-info">
+                <a href="{% url 'product' review.product.id %}" class="product-link">
+                    <h3>{{ review.product.name_ar }}</h3>
+                </a>
+                <p class="product-path">
+                    {{ review.product.category.shelf.compartment.name_ar }} 
+                    → {{ review.product.category.shelf.name_ar }} 
+                    → {{ review.product.category.name_ar }}
+                </p>
+            </div>
+            
+            <div class="review-content">
+                <div class="review-rating">
+                    {% for i in "12345" %}
+                    <span class="star {% if forloop.counter <= review.rating %}filled{% endif %}">★</span>
+                    {% endfor %}
+                </div>
+                {% if review.comment %}
+                <p class="review-comment">{{ review.comment }}</p>
+                {% endif %}
+                <p class="review-date">{{ review.created_at|date:"Y-m-d H:i" }}</p>
+            </div>
+            
+            <div class="review-actions">
+                <a href="{% url 'product' review.product.id %}" class="btn-view">عرض المنتج</a>
+                <form method="post" action="{% url 'review_delete' review.id %}" class="js-review-delete-form" style="display:inline;" data-confirm="حذف هذا التقييم؟">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-delete">حذف</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="store-empty-state empty-reviews">
+        <p class="store-empty-state__title">لا مراجعات بعد</p>
+        <p class="store-empty-state__text">زُر منتجاً اشتريته أو جرّبته وشارك تجربة قصيرة — تُحدّث من صفحة المنتج.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'my_orders' %}" class="store-btn store-btn--secondary">طلباتي</a>
+            <a href="{% url 'products_all' %}" class="store-btn store-btn--primary">تصفّح المنتجات</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+<script>
+(function () {
+    var root = document.querySelector('.my-reviews-page');
+    if (!root) return;
+    function showMsg(text, ok) {
+        var msg = document.createElement('div');
+        msg.className = 'message';
+        msg.style.marginBottom = '0.75rem';
+        msg.style.background = ok ? '#f0faf5' : '#fff0f0';
+        msg.style.color = ok ? '#065f46' : '#dc2626';
+        msg.textContent = text;
+        root.prepend(msg);
+        setTimeout(function () { msg.remove(); }, 2500);
+    }
+    document.addEventListener('submit', function (e) {
+        var form = e.target.closest('form.js-review-delete-form');
+        if (!form) return;
+        e.preventDefault();
+        var confirmMsg = form.getAttribute('data-confirm');
+        if (confirmMsg && !window.confirm(confirmMsg)) return;
+        var btn = form.querySelector('button[type="submit"]');
+        if (btn) btn.disabled = true;
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر الحذف');
+            showMsg(data.message || 'تم حذف التقييم.', true);
+            var card = form.closest('.review-card');
+            if (card) card.remove();
+            if (btn) btn.disabled = false;
+        })
+        .catch(function (err) {
+            showMsg((err && err.message) ? err.message : 'تعذر حذف التقييم.', false);
+            if (btn) btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,374 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}إتمام الطلب{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/checkout.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/address-fields-unified.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+    <nav class="shop-checkout-steps" aria-label="خطوات إتمام الشراء">
+        <a href="{% url 'cart_view' %}" class="shop-checkout-step is-complete">
+            <span class="shop-checkout-step-num" aria-hidden="true">✓</span>
+            سلة التسوق
+        </a>
+        <span class="shop-checkout-step-sep" aria-hidden="true">›</span>
+        <span class="shop-checkout-step is-active" aria-current="step">
+            <span class="shop-checkout-step-num">2</span>
+            الدفع والتوصيل
+        </span>
+    </nav>
+
+    <h1 class="page-title">إتمام الطلب</h1>
+    <p class="page-subtitle">أدخل بيانات التوصيل واختر طريقة الدفع</p>
+    <p class="store-field-hint checkout-flow-hint">الحقول المعلّمة بعلامة <span class="req-star" aria-hidden="true">*</span> مطلوبة. إن وُجد عنوان افتراضي فسيُحمّل تلقائياً؛ يمكنك تعديله أو إضافة عنوان جديد.</p>
+
+    <div class="shop-trust-strip" role="presentation">
+        <span>🔒 بياناتك محمية</span>
+        <span>✓ تأكيد الطلب خطوة أخيرة</span>
+    </div>
+
+    <p class="checkout-back-wrap">
+        <a href="{% url 'cart_view' %}" class="checkout-back-link">← العودة إلى سلة التسوق</a>
+    </p>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="message {{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="checkout-container">
+        <section class="checkout-form-section">
+            <h2 id="delivery-heading">معلومات التوصيل</h2>
+
+            {% if saved_addresses %}
+            <div class="saved-addresses-section">
+                <h3>اختر عنواناً محفوظاً</h3>
+                <div class="addresses-list">
+                    {% for addr in saved_addresses %}
+                    <label class="address-option {% if addr.is_default %}default-option{% endif %}">
+                        <input type="radio" name="address_selector" value="{{ addr.id }}" {% if addr.is_default %}checked{% endif %}>
+                        <div class="address-card-small">
+                            <strong>{{ addr.title }}</strong>
+                            {% if addr.is_default %}<span class="badge-default">افتراضي</span>{% endif %}
+                            <p>{{ addr.full_name }}</p>
+                            <p>{{ addr.phone }}</p>
+                            <p class="address-text-small">{{ addr.full_address }}</p>
+                        </div>
+                    </label>
+                    {% endfor %}
+                </div>
+                <div class="divider">أو</div>
+                <button type="button" class="btn-manual-entry" id="btn-manual-entry">إدخال عنوان جديد يدوياً</button>
+            </div>
+            {% endif %}
+
+            <form method="post" class="checkout-form" id="checkout-form">
+                {% csrf_token %}
+                <input type="hidden" name="saved_address_id" id="saved_address_id" value="{% if default_address %}{{ default_address.id }}{% endif %}">
+
+                <div class="manual-entry unified-address-scope" id="manual-entry" {% if default_address and saved_addresses %}style="display: none;"{% endif %}>
+                    <h3 class="unified-address-block__title">إدخال العنوان يدوياً</h3>
+
+                    <div class="unified-contact-grid">
+                        <div class="unified-field">
+                            <label for="customer_name" class="unified-field__label">
+                                <span class="unified-field__label-text">الاسم الكامل</span>
+                                <span class="req-star" aria-hidden="true">*</span>
+                                <span class="sr-only">مطلوب</span>
+                            </label>
+                            <input type="text" id="customer_name" name="customer_name" class="unified-address-input" placeholder="الاسم كما في الهوية" autocomplete="name" {% if not saved_addresses %}required{% endif %}>
+                        </div>
+                        <div class="unified-field">
+                            <label for="customer_phone" class="unified-field__label">
+                                <span class="unified-field__label-text">رقم الجوال</span>
+                                <span class="req-star" aria-hidden="true">*</span>
+                                <span class="sr-only">مطلوب</span>
+                            </label>
+                            <input type="tel" id="customer_phone" name="customer_phone" class="unified-address-input" placeholder="05xxxxxxxx" dir="ltr" inputmode="tel" autocomplete="tel" {% if not saved_addresses %}required{% endif %}>
+                        </div>
+                    </div>
+
+                    <div class="unified-field unified-field--full" style="margin-top:0.25rem;">
+                        <label for="customer_email" class="unified-field__label">
+                            <span class="unified-field__label-text">البريد الإلكتروني</span>
+                        </label>
+                        <input type="email" id="customer_email" name="customer_email" class="unified-address-input" placeholder="example@email.com" dir="ltr" autocomplete="email">
+                    </div>
+
+                    <section class="unified-address-block" aria-labelledby="checkout-address-details-title" style="margin-top:1.25rem;">
+                        <h4 class="unified-address-block__sub" id="checkout-address-details-title">تفاصيل العنوان</h4>
+                        <div class="unified-address-grid">
+                            <div class="unified-field">
+                                <label for="country" class="unified-field__label">
+                                    <span class="unified-field__label-text">البلد</span>
+                                </label>
+                                <input type="text" id="country" name="country" class="unified-address-input" placeholder="المملكة العربية السعودية" value="المملكة العربية السعودية" autocomplete="country-name">
+                            </div>
+                            <div class="unified-field">
+                                <label for="city" class="unified-field__label">
+                                    <span class="unified-field__label-text">المدينة</span>
+                                    <span class="req-star" aria-hidden="true">*</span>
+                                    <span class="sr-only">مطلوب</span>
+                                </label>
+                                <input type="text" id="city" name="city" class="unified-address-input" placeholder="مثال: الرياض، جدة" autocomplete="address-level2" {% if not saved_addresses %}required{% endif %}>
+                            </div>
+                            <div class="unified-field">
+                                <label for="district" class="unified-field__label">
+                                    <span class="unified-field__label-text">الحي</span>
+                                </label>
+                                <input type="text" id="district" name="district" class="unified-address-input" placeholder="اسم الحي" autocomplete="address-level3">
+                            </div>
+                            <div class="unified-field">
+                                <label for="postal_code" class="unified-field__label">
+                                    <span class="unified-field__label-text">الرمز البريدي</span>
+                                </label>
+                                <input type="text" id="postal_code" name="postal_code" class="unified-address-input" placeholder="12345" dir="ltr" autocomplete="postal-code">
+                            </div>
+                            <div class="unified-field unified-field--full">
+                                <label for="national_address" class="unified-field__label">
+                                    <span class="unified-field__label-text">العنوان الوطني</span>
+                                    <span class="req-star" aria-hidden="true">*</span>
+                                    <span class="sr-only">مطلوب</span>
+                                </label>
+                                <input type="text" id="national_address" name="national_address" class="unified-address-input" placeholder="مثال: RRRRNNNN" dir="ltr" {% if not saved_addresses %}required{% endif %}>
+                            </div>
+                            <div class="unified-field">
+                                <label for="street" class="unified-field__label">
+                                    <span class="unified-field__label-text">اسم الشارع</span>
+                                    <span class="req-star" aria-hidden="true">*</span>
+                                    <span class="sr-only">مطلوب</span>
+                                </label>
+                                <input type="text" id="street" name="street" class="unified-address-input" placeholder="اسم الشارع" autocomplete="street-address" {% if not saved_addresses %}required{% endif %}>
+                            </div>
+                            <div class="unified-field">
+                                <label for="building_number" class="unified-field__label">
+                                    <span class="unified-field__label-text">رقم العمارة</span>
+                                    <span class="req-star" aria-hidden="true">*</span>
+                                    <span class="sr-only">مطلوب</span>
+                                </label>
+                                <input type="text" id="building_number" name="building_number" class="unified-address-input" placeholder="مثال: 1234" {% if not saved_addresses %}required{% endif %}>
+                            </div>
+                            <div class="unified-field unified-field--full">
+                                <label for="additional_info" class="unified-field__label">
+                                    <span class="unified-field__label-text">معلومات إضافية</span>
+                                </label>
+                                <input type="text" id="additional_info" name="additional_info" class="unified-address-input" placeholder="رقم الشقة، معلومات إضافية">
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">ملاحظات إضافية</label>
+                    <textarea id="notes" name="notes" rows="3" placeholder="مثال: وقت التوصيل المفضل"></textarea>
+                </div>
+            </form>
+        </section>
+
+        <section class="payment-method-section" aria-labelledby="payment-heading">
+            <h2 id="payment-heading" tabindex="-1">طريقة الدفع</h2>
+            <p class="payment-instruction" id="payment-hint">اختر طريقة الدفع المناسبة لك (مطلوب)</p>
+            <div class="payment-options" id="payment-options" role="radiogroup" aria-labelledby="payment-heading" aria-describedby="payment-hint">
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="cash_on_delivery" form="checkout-form" required>
+                    <div class="payment-card">
+                        <div class="payment-icon">💵</div>
+                        <div class="payment-details">
+                            <h3>الدفع عند الاستلام</h3>
+                            <p>ادفع نقداً عند استلام الطلب</p>
+                        </div>
+                    </div>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment_method" value="payment_gateway" form="checkout-form" required>
+                    <div class="payment-card">
+                        <div class="payment-icon">💳</div>
+                        <div class="payment-details">
+                            <h3>الدفع بالبطاقة</h3>
+                            <p>فيزا / مدى / بطاقة ائتمانية</p>
+                        </div>
+                    </div>
+                </label>
+            </div>
+            <div class="payment-error" id="payment-error" style="display: none;">
+                ⚠️ الرجاء اختيار طريقة الدفع
+            </div>
+            <button type="submit" form="checkout-form" class="btn-submit-order" data-submit-label="تأكيد الطلب">تأكيد الطلب</button>
+        </section>
+
+        <aside class="checkout-sidebar">
+            <section class="order-summary-section order-summary-card">
+                <h2>ملخص الطلب</h2>
+                <div class="coupon-entry" style="display:none;">
+                    {# تم نقل تطبيق الكوبون إلى صفحة السلة فقط #}
+                </div>
+
+                <div class="summary-items">
+                    {% for item in cart %}
+                    <div class="summary-item">
+                        <span class="summary-item-name">{{ item.name }}</span>
+                        <span class="summary-item-quantity">× {{ item.quantity }}</span>
+                        <span class="summary-item-price">{{ item.total }} ر.س</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="summary-row summary-subtotal">
+                    <span>المجموع الفرعي</span>
+                    <span>{{ subtotal }} ر.س</span>
+                </div>
+                {% if product_discount_total != 0 %}
+                <div class="summary-row summary-product-discount">
+                    <span>خصم عروض المنتجات</span>
+                    <span>-{{ product_discount_total }} ر.س</span>
+                </div>
+                {% endif %}
+                {% if product_discount_total != 0 %}
+                <div class="summary-row summary-after-product-offers">
+                    <span>الإجمالي بعد خصم عروض المنتجات</span>
+                    <span>{{ subtotal_after_product_offers }} ر.س</span>
+                </div>
+                {% endif %}
+                <div class="summary-row summary-coupon-discount">
+                    <span>
+                        خصم الكوبون
+                        {% if applied_coupon_code %}( {{ applied_coupon_code }} ){% endif %}
+                    </span>
+                    <span>
+                        {% if coupon_discount_total and coupon_discount_total != 0 and applied_coupon_code %}
+                            -{{ coupon_discount_total }} ر.س
+                        {% else %}
+                            0 ر.س
+                        {% endif %}
+                    </span>
+                </div>
+                {% if coupon_discount_total != 0 and applied_coupon_code %}
+                <div class="summary-row summary-after-coupon-discount">
+                    <span>الإجمالي بعد خصم الكوبون</span>
+                    <span>{{ subtotal_after_all_discounts }} ر.س</span>
+                </div>
+                {% endif %}
+                <div class="summary-row summary-delivery">
+                    <span>رسوم التوصيل</span>
+                    <span>{{ delivery_fee }} ر.س</span>
+                </div>
+                <div class="summary-total">
+                    <span>المجموع الكلي</span>
+                    <span>{{ total_with_delivery }} ر.س</span>
+                </div>
+            </section>
+        </aside>
+    </div>
+
+    <div class="checkout-sticky-mobile" aria-hidden="true">
+        <div class="sticky-inner">
+            <span class="sticky-total"><strong>{{ total_with_delivery }} ر.س</strong></span>
+            <button type="submit" form="checkout-form" class="btn-submit-sticky" data-submit-label="تأكيد الطلب">تأكيد الطلب</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var savedSection = document.querySelector('.saved-addresses-section');
+    var manualEntry = document.getElementById('manual-entry');
+    var savedInput = document.getElementById('saved_address_id');
+    var btnManual = document.getElementById('btn-manual-entry');
+    var checkoutForm = document.getElementById('checkout-form');
+    var paymentError = document.getElementById('payment-error');
+
+    // التعامل مع العناوين المحفوظة
+    if (savedSection && manualEntry && savedInput) {
+        document.querySelectorAll('input[name="address_selector"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                savedInput.value = this.value;
+                manualEntry.style.display = 'none';
+                document.getElementById('customer_name').removeAttribute('required');
+                document.getElementById('customer_phone').removeAttribute('required');
+                document.getElementById('city').removeAttribute('required');
+                document.getElementById('national_address').removeAttribute('required');
+                document.getElementById('street').removeAttribute('required');
+                document.getElementById('building_number').removeAttribute('required');
+            });
+        });
+    }
+
+    if (btnManual && manualEntry && savedInput) {
+        btnManual.addEventListener('click', function() {
+            savedInput.value = '';
+            manualEntry.style.display = 'block';
+            document.querySelectorAll('input[name="address_selector"]').forEach(function(r) { r.checked = false; });
+            document.getElementById('customer_name').setAttribute('required', '');
+            document.getElementById('customer_phone').setAttribute('required', '');
+            document.getElementById('city').setAttribute('required', '');
+            document.getElementById('national_address').setAttribute('required', '');
+            document.getElementById('street').setAttribute('required', '');
+            document.getElementById('building_number').setAttribute('required', '');
+        });
+    }
+
+    function setCheckoutSubmitting(isSubmitting) {
+        var label = isSubmitting ? 'جاري الإرسال…' : null;
+        document.querySelectorAll('.btn-submit-order, .btn-submit-sticky').forEach(function(btn) {
+            if (isSubmitting) {
+                if (!btn.dataset.originalText) btn.dataset.originalText = btn.textContent;
+                btn.disabled = true;
+                btn.classList.add('is-loading');
+                btn.textContent = label;
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('is-loading');
+                if (btn.dataset.originalText) btn.textContent = btn.dataset.originalText;
+            }
+        });
+    }
+
+    // التحقق من اختيار طريقة الدفع + منع الإرسال المزدوج
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', function(e) {
+            var paymentMethod = document.querySelector('input[name="payment_method"]:checked');
+
+            if (checkoutForm.classList.contains('is-submitting')) {
+                e.preventDefault();
+                return false;
+            }
+
+            if (!paymentMethod) {
+                e.preventDefault();
+                if (paymentError) {
+                    paymentError.style.display = 'block';
+                    paymentError.setAttribute('role', 'alert');
+                    paymentError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                var paySection = document.getElementById('payment-heading');
+                if (paySection) paySection.focus({ preventScroll: false });
+                return false;
+            }
+
+            if (paymentError) {
+                paymentError.style.display = 'none';
+            }
+            checkoutForm.classList.add('is-submitting');
+            setCheckoutSubmitting(true);
+        });
+    }
+
+    // إخفاء رسالة الخطأ عند اختيار طريقة دفع
+    document.querySelectorAll('input[name="payment_method"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            if (paymentError) {
+                paymentError.style.display = 'none';
+            }
+        });
+    });
+})();
+</script>
+{% endblock %}
+

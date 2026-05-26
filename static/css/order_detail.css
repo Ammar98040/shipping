@@ -1,0 +1,1240 @@
+/**
+ * تفاصيل الطلب / تفاصيل المرتجع
+ * يعتمد على base.css (متغيرات، ألوان، خطوط).
+ * يُفعَّل تخطيط العمود الموحّد عند body.page-order-detail فقط.
+ */
+
+:root {
+    --od-gap: 1.25rem;
+    --od-card-pad: 1.5rem 1.25rem;
+    --od-breadcrumb-pad: 0.65rem 1rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* متغيرات محلية — عمود واحد موحّد */
+/* -------------------------------------------------------------------------- */
+body.page-order-detail {
+    --od-pad-x: max(1rem, env(safe-area-inset-left));
+    --od-pad-x-end: max(1rem, env(safe-area-inset-right));
+    --od-gap: 1.25rem;
+    --od-card-pad: 1.5rem 1.25rem;
+    --od-breadcrumb-pad: 0.65rem 1rem;
+}
+
+@media (max-width: 768px) {
+    body.page-order-detail {
+        --od-pad-x: max(0.75rem, env(safe-area-inset-left));
+        --od-pad-x-end: max(0.75rem, env(safe-area-inset-right));
+        --od-card-pad: 1.25rem 1rem;
+    }
+
+    body.page-order-detail .main-content {
+        padding-top: 0.75rem;
+        padding-bottom: 0.75rem;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* هيكل الصفحة — header / main / footer (لا يؤثر على باقي الموقع) */
+/* -------------------------------------------------------------------------- */
+body.page-order-detail .site-header,
+body.page-order-detail .site-footer {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* الهيدر وشريط البحث: نفس base.css وصفحة «طلباتي» (لا نُوسّع البحث ولا نلغي max-width للهيدر) */
+
+body.page-order-detail .main-content {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    padding-left: var(--od-pad-x);
+    padding-right: var(--od-pad-x-end);
+    box-sizing: border-box;
+}
+
+body.page-order-detail .site-footer {
+    max-width: none;
+    padding-left: var(--od-pad-x);
+    padding-right: var(--od-pad-x-end);
+}
+
+body.page-order-detail .site-footer p,
+body.page-order-detail .site-footer .footer-links {
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------------------- */
+/* مسار + شريط أدوات — بعرض عمود المحتوى */
+/* -------------------------------------------------------------------------- */
+body.page-order-detail nav.store-breadcrumb-nav,
+body.page-order-detail .store-quick-toolbar {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    box-sizing: border-box;
+}
+
+body.page-order-detail nav.store-breadcrumb-nav {
+    padding: var(--od-breadcrumb-pad);
+}
+
+body.page-order-detail .store-quick-toolbar {
+    justify-content: flex-start;
+}
+
+/* -------------------------------------------------------------------------- */
+/* حاوية المحتوى */
+/* -------------------------------------------------------------------------- */
+.order-detail-page {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body.page-order-detail .order-detail-page .page-header {
+    padding: 1rem 0 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+body.page-order-detail .order-detail-page .shop-trust-strip {
+    margin: 0 0 var(--od-gap);
+    padding: 0;
+    width: 100%;
+}
+
+.order-detail-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+/* صفحات بدون page-order-detail (احتياطي) */
+body:not(.page-order-detail) .order-detail-page .page-header {
+    padding: 1rem 1rem 0;
+}
+
+.order-detail-page .page-subtitle {
+    margin: 0.35rem 0 0;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.page-title {
+    font-size: 1.5rem;
+    margin: 0;
+    color: var(--text);
+    font-weight: 700;
+}
+
+.order-detail-container {
+    display: grid;
+    gap: var(--od-gap);
+}
+
+body.page-order-detail .order-detail-page .order-detail-container {
+    padding: 0 0 2rem;
+    width: 100%;
+}
+
+body:not(.page-order-detail) .order-detail-page .order-detail-container {
+    padding: 0 1rem 2rem;
+}
+
+@media (min-width: 769px) {
+    body:not(.page-order-detail) .order-detail-page {
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* بطاقات موحّدة */
+/* -------------------------------------------------------------------------- */
+.order-info-card,
+.customer-info-card,
+.products-card,
+.status-timeline-card,
+.actions-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: var(--od-card-pad);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+body.page-order-detail .order-detail-page .order-status-row,
+body.page-order-detail .order-detail-page .order-info-card,
+body.page-order-detail .order-detail-page .customer-info-card,
+body.page-order-detail .order-detail-page .products-card,
+body.page-order-detail .order-detail-page .actions-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+.order-info-card h2,
+.customer-info-card h2,
+.products-card h2,
+.status-timeline-card h2 {
+    margin: 0 0 1.25rem;
+    color: var(--text);
+    font-size: 1.2rem;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 0.75rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* مسار الطلب — شريط التقدم */
+/* -------------------------------------------------------------------------- */
+.progress-track {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    margin: 1.5rem 0 2rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.pt-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    min-width: 70px;
+    position: relative;
+}
+
+.pt-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 17px;
+    left: calc(50% + 17px);
+    width: calc(100% - 34px);
+    height: 3px;
+    background: #e2e8f0;
+    z-index: 0;
+}
+
+.pt-step.done:not(:last-child)::after {
+    background: #2c5f4f;
+}
+
+.pt-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 3px solid #e2e8f0;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    z-index: 1;
+    position: relative;
+}
+
+.pt-step.done .pt-dot {
+    background: #2c5f4f;
+    border-color: #2c5f4f;
+    color: #fff;
+}
+
+.pt-step.active .pt-dot {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: #fff;
+    box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.15);
+}
+
+.pt-step.cancelled .pt-dot {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #fff;
+}
+
+.pt-label {
+    font-size: 0.68rem;
+    margin-top: 0.35rem;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.pt-step.done .pt-label {
+    color: #2c5f4f;
+    font-weight: 700;
+}
+
+.pt-step.active .pt-label {
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.pt-step.cancelled .pt-label {
+    color: #ef4444;
+    font-weight: 700;
+}
+
+/* طلب ملغي */
+.order-cancel-banner {
+    background: #fff5f5;
+    border: 1px solid #fca5a5;
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.order-cancel-banner__icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.order-cancel-banner__title {
+    color: #ef4444;
+}
+
+.order-cancel-banner__note {
+    margin: 0.2rem 0 0;
+    color: #6c757d;
+    font-size: 0.88rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* بطاقات الحالة */
+/* -------------------------------------------------------------------------- */
+.order-status-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.os-card {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem 1.25rem;
+    box-sizing: border-box;
+}
+
+.os-card--total {
+    border-color: #2c5f4f;
+}
+
+.os-card--total .os-value--total {
+    color: #2c5f4f;
+    font-size: 1.1rem;
+}
+
+.os-label {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-bottom: 0.3rem;
+}
+
+.os-value {
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.os-card__tracking {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: #6b7280;
+    font-family: ui-monospace, monospace;
+}
+
+/* -------------------------------------------------------------------------- */
+/* سجل الطلب */
+/* -------------------------------------------------------------------------- */
+.order-history {
+    list-style: none;
+    padding: 0 1.25rem 0 0;
+    margin: 0;
+    border-right: 3px solid #e2e8f0;
+}
+
+.oh-item {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+.oh-item::before {
+    content: '';
+    position: absolute;
+    right: -1.52rem;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #2c5f4f;
+}
+
+.oh-item.auto::before {
+    background: #3b82f6;
+}
+
+.oh-time {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    margin-bottom: 0.15rem;
+}
+
+.oh-text {
+    font-size: 0.88rem;
+    color: #374151;
+    font-weight: 500;
+}
+
+.oh-note {
+    font-size: 0.82rem;
+    color: #6b7280;
+    margin-top: 0.15rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* شارات ودفع */
+/* -------------------------------------------------------------------------- */
+.pay-badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.pay-pending { background: #fff3cd; color: #92400e; }
+.pay-paid { background: #d1fae5; color: #065f46; }
+.pay-failed { background: #fee2e2; color: #991b1b; }
+.pay-refunded { background: #dbeafe; color: #1e40af; }
+
+.status-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    display: inline-block;
+}
+
+.status-pending { background: #fff3cd; color: #856404; }
+.status-confirmed { background: #dbeafe; color: #1e40af; }
+.status-processing { background: #cfe2ff; color: #084298; }
+.status-ready_to_ship { background: #d1fae5; color: #065f46; }
+.status-shipped { background: #d1e7dd; color: #0f5132; }
+.status-delivered { background: #d4edda; color: #155724; }
+.status-cancelled { background: #f8d7da; color: #721c24; }
+
+/* -------------------------------------------------------------------------- */
+/* معلومات العميل */
+/* -------------------------------------------------------------------------- */
+.customer-details {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.detail-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.detail-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.detail-value {
+    color: var(--text);
+    font-size: 1.05rem;
+    white-space: pre-line;
+}
+
+.detail-value--address {
+    white-space: pre-line;
+    line-height: 1.8;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.info-value {
+    font-size: 1.15rem;
+    color: var(--text);
+    font-weight: 600;
+}
+
+.info-value--link {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.info-value--link:hover {
+    text-decoration: underline;
+}
+
+.total-price {
+    color: var(--accent);
+    font-size: 1.35rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* المنتجات */
+/* -------------------------------------------------------------------------- */
+.products-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.product-item {
+    display: flex;
+    gap: 1.25rem;
+    padding: 1.25rem 1rem;
+    background: var(--bg);
+    border-radius: 10px;
+    align-items: center;
+    box-sizing: border-box;
+}
+
+.product-image {
+    width: 88px;
+    height: 88px;
+    flex-shrink: 0;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.2rem;
+    font-weight: bold;
+    color: white;
+}
+
+.product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.product-name {
+    margin: 0 0 0.5rem;
+    font-size: 1.15rem;
+}
+
+.product-name a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.product-name a:hover {
+    text-decoration: underline;
+}
+
+.product-category {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.product-pricing {
+    text-align: end;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex-shrink: 0;
+}
+
+.quantity {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.price {
+    font-size: 1rem;
+    color: var(--text);
+}
+
+.subtotal {
+    font-size: 1.15rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.order-summary {
+    border-top: 2px solid #dee2e6;
+    padding-top: 1rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.25rem;
+    gap: 0.5rem;
+}
+
+.summary-total {
+    font-weight: bold;
+    color: var(--accent);
+    font-size: 1.5rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* أزرار */
+/* -------------------------------------------------------------------------- */
+.btn-back {
+    padding: 0.75rem 1.5rem;
+    background: #6c757d;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+.btn-back:hover {
+    background: #5a6268;
+    transform: translateX(5px);
+}
+
+.actions-card {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* .btn-action و .btn-reorder الأساسية من my_orders.css */
+
+.btn-action--danger {
+    background: #dc3545;
+}
+
+.btn-action--danger:hover {
+    background: #c82333;
+    color: #fff;
+}
+
+.btn-cancel-inline {
+    background: transparent;
+    border: 2px solid #ef4444;
+    color: #ef4444;
+    border-radius: 10px;
+    padding: 0.65rem 1.25rem;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    box-sizing: border-box;
+}
+
+.btn-cancel-inline:hover {
+    background: #ef4444;
+    color: #fff;
+}
+
+body.page-order-detail .order-actions--detail .btn-action,
+body.page-order-detail .order-actions--detail .btn-cancel-inline {
+    box-sizing: border-box;
+}
+
+body.page-order-detail .order-actions--detail .form-cancel-order {
+    display: flex;
+    align-items: stretch;
+    margin: 0;
+}
+
+body.page-order-detail .actions-card .btn-action,
+body.page-order-detail .actions-card .btn-cancel-inline,
+body.page-order-detail .actions-card .form-cancel-order {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+body.page-order-detail .actions-card .form-cancel-order {
+    display: block;
+}
+
+/* -------------------------------------------------------------------------- */
+/* خط زمني — مرتجع */
+/* -------------------------------------------------------------------------- */
+.timeline {
+    position: relative;
+    padding-right: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    right: 1.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    padding: 1rem 0;
+    display: flex;
+    gap: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    right: 1rem;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #dee2e6;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px #dee2e6;
+    z-index: 1;
+}
+
+.timeline-item.active .timeline-marker {
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.timeline-item.cancelled .timeline-marker {
+    background: #dc3545;
+    box-shadow: 0 0 0 2px #dc3545;
+}
+
+.timeline-content h4 {
+    margin: 0 0 0.25rem;
+    color: var(--text);
+    font-size: 1rem;
+}
+
+.timeline-item.active .timeline-content h4 {
+    color: var(--accent);
+}
+
+.timeline-item.cancelled .timeline-content h4 {
+    color: #dc3545;
+}
+
+.timeline-content p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* -------------------------------------------------------------------------- */
+/* مرتجع — حالات مخصصة */
+/* -------------------------------------------------------------------------- */
+.return-status-pending { background: #ffc107; color: #000; }
+.return-status-approved { background: #28a745; color: #fff; }
+.return-status-rejected { background: #dc3545; color: #fff; }
+.return-status-completed { background: #17a2b8; color: #fff; }
+
+.status-badge.status-pending { background: #ffc107; color: #000; }
+.status-badge.status-approved { background: #28a745; color: #fff; }
+.status-badge.status-rejected { background: #dc3545; color: #fff; }
+.status-badge.status-completed { background: #17a2b8; color: #fff; }
+
+.reason-details,
+.admin-notes {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+.reason-details h3,
+.admin-notes h3 {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+/* -------------------------------------------------------------------------- */
+/* شاشات صغيرة */
+/* -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+    /* هوامش سالبة فقط إذا لم يُعطَ body الصنف page-order-detail */
+    body:not(.page-order-detail) .order-detail-page {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        width: calc(100% + 1.5rem);
+    }
+
+    .page-title {
+        font-size: 1.35rem;
+    }
+
+    .page-header {
+        gap: 1rem;
+        align-items: stretch;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .product-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .product-pricing {
+        text-align: center;
+    }
+
+    .timeline {
+        padding-right: 0;
+        padding-left: 2rem;
+    }
+
+    .timeline::before {
+        right: auto;
+        left: 1.5rem;
+    }
+
+    .timeline-marker {
+        right: auto;
+        left: 1rem;
+    }
+
+    .actions-card {
+        flex-direction: column;
+    }
+}
+
+/* -------------------------------------------------------------------------- */
+/* مطابقة «طلباتي»: بطاقة واحدة، أقسام، منتجات، أزرار */
+/* -------------------------------------------------------------------------- */
+.order-detail-page.my-orders-page {
+    max-width: 900px;
+}
+
+.order-detail-card.order-card {
+    margin-bottom: 2rem;
+}
+
+.order-detail-summary.order-info {
+    border-bottom: 1px solid #eee;
+}
+
+.order-detail-section {
+    padding: 1.25rem 1.5rem;
+    border-top: 1px solid #eee;
+}
+
+.order-detail-section__title {
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    color: var(--text);
+    font-weight: 700;
+}
+
+.order-detail-section--progress .progress-track {
+    margin: 0.5rem 0 0;
+}
+
+.order-info--compact .info-row--block {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.35rem;
+}
+
+.order-info--compact .info-row--block .label {
+    margin-bottom: 0;
+}
+
+.value--multiline {
+    white-space: pre-line;
+    line-height: 1.6;
+    text-align: start;
+}
+
+.order-detail-summary .info-row--highlight .value--total {
+    color: #2c5f4f;
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.order-detail-totals {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.order-items--detail .order-item--detail {
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+}
+
+.order-item--detail .order-item__main {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.order-item__thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: block;
+    background: #e9ecef;
+}
+
+.order-item__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.order-item__thumb--ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+}
+
+.order-item__name {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.98rem;
+}
+
+.order-item__name:hover {
+    text-decoration: underline;
+}
+
+.order-item__meta {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 0.15rem;
+}
+
+.order-actions--detail {
+    border-top: 1px solid #eee;
+    background: #fafafa;
+}
+
+.order-actions--detail .btn-track {
+    flex: 1 1 100%;
+    justify-content: center;
+}
+
+.order-actions--detail .form-cancel-order {
+    flex: 1 1 auto;
+    min-width: 120px;
+    margin: 0;
+}
+
+.order-actions--detail .form-cancel-order .btn-cancel-inline {
+    width: 100%;
+    min-height: 2.75rem;
+}
+
+.order-detail-tracking {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85em;
+}
+
+[dir="rtl"] .progress-track {
+    direction: ltr;
+}
+
+[dir="rtl"] .pt-label {
+    direction: rtl;
+}
+
+@media (max-width: 768px) {
+    .order-actions--detail {
+        justify-content: center;
+    }
+
+    .order-actions--detail .btn-action:not(.btn-track) {
+        flex: 1 1 calc(50% - 0.5rem);
+        min-width: 0;
+    }
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .order-info-card h2,
+body.theme-dark .customer-info-card h2,
+body.theme-dark .products-card h2,
+body.theme-dark .status-timeline-card h2 {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+/* شريط التقدم */
+body.theme-dark .pt-step:not(:last-child)::after {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+body.theme-dark .pt-step.done:not(:last-child)::after {
+    background: var(--accent);
+}
+
+body.theme-dark .pt-dot {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.theme-dark .pt-step.done .pt-dot {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+body.theme-dark .pt-step.active .pt-dot {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.2);
+}
+
+body.theme-dark .pt-step.cancelled .pt-dot {
+    background: #ef4444;
+    border-color: #ef4444;
+}
+
+body.theme-dark .pt-label {
+    color: var(--text-muted);
+}
+
+body.theme-dark .pt-step.done .pt-label {
+    color: var(--accent);
+}
+
+body.theme-dark .pt-step.active .pt-label {
+    color: #f59e0b;
+}
+
+body.theme-dark .pt-step.cancelled .pt-label {
+    color: #f87171;
+}
+
+/* بانر الإلغاء */
+body.theme-dark .order-cancel-banner {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+body.theme-dark .order-cancel-banner__title {
+    color: #f87171;
+}
+
+body.theme-dark .order-cancel-banner__note {
+    color: var(--text-muted);
+}
+
+/* بطاقات الحالة */
+body.theme-dark .os-card {
+    background: var(--card);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.theme-dark .os-card--total {
+    border-color: var(--accent);
+}
+
+body.theme-dark .os-card--total .os-value--total {
+    color: var(--accent);
+}
+
+body.theme-dark .os-label {
+    color: var(--text-muted);
+}
+
+body.theme-dark .os-card__tracking {
+    color: var(--text-muted);
+}
+
+/* سجل الطلب */
+body.theme-dark .order-history {
+    border-right-color: rgba(255, 255, 255, 0.12);
+}
+
+body.theme-dark .oh-item::before {
+    background: var(--accent);
+}
+
+body.theme-dark .oh-item.auto::before {
+    background: #60a5fa;
+}
+
+body.theme-dark .oh-time {
+    color: var(--text-muted);
+}
+
+body.theme-dark .oh-text {
+    color: var(--text);
+}
+
+body.theme-dark .oh-note {
+    color: var(--text-muted);
+}
+
+/* شارات الدفع */
+body.theme-dark .pay-pending { background: rgba(245, 158, 11, 0.18); color: #fde68a; }
+body.theme-dark .pay-paid    { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; }
+body.theme-dark .pay-failed  { background: rgba(239, 68, 68, 0.18);  color: #fca5a5; }
+body.theme-dark .pay-refunded{ background: rgba(96, 165, 250, 0.18); color: #93c5fd; }
+
+/* شارات الحالة */
+body.theme-dark .status-pending   { background: rgba(245,158,11,0.18); color: #fde68a; }
+body.theme-dark .status-confirmed { background: rgba(96,165,250,0.18); color: #93c5fd; }
+body.theme-dark .status-processing{ background: rgba(96,165,250,0.18); color: #93c5fd; }
+body.theme-dark .status-ready_to_ship { background: rgba(45,212,191,0.18); color: #6ee7b7; }
+body.theme-dark .status-shipped   { background: rgba(45,212,191,0.18); color: #5eead4; }
+body.theme-dark .status-delivered { background: rgba(16,185,129,0.18); color: #6ee7b7; }
+body.theme-dark .status-cancelled { background: rgba(239,68,68,0.18);  color: #fca5a5; }
+
+/* ملخص الطلب */
+body.theme-dark .order-summary {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.theme-dark .order-detail-totals {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* الخط الزمني */
+body.theme-dark .timeline::before {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+body.theme-dark .timeline-marker {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: var(--card);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+}
+
+body.theme-dark .timeline-item.active .timeline-marker {
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+body.theme-dark .timeline-item.cancelled .timeline-marker {
+    background: #ef4444;
+    box-shadow: 0 0 0 2px #ef4444;
+}
+
+body.theme-dark .timeline-item.cancelled .timeline-content h4 {
+    color: #f87171;
+}
+
+/* حالات المرتجع */
+body.theme-dark .return-status-pending   { background: rgba(255,193,7,0.2);  color: #fde68a; }
+body.theme-dark .return-status-approved  { background: rgba(40,167,69,0.2);  color: #6ee7b7; }
+body.theme-dark .return-status-rejected  { background: rgba(220,53,69,0.2);  color: #fca5a5; }
+body.theme-dark .return-status-completed { background: rgba(23,162,184,0.2); color: #67e8f9; }
+
+body.theme-dark .status-badge.status-pending   { background: rgba(255,193,7,0.2);  color: #fde68a; }
+body.theme-dark .status-badge.status-approved  { background: rgba(40,167,69,0.2);  color: #6ee7b7; }
+body.theme-dark .status-badge.status-rejected  { background: rgba(220,53,69,0.2);  color: #fca5a5; }
+body.theme-dark .status-badge.status-completed { background: rgba(23,162,184,0.2); color: #67e8f9; }
+
+/* تفاصيل السبب / ملاحظات */
+body.theme-dark .reason-details,
+body.theme-dark .admin-notes {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* الأزرار */
+body.theme-dark .btn-back {
+    background: rgba(108, 117, 125, 0.25);
+    color: var(--text);
+}
+
+body.theme-dark .btn-back:hover {
+    background: rgba(108, 117, 125, 0.4);
+    color: var(--text);
+}
+
+/* أقسام مود اليوم الفاتحة */
+body.theme-dark .order-detail-summary.order-info {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-dark .order-detail-section {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-dark .order-detail-summary .info-row--highlight .value--total {
+    color: var(--accent);
+}
+
+body.theme-dark .order-item__thumb {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-dark .order-actions--detail {
+    border-top-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+}

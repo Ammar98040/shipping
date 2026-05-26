@@ -1,0 +1,681 @@
+/* دولاب ثلاثي الأبعاد تفاعلي بالكامل */
+
+.wardrobe-page {
+    padding: 1rem 0 2rem;
+    min-height: 80vh;
+    perspective: 2000px;
+}
+
+.wardrobe-tagline {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+}
+
+.wardrobe-container {
+    max-width: 900px;
+    margin: 0 auto;
+    perspective: 2000px;
+    perspective-origin: center 50%;
+}
+
+/* الدولاب ثلاثي الأبعاد */
+.wardrobe-3d {
+    position: relative;
+    transform-style: preserve-3d;
+    margin: 0 auto;
+    animation: wardrobeEntrance 1s ease-out;
+}
+
+@keyframes wardrobeEntrance {
+    from {
+        opacity: 0;
+        transform: translateY(30px) rotateX(5deg);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) rotateX(0);
+    }
+}
+
+/* التاج/الإطار العلوي */
+.wardrobe-crown {
+    background: linear-gradient(180deg, #8b7355 0%, #7a6445 100%);
+    border: 3px solid #6b5435;
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    padding: 0.75rem 1.5rem;
+    text-align: center;
+    box-shadow: 
+        0 -2px 8px rgba(0,0,0,.2),
+        inset 0 1px 0 rgba(255,255,255,.2);
+    position: relative;
+    z-index: 5;
+}
+
+.wardrobe-crown::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 10%;
+    right: 10%;
+    height: 8px;
+    background: linear-gradient(180deg, #6b5435 0%, #5a4325 100%);
+    border-radius: 4px 4px 0 0;
+}
+
+.wardrobe-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #f5f0e8;
+    text-shadow: 0 2px 4px rgba(0,0,0,.4);
+    letter-spacing: 0.5px;
+}
+
+/* جسم الدولاب */
+.wardrobe-body {
+    position: relative;
+    background: linear-gradient(180deg, #d8cbb8 0%, #c8bba8 50%, #b8ab98 100%);
+    border: 4px solid #8b7355;
+    border-top: none;
+    border-bottom: none;
+    min-height: 420px;
+    padding: 1rem;
+    transform-style: preserve-3d;
+    box-shadow: 
+        inset 0 4px 12px rgba(0,0,0,.15),
+        inset 0 -4px 12px rgba(0,0,0,.1),
+        0 8px 32px rgba(0,0,0,.25);
+}
+
+/* الجوانب للعمق */
+.wardrobe-side {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(90deg, #9a8770 0%, #8a7760 100%);
+    box-shadow: inset 0 0 10px rgba(0,0,0,.2);
+}
+
+.wardrobe-side-right {
+    right: -40px;
+    transform-origin: left center;
+    transform: rotateY(-90deg);
+}
+
+.wardrobe-side-left {
+    left: -40px;
+    transform-origin: right center;
+    transform: rotateY(90deg);
+}
+
+/* الخلفية الداخلية */
+.wardrobe-back {
+    position: absolute;
+    inset: 0;
+    background: 
+        repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(0,0,0,.03) 19px, rgba(0,0,0,.03) 20px),
+        repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(0,0,0,.03) 19px, rgba(0,0,0,.03) 20px),
+        linear-gradient(180deg, #e8dfd0 0%, #d8cfbc 100%);
+    pointer-events: none;
+}
+
+/* مجموعة الخانات */
+.compartments-wrapper {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 1rem;
+    min-height: 400px;
+    z-index: 2;
+}
+
+/* خانة واحدة */
+.compartment-slot {
+    position: relative;
+    transform-style: preserve-3d;
+}
+
+.compartment-door-link {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+    min-height: 190px;
+}
+
+/* وحدة الباب */
+.door-unit {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* الباب الأمامي */
+.door-front {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transform-origin: right center;
+    transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[dir="ltr"] .door-front {
+    transform-origin: left center;
+}
+
+/* لوحة الباب */
+.door-panel {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(145deg, #f8f3eb 0%, #e8dfd0 50%, #d8cfbc 100%);
+    border: 3px solid #9a8770;
+    border-radius: 6px;
+    box-shadow: 
+        inset 0 2px 0 rgba(255,255,255,.6),
+        inset 0 -2px 0 rgba(0,0,0,.1),
+        2px 4px 16px rgba(0,0,0,.2);
+    overflow: hidden;
+    backface-visibility: hidden;
+}
+
+/* إطار زخرفي داخلي */
+.door-frame-inner {
+    position: absolute;
+    inset: 12px;
+    border: 2px solid rgba(154,135,112,.3);
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* المحتوى (الصورة أو الأيقونة) */
+.door-content {
+    position: absolute;
+    inset: 22px 22px 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(255,255,255,.4) 0%, rgba(232,223,208,.4) 100%);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.door-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.door-icon {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent);
+    opacity: .6;
+}
+
+/* التسمية */
+.door-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.6rem;
+    background: linear-gradient(180deg, rgba(248,243,235,.95) 0%, rgba(232,223,208,.98) 100%);
+    border-top: 2px solid rgba(154,135,112,.4);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text);
+    text-shadow: 0 1px 0 rgba(255,255,255,.8);
+}
+
+/* المقبض */
+.door-handle {
+    position: absolute;
+    top: 50%;
+    left: 18px;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 44px;
+    background: linear-gradient(90deg, #5a4d3d 0%, #6b5d4a 50%, #5a4d3d 100%);
+    border-radius: 4px;
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,.2),
+        2px 2px 6px rgba(0,0,0,.4);
+    z-index: 10;
+}
+
+[dir="ltr"] .door-handle {
+    left: auto;
+    right: 18px;
+}
+
+.handle-grip {
+    position: absolute;
+    top: 50%;
+    left: -6px;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    background: radial-gradient(circle, #7a6b52 0%, #5a4d3d 70%);
+    border-radius: 50%;
+    border: 2px solid #4a3d2d;
+    box-shadow: 
+        inset 0 1px 2px rgba(255,255,255,.3),
+        inset 0 -1px 2px rgba(0,0,0,.4),
+        0 2px 6px rgba(0,0,0,.5);
+}
+
+/* المفصلات */
+.door-hinge {
+    position: absolute;
+    right: -3px;
+    width: 12px;
+    height: 24px;
+    background: linear-gradient(90deg, #4a3d2d 0%, #5a4d3d 50%, #4a3d2d 100%);
+    border-radius: 3px;
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,.15),
+        2px 1px 4px rgba(0,0,0,.5);
+    z-index: 11;
+}
+
+[dir="ltr"] .door-hinge {
+    right: auto;
+    left: -3px;
+}
+
+.door-hinge-top { top: 12px; }
+.door-hinge-bottom { bottom: 12px; }
+
+.door-hinge::before,
+.door-hinge::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 3px;
+    background: #2a1d1d;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0,0,0,.6);
+}
+
+.door-hinge::before { top: 4px; }
+.door-hinge::after { bottom: 4px; }
+
+/* تأثير التمرير - الباب يفتح قليلاً */
+.compartment-door-link:hover .door-front {
+    transform: rotateY(-12deg);
+    box-shadow: 8px 8px 24px rgba(0,0,0,.35);
+}
+
+[dir="ltr"] .compartment-door-link:hover .door-front {
+    transform: rotateY(12deg);
+}
+
+/* عند الضغط - الباب يفتح أكثر */
+.compartment-door-link:active .door-front {
+    transform: rotateY(-25deg);
+    transition-duration: 0.3s;
+}
+
+[dir="ltr"] .compartment-door-link:active .door-front {
+    transform: rotateY(25deg);
+}
+
+/* تأثير فتح الباب عند الانتقال */
+.compartment-slot.opening .door-front {
+    animation: doorOpening 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes doorOpening {
+    0% {
+        transform: rotateY(0deg);
+    }
+    100% {
+        transform: rotateY(-110deg);
+    }
+}
+
+[dir="ltr"] @keyframes doorOpening {
+    0% {
+        transform: rotateY(0deg);
+    }
+    100% {
+        transform: rotateY(110deg);
+    }
+}
+
+/* القاعدة */
+.wardrobe-base {
+    position: relative;
+    height: 16px;
+    background: linear-gradient(180deg, #6b5d4a 0%, #5a4d3d 100%);
+    border: 3px solid #4a3d2d;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    transform-style: preserve-3d;
+    box-shadow: 0 8px 16px rgba(0,0,0,.3);
+}
+
+.base-front {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #7a6b52 10%, #6b5d4a 90%);
+    border-radius: 0 0 6px 6px;
+}
+
+.base-top {
+    position: absolute;
+    top: -4px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #5a4d3d 0%, #6b5d4a 50%, #5a4d3d 100%);
+    box-shadow: 0 2px 4px rgba(0,0,0,.3);
+}
+
+.wardrobe-empty {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+/* توزيع الخانات حسب العدد */
+.compartments-wrapper.compartments-1 {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+}
+
+.compartments-wrapper.compartments-2 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: 1fr;
+}
+
+.compartments-wrapper.compartments-3 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* إضاءة وظلال ديناميكية */
+.door-panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, 
+        rgba(255,255,255,.4) 0%, 
+        transparent 30%, 
+        transparent 70%, 
+        rgba(0,0,0,.1) 100%);
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.compartment-door-link:hover .door-panel::after {
+    opacity: 0.8;
+}
+
+/* تأثير التركيز */
+.compartment-door-link:focus {
+    outline: none;
+}
+
+.compartment-door-link:focus .door-panel {
+    border-color: var(--accent);
+    box-shadow: 
+        inset 0 2px 0 rgba(255,255,255,.7),
+        0 0 0 3px rgba(44, 95, 79, .3),
+        4px 6px 20px rgba(0,0,0,.3);
+}
+
+/* موبايل - تصغير */
+@media (max-width: 480px) {
+    .wardrobe-container {
+        perspective: 1500px;
+    }
+    .wardrobe-body {
+        min-height: 340px;
+        padding: 0.75rem;
+    }
+    .compartments-wrapper {
+        gap: 0.75rem;
+        min-height: 320px;
+    }
+    .compartment-door-link {
+        min-height: 150px;
+    }
+    .door-icon {
+        font-size: 2rem;
+    }
+    .door-label {
+        font-size: 0.85rem;
+        padding: 0.5rem;
+    }
+}
+
+/* شاشات متوسطة */
+@media (min-width: 768px) {
+    .wardrobe-container {
+        max-width: 760px;
+    }
+    .wardrobe-body {
+        min-height: 460px;
+        padding: 1.5rem;
+    }
+    .compartments-wrapper {
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: 1fr;
+        gap: 1.25rem;
+        min-height: 420px;
+    }
+    .compartments-wrapper.compartments-1 {
+        grid-template-columns: 1fr;
+    }
+    .compartments-wrapper.compartments-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .compartments-wrapper.compartments-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    .compartment-door-link {
+        min-height: 240px;
+    }
+    .door-icon {
+        font-size: 3rem;
+    }
+    .wardrobe-crown {
+        padding: 1rem 2rem;
+    }
+    .wardrobe-title {
+        font-size: 1.4rem;
+    }
+}
+
+/* شاشات كبيرة */
+@media (min-width: 1024px) {
+    .wardrobe-container {
+        max-width: 900px;
+    }
+    .wardrobe-body {
+        min-height: 500px;
+        padding: 2rem;
+    }
+    .compartments-wrapper {
+        gap: 1.5rem;
+        min-height: 460px;
+    }
+}
+
+/* تأثير الإضاءة المحيطة */
+.wardrobe-3d::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: -30px;
+    right: -30px;
+    bottom: -30px;
+    background: radial-gradient(ellipse at center top, rgba(255,255,255,.1) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* ظل الدولاب على الأرض */
+.wardrobe-3d::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: 5%;
+    right: 5%;
+    height: 30px;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,.25) 0%, transparent 70%);
+    filter: blur(10px);
+    z-index: -2;
+}
+
+/* لمعان زجاج المقبض */
+.handle-grip::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, rgba(255,255,255,.6) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* نسيج خفيف على الأبواب */
+.door-panel {
+    background-image: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 3px,
+            rgba(0,0,0,.01) 3px,
+            rgba(0,0,0,.01) 6px
+        );
+}
+
+/* تأثير تموج عند الضغط */
+.compartment-door-link:active .door-panel {
+    animation: ripple 0.6s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        box-shadow: 
+            inset 0 0 0 0 rgba(44, 95, 79, .4),
+            inset 0 2px 0 rgba(255,255,255,.6),
+            2px 4px 16px rgba(0,0,0,.2);
+    }
+    50% {
+        box-shadow: 
+            inset 0 0 0 20px rgba(44, 95, 79, .1),
+            inset 0 2px 0 rgba(255,255,255,.6),
+            2px 4px 16px rgba(0,0,0,.2);
+    }
+    100% {
+        box-shadow: 
+            inset 0 0 0 0 rgba(44, 95, 79, 0),
+            inset 0 2px 0 rgba(255,255,255,.6),
+            2px 4px 16px rgba(0,0,0,.2);
+    }
+}
+
+/* ===== مود الليل ===== */
+body.theme-dark .wardrobe-crown {
+    background: linear-gradient(180deg, #0e0a06 0%, #080604 100%);
+    border-color: #1e1610;
+}
+
+body.theme-dark .wardrobe-crown::before {
+    background: linear-gradient(180deg, #1a1208 0%, #100c06 100%);
+}
+
+body.theme-dark .wardrobe-body {
+    background: linear-gradient(180deg, #0e0a06 0%, #0a0804 50%, #080604 100%);
+    border-color: #1e1610;
+    box-shadow:
+        inset 0 4px 12px rgba(0,0,0,0.5),
+        inset 0 -4px 12px rgba(0,0,0,0.4),
+        0 8px 32px rgba(0,0,0,0.6);
+}
+
+body.theme-dark .wardrobe-side {
+    background: linear-gradient(90deg, #0a0804 0%, #080604 100%);
+}
+
+body.theme-dark .wardrobe-back {
+    background:
+        repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.01) 19px, rgba(255,255,255,0.01) 20px),
+        repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.01) 19px, rgba(255,255,255,0.01) 20px),
+        linear-gradient(180deg, #080605 0%, #060404 100%);
+}
+
+body.theme-dark .door-panel {
+    background: linear-gradient(145deg, #1a1410 0%, #120e0a 50%, #0e0a07 100%);
+    border-color: #2a2018;
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.04),
+        inset 0 -2px 0 rgba(0,0,0,0.3),
+        2px 4px 16px rgba(0,0,0,0.5);
+}
+
+body.theme-dark .door-frame-inner {
+    border-color: rgba(255,255,255,0.06);
+}
+
+body.theme-dark .door-content {
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+}
+
+body.theme-dark .door-label {
+    background: linear-gradient(180deg, rgba(15,27,45,0.96) 0%, rgba(11,18,32,0.98) 100%);
+    border-top-color: rgba(255,255,255,0.08);
+    text-shadow: none;
+}
+
+body.theme-dark .compartment-slot:hover .door-panel {
+    border-color: rgba(45,212,191,0.4);
+}
+
+body.theme-dark .wardrobe-base {
+    background: linear-gradient(180deg, #0a0804 0%, #060604 100%);
+    border-color: #1e1610;
+}
+
+body.theme-dark .base-front {
+    background: linear-gradient(180deg, #0a0804 0%, #060604 100%);
+    border-color: #1e1610;
+}
+
+body.theme-dark .base-top {
+    background: linear-gradient(180deg, #1a1410 0%, #100c08 100%);
+}
+
+/* إخفاء الطبقات البيضاء الشفافة التي تُخفف الأبواب في مود الليل */
+body.theme-dark .door-panel::after {
+    opacity: 0 !important;
+}
+
+body.theme-dark .wardrobe-3d::before {
+    opacity: 0;
+}
+
+body.theme-dark .compartment-slot:hover .door-panel,
+body.theme-dark .compartment-door-link:focus .door-panel {
+    border-color: var(--accent);
+    box-shadow:
+        inset 0 2px 0 rgba(255,255,255,0.04),
+        0 0 0 3px rgba(45,212,191,0.25),
+        4px 6px 20px rgba(0,0,0,0.5);
+}

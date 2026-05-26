@@ -1,0 +1,246 @@
+{% extends "shipping/base_shipping.html" %}
+{% block title %}الرئيسية | شركة السريع للشحن{% endblock %}
+
+{% block extra_css %}
+<style>
+  .ship-dash-availability { background: #fff7ed; border: 1px solid #fdba74; border-radius: 12px; }
+  .ship-dash-availability.ship-dash-availability--on { background: #ecfdf5; border-color: #34d399; }
+  .ship-dash-live { background:#e0f2fe; border:1px solid #38bdf8; }
+  body.theme-dark .ship-dash-availability { background: #1f2937; border-color: #9a3412; }
+  body.theme-dark .ship-dash-availability.ship-dash-availability--on { background: #052e2b; border-color: #0f766e; }
+  body.theme-dark .ship-dash-live { background:#082f49; border-color:#0369a1; }
+  body.theme-dark .ship-dash-live strong,
+  body.theme-dark .ship-dash-live .btn { color:#e0f2fe; }
+  body.theme-dark .ship-dash-live #shipping-available-count { color:#7dd3fc !important; }
+  body.theme-dark .ship-dash-live #shipping-live-dot { color:#38bdf8 !important; }
+  body.theme-dark .manage-stat-card[style*="d1fae5"] { background:#052e2b !important; border-color:#0f766e !important; }
+  body.theme-dark .manage-stat-card[style*="d1fae5"] .manage-stat-number,
+  body.theme-dark .manage-stat-card[style*="d1fae5"] .manage-stat-label { color:#86efac !important; }
+  body.theme-dark .manage-stat-card[style*="fee2e2"] { background:#3f1d1d !important; border-color:#991b1b !important; }
+  body.theme-dark .manage-stat-card[style*="fee2e2"] .manage-stat-number,
+  body.theme-dark .manage-stat-card[style*="fee2e2"] .manage-stat-label { color:#fca5a5 !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="manage-page-title">🏠 لوحة المندوب</h1>
+
+<div class="manage-section ship-dash-availability{% if profile_obj.is_available %} ship-dash-availability--on{% endif %}">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+    <div>
+      <strong>حالة التوفر:</strong>
+      {% if profile_obj.is_available %}
+      <span class="badge badge-active" id="shipping-availability-badge">🟢 متوفر</span>
+      {% else %}
+      <span class="badge" id="shipping-availability-badge" style="background:#fff1e6; color:#9a3412;">⚪ غير متوفر</span>
+      {% endif %}
+    </div>
+    <form method="post" action="{% url 'shipping:set_availability' %}" id="shipping-availability-form">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{% url 'shipping:dashboard' %}">
+      {% if profile_obj.is_available %}
+      <input type="hidden" name="is_available" value="0">
+      <button type="submit" class="btn btn-secondary" id="shipping-availability-btn">إيقاف التوفر مؤقتاً</button>
+      {% else %}
+      <input type="hidden" name="is_available" value="1">
+      <button type="submit" class="btn btn-primary" id="shipping-availability-btn">أنا متوفر الآن</button>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<div class="manage-section ship-dash-live">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+    <div>
+      <strong>طلبات جديدة غير مسندة:</strong>
+      <span id="shipping-available-count" style="font-weight:900; color:#0369a1;">{{ available_count }}</span>
+      <span id="shipping-live-dot" style="display:none; margin-right:0.5rem; color:#0284c7; font-weight:800;">● تحديث الآن</span>
+    </div>
+    <a class="btn btn-primary" href="{% url 'shipping:available_jobs' %}">عرض الطلبات الجديدة</a>
+  </div>
+</div>
+
+<div class="manage-stats">
+  <div class="manage-stat-card highlight">
+    <span class="manage-stat-number">{{ stats.all }}</span>
+    <span class="manage-stat-label">📦 جميع شحناتي</span>
+  </div>
+  <div class="manage-stat-card">
+    <span class="manage-stat-number">{{ stats.in_transit }}</span>
+    <span class="manage-stat-label">🚚 بالطريق</span>
+  </div>
+  <div class="manage-stat-card">
+    <span class="manage-stat-number">{{ stats.out_for_delivery }}</span>
+    <span class="manage-stat-label">📍 خرجت للتسليم</span>
+  </div>
+  <div class="manage-stat-card" style="background: #d1fae5; border-color: #10b981;">
+    <span class="manage-stat-number" style="color:#065f46;">{{ stats.delivered }}</span>
+    <span class="manage-stat-label" style="color:#065f46;">✅ تم التسليم</span>
+  </div>
+  <div class="manage-stat-card" style="background:#fee2e2; border-color:#ef4444;">
+    <span class="manage-stat-number" style="color:#991b1b;">{{ stats.failed }}</span>
+    <span class="manage-stat-label" style="color:#991b1b;">❌ تعثر</span>
+  </div>
+</div>
+
+<div class="manage-section">
+  <h2>آخر الشحنات</h2>
+  {% if recent %}
+  <div class="manage-table-container">
+    <table class="manage-table">
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>رقم التتبع</th>
+          <th>حالة الشحنة</th>
+          <th>آخر تحديث</th>
+          <th>إجراء</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in recent %}
+        <tr>
+          <td><strong>#{{ s.order.id }}</strong></td>
+          <td style="font-family: monospace;">{{ s.tracking_number }}</td>
+          <td>{{ s.get_status_display }}</td>
+          <td>{{ s.updated_at|date:"Y-m-d H:i" }}</td>
+          <td><a class="btn btn-sm" href="{% url 'shipping:shipment_detail' s.id %}">👁️ فتح</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-msg">لا توجد شحنات مسندة لك بعد.</p>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var form = document.getElementById('shipping-availability-form');
+  var btn = document.getElementById('shipping-availability-btn');
+  var badge = document.getElementById('shipping-availability-badge');
+  var strip = document.querySelector('.ship-dash-availability');
+  if (!form || !btn || !badge) return;
+
+  var liveUrl = "{% url 'shipping:my_availability_live' %}";
+  var lastAvailSync = {
+    avail: {{ profile_obj.is_available|yesno:"true,false" }},
+    at: {% if profile_obj.availability_updated_at %}'{{ profile_obj.availability_updated_at|date:"c" }}'{% else %}''{% endif %}
+  };
+
+  function applyShippingAvailabilityUi(data) {
+    if (!data || !data.success) return;
+    badge.textContent = data.badge_text || '';
+    if (data.is_available) {
+      badge.className = 'badge badge-active';
+      badge.style.background = '';
+      badge.style.color = '';
+    } else {
+      badge.className = 'badge';
+      badge.style.background = '#fff1e6';
+      badge.style.color = '#9a3412';
+    }
+    if (strip) strip.classList.toggle('ship-dash-availability--on', !!data.is_available);
+    var headerIndicator = document.getElementById('shipping-header-status-indicator');
+    var headerText = document.getElementById('shipping-header-status-text');
+    if (headerIndicator && headerText) {
+      headerIndicator.classList.toggle('warehouse-status-indicator--on', !!data.is_available);
+      headerIndicator.classList.toggle('warehouse-status-indicator--off', !data.is_available);
+      headerText.textContent = data.is_available ? 'متوفر الآن' : 'غير متوفر';
+    }
+    btn.textContent = data.button_text || '';
+    btn.classList.remove('btn-primary', 'btn-secondary');
+    btn.classList.add(data.button_class || 'btn-primary');
+    var hidden = form.querySelector('input[name="is_available"]');
+    if (hidden) hidden.value = data.is_available ? '0' : '1';
+    if (typeof data.updated_at === 'string') lastAvailSync.at = data.updated_at;
+    lastAvailSync.avail = !!data.is_available;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    btn.disabled = true;
+    fetch(getFormActionUrl(form), {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': window.SHIPPING_CSRF_TOKEN || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'failed');
+      applyShippingAvailabilityUi(data);
+      btn.disabled = false;
+    })
+    .catch(function (err) {
+      btn.disabled = false;
+      showManageError((err && err.message && err.message !== 'failed') ? err.message : 'تعذر تحديث حالة التوفر.', { durationMs: 3200 });
+    });
+  });
+
+  function pollAvailabilitySync() {
+    if (document.hidden) return;
+    fetch(liveUrl, { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var at = data.updated_at || '';
+        if (at === lastAvailSync.at && data.is_available === lastAvailSync.avail) return;
+        applyShippingAvailabilityUi(data);
+      })
+      .catch(function () {});
+  }
+  setInterval(pollAvailabilitySync, 4000);
+})();
+
+(function () {
+  var countEl = document.getElementById('shipping-available-count');
+  var liveDot = document.getElementById('shipping-live-dot');
+  if (!countEl) return;
+  var liveUrl = "{% url 'shipping:available_jobs_live' %}";
+  var lastCount = parseInt(countEl.textContent || '0', 10) || 0;
+
+  function flashLive() {
+    if (!liveDot) return;
+    liveDot.style.display = '';
+    setTimeout(function () { liveDot.style.display = 'none'; }, 1200);
+  }
+
+  function pollAvailableCount() {
+    if (document.hidden) return;
+    fetch(liveUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success || !Array.isArray(data.items)) return;
+        var nextCount = data.items.length;
+        if (nextCount !== lastCount) {
+          countEl.textContent = String(nextCount);
+          flashLive();
+          lastCount = nextCount;
+        }
+      })
+      .catch(function () {});
+  }
+
+  pollAvailableCount();
+  setInterval(pollAvailableCount, 3000);
+})();
+</script>
+{% endblock %}

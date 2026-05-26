@@ -1,0 +1,52 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ compartment.name_ar }}{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/compartment3d.css' %}?v=20">
+<link rel="stylesheet" href="{% static 'css/store-flow.css' %}?v=20">
+{% endblock %}
+
+{% block content %}
+<nav class="breadcrumb store-breadcrumb-nav" aria-label="مسار التصفح">
+    <a href="{% url 'wardrobe' %}" data-back-to-wardrobe>الدولاب</a>
+    <span aria-hidden="true">›</span>
+    <span class="breadcrumb-current">{{ compartment.name_ar }}</span>
+</nav>
+
+<div class="page-header">
+    <h1 class="page-title">{{ compartment.name_ar }}</h1>
+    <p class="page-subtitle">اختر رفاً</p>
+</div>
+
+<div class="shelves-container">
+    {% for shelf in shelves %}
+    <a href="{% url 'shelf' shelf.id %}" class="shelf-item">
+        <div class="shelf-card">
+            <div class="shelf-front">
+                <div class="shelf-content">
+                    {% if shelf.image %}
+                    <img src="{{ shelf.image.url }}" alt="{{ shelf.name_ar }}" class="shelf-img">
+                    {% else %}
+                    <span class="shelf-icon">{{ shelf.name_ar|slice:":1" }}</span>
+                    {% endif %}
+                </div>
+                <div class="shelf-label">{{ shelf.name_ar }}</div>
+                <div class="shelf-pull-tab"></div>
+            </div>
+        </div>
+    </a>
+    {% empty %}
+    <div class="store-empty-state">
+        <p class="store-empty-state__title">لا توجد رفوف في هذه الخانة</p>
+        <p class="store-empty-state__text">أضيفت الخانات لكن لم تُنشأ الرفوف بعد، أو لم تُفعّل للعرض.</p>
+        <div class="store-empty-state__actions">
+            <a href="{% url 'wardrobe' %}" class="store-btn store-btn--secondary">العودة للدولاب</a>
+            <a href="{% url 'products_all' %}" class="store-btn store-btn--primary">كل المنتجات</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/navigation3d.js' %}"></script>{% endblock %}
+

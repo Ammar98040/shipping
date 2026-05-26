@@ -1,0 +1,331 @@
+/**
+ * عناصر مشتركة: السلة → الدفع + تصفّح المتجر + طلباتي
+ */
+.shop-checkout-steps {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem 0.75rem;
+    margin: 0 auto 1.5rem;
+    padding: 0.85rem 1.25rem;
+    max-width: 640px;
+    background: linear-gradient(135deg, rgba(44, 95, 79, 0.08) 0%, rgba(44, 95, 79, 0.03) 100%);
+    border: 1px solid rgba(44, 95, 79, 0.15);
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.shop-checkout-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    text-decoration: none;
+    color: var(--text-muted);
+    transition: color 0.2s, background 0.2s;
+}
+
+.shop-checkout-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    background: #e8e8e8;
+    color: var(--text-muted);
+}
+
+a.shop-checkout-step:hover {
+    color: var(--accent);
+    background: rgba(44, 95, 79, 0.08);
+}
+
+.shop-checkout-step.is-complete .shop-checkout-step-num {
+    background: var(--accent);
+    color: #fff;
+    font-size: 0.75rem;
+}
+
+.shop-checkout-step.is-active {
+    color: var(--accent);
+    background: rgba(44, 95, 79, 0.12);
+}
+
+.shop-checkout-step.is-active .shop-checkout-step-num {
+    background: var(--accent);
+    color: #fff;
+}
+
+.shop-checkout-step.is-muted {
+    color: var(--text-muted);
+    opacity: 0.65;
+    cursor: default;
+    pointer-events: none;
+}
+
+.shop-checkout-step-sep {
+    color: var(--text-muted);
+    opacity: 0.5;
+    user-select: none;
+    font-weight: 400;
+}
+
+/* شريط ثقة تحت العنوان */
+.shop-trust-strip {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1rem 1.5rem;
+    margin: -0.5rem auto 1.25rem;
+    padding: 0 0.5rem;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.shop-trust-strip span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* نص مساعد تحت الحالة الفارغة */
+.empty-hint {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin: 0 auto 1rem;
+    line-height: 1.55;
+    max-width: 28rem;
+}
+
+/* مسار التصفح الموحّد */
+nav.store-breadcrumb-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+    max-width: 1100px;
+    margin: 0 auto 1rem;
+    padding: 0.65rem 1rem;
+    background: var(--card);
+    border: 1px solid rgba(44, 95, 79, 0.12);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+nav.store-breadcrumb-nav a {
+    color: var(--accent);
+    text-decoration: none;
+    padding: 0.2rem 0.35rem;
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+nav.store-breadcrumb-nav a:hover {
+    background: rgba(44, 95, 79, 0.08);
+    color: var(--accent-dark);
+}
+
+nav.store-breadcrumb-nav .breadcrumb-current {
+    color: var(--text);
+    font-weight: 700;
+    padding: 0.2rem 0;
+}
+
+/* شريط أدوات سريعة (صفحة المنتج) */
+.store-quick-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin: 0 auto 1.25rem;
+    max-width: 1100px;
+}
+
+.store-quick-toolbar a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--accent);
+    background: rgba(44, 95, 79, 0.08);
+    border: 1px solid rgba(44, 95, 79, 0.2);
+    border-radius: 10px;
+    transition: background 0.2s, transform 0.2s;
+}
+
+.store-quick-toolbar a:hover {
+    background: rgba(44, 95, 79, 0.14);
+}
+
+/* مقدمة الصفحة الرئيسية */
+.wardrobe-hero-text {
+    text-align: center;
+    margin-bottom: 0.5rem;
+}
+
+.wardrobe-hero-text .wardrobe-tagline {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+}
+
+.wardrobe-hero-text .shop-trust-strip {
+    margin: 0 auto 1rem;
+}
+
+/* وصولية: تركيز واضح */
+.cart-page a:focus-visible,
+.checkout-page a:focus-visible,
+.my-orders-page a:focus-visible,
+.wardrobe-page a:focus-visible,
+nav.store-breadcrumb-nav a:focus-visible,
+.store-quick-toolbar a:focus-visible,
+.cart-page button:focus-visible,
+.checkout-page button:focus-visible,
+.cart-page .qty-btn:focus-visible,
+.checkout-page input:focus-visible,
+.checkout-page textarea:focus-visible,
+.product-showcase a:focus-visible,
+.product-showcase button:focus-visible,
+.reviews-section a:focus-visible,
+.reviews-section button:focus-visible,
+.order-detail-page a:focus-visible,
+.order-detail-page button:focus-visible,
+.track-page a:focus-visible,
+.track-page button:focus-visible,
+.track-page input:focus-visible,
+.search-page a:focus-visible,
+.search-page button:focus-visible,
+.search-page input:focus-visible,
+.search-page select:focus-visible,
+.wishlist-category a:focus-visible,
+.wishlist-category button:focus-visible,
+.store-page-shell a:focus-visible,
+.store-page-shell button:focus-visible,
+.store-page-shell input:focus-visible,
+.store-page-shell textarea:focus-visible {
+    outline: 3px solid rgba(44, 95, 79, 0.45);
+    outline-offset: 2px;
+}
+
+/* المفضلات: طبقة «المنتج كامل» لا تغطي صف الإجراءات (قلب / تفاصيل / سلة) */
+.wishlist-category .product-item-link {
+    inset: auto;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 4.85rem;
+}
+
+.wishlist-category .product-card-actions {
+    z-index: 12;
+}
+/* تلميح تحت السعر: أيقونة مثل «تفاصيل» + نص، محاذاة لأقصى اليمين (dir=rtl على العنصر) */
+.product-variant-teaser {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.45rem;
+    width: 100%;
+    margin: 0.2rem 0 0.45rem;
+    padding: 0;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+    position: relative;
+    z-index: 1;
+}
+
+.product-variant-teaser__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+}
+
+.product-variant-teaser__icon-inner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    color: var(--accent, #2c5f4f);
+    font-size: 0.95rem;
+}
+
+.product-variant-teaser__icon-inner .btn-icon {
+    line-height: 1;
+}
+
+.product-variant-teaser__text {
+    color: var(--accent, #2c5f4f);
+    opacity: 0.9;
+    padding-bottom: 0.05rem;
+}
+
+/* أسعار: أصلي (أسود/مخنوق) + بعد الخصم (أحمر) */
+.product-price--original {
+    color: var(--text, #111827);
+    opacity: 0.8;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+}
+
+.product-price--discount {
+    color: #dc3545;
+}
+
+/* شارة خصم لطيفة بجانب سعر المنتج */
+.product-discount-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.12rem 0.5rem;
+    margin-inline-start: 0.35rem;
+    border-radius: 999px;
+    background: rgba(220, 53, 69, 0.12);
+    color: #b02a37;
+    font-weight: 900;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cart-page *,
+    .checkout-page *,
+    .my-orders-page *,
+    .wardrobe-page *,
+    .order-detail-page *,
+    .track-page *,
+    .search-page *,
+    .wishlist-category *,
+    .store-page-shell * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    .btn-checkout:hover,
+    .btn-submit-order:hover,
+    .btn-shopping:hover,
+    .store-quick-toolbar a:hover {
+        transform: none !important;
+    }
+}

@@ -1,0 +1,973 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}طلب #{{ order.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* شريط التقدم */
+.order-progress { display: flex; align-items: center; gap: 0; margin: 1.5rem 0; overflow-x: auto; padding-bottom: 0.5rem; }
+.progress-step { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 80px; position: relative; }
+.progress-step:not(:last-child)::after {
+    content: ''; position: absolute; top: 18px; left: calc(50% + 18px);
+    width: calc(100% - 36px); height: 3px; background: #dee2e6; z-index: 0;
+}
+.progress-step.done:not(:last-child)::after { background: #2c5f4f; }
+.progress-dot {
+    width: 36px; height: 36px; border-radius: 50%; border: 3px solid #dee2e6;
+    background: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; z-index: 1; position: relative; transition: all 0.3s;
+}
+.progress-step.done   .progress-dot { background: #2c5f4f; border-color: #2c5f4f; color: #fff; }
+.progress-step.active .progress-dot { background: #f59e0b; border-color: #f59e0b; color: #fff; box-shadow: 0 0 0 4px rgba(245,158,11,0.2); }
+.progress-step.cancelled .progress-dot { background: #ef4444; border-color: #ef4444; color: #fff; }
+.progress-label { font-size: 0.72rem; margin-top: 0.4rem; text-align: center; color: #6c757d; font-weight: 500; }
+.progress-step.done   .progress-label { color: #2c5f4f; font-weight: 700; }
+.progress-step.active .progress-label { color: #f59e0b; font-weight: 700; }
+
+/* بطاقات الحالة */
+.status-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.status-card { background: #fff; border: 2px solid #dee2e6; border-radius: 12px; padding: 1.25rem; display: flex; align-items: center; gap: 1rem; }
+.status-card-icon { font-size: 2rem; }
+.status-card-body .label { font-size: 0.8rem; color: #6c757d; margin-bottom: 0.2rem; }
+.status-card-body .value { font-size: 1rem; font-weight: 700; }
+
+/* السجل الزمني */
+.timeline { position: relative; padding-right: 2rem; }
+.timeline::before { content: ''; position: absolute; right: 8px; top: 0; bottom: 0; width: 2px; background: #dee2e6; }
+.timeline-item { position: relative; margin-bottom: 1.25rem; }
+.timeline-dot {
+    position: absolute; right: -1.65rem; top: 4px;
+    width: 12px; height: 12px; border-radius: 50%;
+    background: #2c5f4f; border: 2px solid #fff; box-shadow: 0 0 0 2px #2c5f4f;
+}
+.timeline-dot.auto { background: #3b82f6; box-shadow: 0 0 0 2px #3b82f6; }
+.timeline-body { background: #f8f9fa; border-radius: 8px; padding: 0.75rem 1rem; }
+.timeline-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.3rem; }
+.timeline-change { font-weight: 700; font-size: 0.9rem; color: #1a1a1a; }
+.timeline-meta { font-size: 0.78rem; color: #6c757d; }
+.timeline-note { font-size: 0.85rem; color: #495057; margin-top: 0.3rem; }
+.timeline-note-edit {
+    margin-top: 0.4rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.55rem 0.7rem;
+}
+.timeline-note-badge {
+    display: inline-block;
+    margin-bottom: 0.35rem;
+    background: #e0e7ff;
+    color: #3730a3;
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    font-size: 0.74rem;
+    font-weight: 800;
+}
+
+/* أزرار الإجراءات */
+.action-panel { background: #f8f9fa; border-radius: 12px; padding: 1.5rem; border: 1px solid #dee2e6; }
+.action-panel h3 { margin: 0 0 1rem; font-size: 1rem; color: #495057; }
+.action-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.btn-advance { background: linear-gradient(135deg, #2c5f4f, #3d7a66); color: #fff; border: none; border-radius: 8px; padding: 0.6rem 1.2rem; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.btn-advance:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(44,95,79,0.3); }
+.btn-cancel-order { background: #fff; color: #ef4444; border: 2px solid #ef4444; border-radius: 8px; padding: 0.6rem 1.2rem; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.btn-cancel-order:hover { background: #ef4444; color: #fff; }
+.btn-pay-action { background: #fff; color: #10b981; border: 2px solid #10b981; border-radius: 8px; padding: 0.6rem 1.2rem; font-size: 0.9rem; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+.btn-pay-action:hover { background: #10b981; color: #fff; }
+
+/* modal الإلغاء */
+.cancel-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
+.cancel-modal.open { display: flex; }
+.cancel-modal-box { background: #fff; border-radius: 16px; padding: 2rem; max-width: 460px; width: 90%; }
+.cancel-modal-box h3 { margin: 0 0 1.25rem; color: #ef4444; }
+
+/* نوع العميل badge */
+.customer-type-badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.8rem; font-weight: 700; }
+.type-registered { background: #d1fae5; color: #065f46; }
+.type-guest { background: #e0e7ff; color: #3730a3; }
+
+/* حالات الدفع — بدل Django داخل style="" (لتوافق محرر CSS) */
+.status-card--pay-paid { border-color: #10b981; }
+.status-card--pay-failed { border-color: #ef4444; }
+.status-card--pay-refunded { border-color: #2563eb; }
+.status-card--pay-pending { border-color: #f59e0b; }
+.status-card--pay-paid .order-pay-card__value { color: #065f46; }
+.status-card--pay-failed .order-pay-card__value { color: #991b1b; }
+.status-card--pay-refunded .order-pay-card__value { color: #1e40af; }
+.status-card--pay-pending .order-pay-card__value { color: #92400e; }
+.order-pay-pill--paid { background: #d1fae5 !important; color: #065f46 !important; }
+.order-pay-pill--failed { background: #fee2e2 !important; color: #991b1b !important; }
+.order-pay-pill--refunded { background: #dbeafe !important; color: #1e40af !important; }
+.order-pay-pill--pending { background: #fff3cd !important; color: #92400e !important; }
+
+.order-delivered-thanks {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border: 2px solid #34d399;
+  border-radius: 12px;
+  text-align: center;
+}
+.order-delivered-thanks--hidden { display: none !important; }
+
+.manage-cart-share-wrap {
+  margin-top: 0.9rem;
+  display: none;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.manage-cart-share-wrap--open { display: flex; }
+.manage-cart-share-url-input {
+  min-width: 320px;
+  width: min(100%, 620px);
+  direction: ltr;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+}
+</style>
+{% endblock %}
+
+{% block manage_content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+    <h1 class="manage-page-title">📦 تفاصيل الطلب #{{ order.id }}</h1>
+    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        {% if can_open_full_order_edit %}
+        <a href="{% url 'manage:order_edit' order.id %}" class="btn btn-primary">✏️ تعديل شامل الطلب</a>
+        {% endif %}
+        {% if order.customer_type == 'guest' %}
+        <span class="customer-type-badge type-guest">👤 ضيف</span>
+        {% else %}
+        <span class="customer-type-badge type-registered">✅ مسجل</span>
+        {% endif %}
+        <a href="{% url 'manage:order_list' %}" class="btn btn-secondary">← قائمة الطلبات</a>
+    </div>
+</div>
+
+<div class="status-cards">
+    <div class="status-card" style="border-color: #2c5f4f;">
+        <span class="status-card-icon">📋</span>
+        <div class="status-card-body">
+            <div class="label">حالة الطلب</div>
+            <div class="value" style="color: #2c5f4f;" id="order-status-card-value">
+                {% if order.status == 'pending' %}⏳{% elif order.status == 'confirmed' %}✅{% elif order.status == 'processing' %}⚙️{% elif order.status == 'ready_to_ship' %}📦{% elif order.status == 'shipped' %}🚚{% elif order.status == 'delivered' %}🎉{% else %}❌{% endif %}
+                {{ order.get_status_display }}
+            </div>
+        </div>
+    </div>
+    <div class="status-card {% if order.payment_status == 'paid' %}status-card--pay-paid{% elif order.payment_status == 'failed' %}status-card--pay-failed{% elif order.payment_status == 'refunded' %}status-card--pay-refunded{% else %}status-card--pay-pending{% endif %}" id="order-payment-status-card">
+        <span class="status-card-icon">💳</span>
+        <div class="status-card-body">
+            <div class="label">حالة الدفع</div>
+            <div class="value order-pay-card__value" id="order-payment-status-card-value">
+                {{ order.get_payment_status_display }}
+            </div>
+        </div>
+    </div>
+    <div class="status-card">
+        <span class="status-card-icon">💰</span>
+        <div class="status-card-body">
+            <div class="label">المجموع الكلي</div>
+            <div class="value" style="color: #2c5f4f; font-size: 1.2rem;">{{ order.total }} ر.س</div>
+        </div>
+    </div>
+    <div class="status-card">
+        <span class="status-card-icon">🗓️</span>
+        <div class="status-card-body">
+            <div class="label">تاريخ الطلب</div>
+            <div class="value">{{ order.created_at|date:"Y-m-d H:i" }}</div>
+        </div>
+    </div>
+</div>
+
+{% if order.status != 'cancelled' %}
+<div class="manage-section" id="order-shipping-section">
+    <h2>📊 مسار الطلب</h2>
+    <div class="order-progress">
+        <div class="progress-step {% if order.status == 'delivered' or order.status == 'shipped' or order.status == 'ready_to_ship' or order.status == 'processing' or order.status == 'confirmed' %}done{% elif order.status == 'pending' %}active{% endif %}" data-status-step="pending">
+            <div class="progress-dot">⏳</div>
+            <div class="progress-label">قيد الانتظار</div>
+        </div>
+        <div class="progress-step {% if order.status == 'delivered' or order.status == 'shipped' or order.status == 'ready_to_ship' or order.status == 'processing' %}done{% elif order.status == 'confirmed' %}active{% endif %}" data-status-step="confirmed">
+            <div class="progress-dot">✅</div>
+            <div class="progress-label">تم التأكيد</div>
+        </div>
+        <div class="progress-step {% if order.status == 'delivered' or order.status == 'shipped' or order.status == 'ready_to_ship' %}done{% elif order.status == 'processing' %}active{% endif %}" data-status-step="processing">
+            <div class="progress-dot">⚙️</div>
+            <div class="progress-label">قيد التجهيز</div>
+        </div>
+        <div class="progress-step {% if order.status == 'delivered' or order.status == 'shipped' %}done{% elif order.status == 'ready_to_ship' %}active{% endif %}" data-status-step="ready_to_ship">
+            <div class="progress-dot">📦</div>
+            <div class="progress-label">جاهز للشحن</div>
+        </div>
+        <div class="progress-step {% if order.status == 'delivered' %}done{% elif order.status == 'shipped' %}active{% endif %}" data-status-step="shipped">
+            <div class="progress-dot">🚚</div>
+            <div class="progress-label">تم الشحن</div>
+        </div>
+        <div class="progress-step {% if order.status == 'delivered' %}active{% endif %}" data-status-step="delivered">
+            <div class="progress-dot">🎉</div>
+            <div class="progress-label">تم التوصيل</div>
+        </div>
+    </div>
+    <div
+        id="order-delivered-thanks"
+        class="order-delivered-thanks{% if order.status != 'delivered' %} order-delivered-thanks--hidden{% endif %}"
+    >
+        <p style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #065f46; line-height: 1.7;">
+            🤲 الحمد لله<br>
+            <span style="font-size: 0.98rem; font-weight: 700; color: #047857;">اكتمل مسار الطلب وتم التوصيل للعميل بنجاح.</span>
+        </p>
+    </div>
+</div>
+{% else %}
+<div class="manage-section" style="background: #fff5f5; border: 1px solid #fca5a5;">
+    <div style="display: flex; align-items: center; gap: 1rem; padding: 0.5rem;">
+        <span style="font-size: 2rem;">❌</span>
+        <div>
+            <strong style="color: #ef4444; font-size: 1.1rem;">هذا الطلب ملغي</strong>
+            {% if order.cancel_reason %}
+            <p style="margin: 0.25rem 0 0; color: #6c757d; font-size: 0.9rem;">السبب: {{ order.get_cancel_reason_display }}{% if order.cancel_note %} — {{ order.cancel_note }}{% endif %}</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if can_manage_order_operations and order.status != 'cancelled' and order.status != 'delivered' %}
+<div class="manage-section" id="order-actions-section">
+    <h2>⚡ الإجراءات</h2>
+    <div class="action-panel">
+        <div id="order-advance-actions-wrap">
+        {% if next_statuses %}
+        <h3>تقدم حالة الطلب إلى:</h3>
+        <div class="action-btns">
+            {% for st_code, st_label in next_statuses %}
+            <form method="post" style="display: inline;" class="js-order-ajax-form" data-confirm="تأكيد الانتقال إلى: {{ st_label }}؟">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="advance">
+                <input type="hidden" name="new_status" value="{{ st_code }}">
+                <button type="submit" class="btn-advance">
+                    ▶ {{ st_label }}
+                </button>
+            </form>
+            {% endfor %}
+        </div>
+        {% endif %}
+        </div>
+
+        {% if order.payment_method == 'payment_gateway' and order.payment_status == 'pending' %}
+        <div id="order-mark-paid-wrap" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+            <h3>تحديث حالة الدفع:</h3>
+            <div class="action-btns">
+                <form method="post" style="display: inline;" class="js-order-ajax-form" data-confirm="تأكيد تسجيل الدفع كـ مدفوع؟">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="mark_paid">
+                    <button type="submit" class="btn-pay-action">✅ تسجيل كـ مدفوع</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if order.can_be_cancelled %}
+        <div id="order-cancel-wrap" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #dee2e6;">
+            <h3>إلغاء الطلب:</h3>
+            <button type="button" class="btn-cancel-order" onclick="document.getElementById('cancelModal').classList.add('open')">
+                ❌ إلغاء الطلب
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if can_manage_order_operations %}
+<div class="manage-section">
+    <h2>🔗 مشاركة سلة الطلب</h2>
+    <p style="margin-top:0; color:#64748b; font-size:0.9rem;">
+        أنشئ رابط سلة جاهز من عناصر هذا الطلب لإرساله للعميل (يدعم Merge و Replace).
+    </p>
+    <form method="post" style="display:inline-flex; gap:0.7rem; align-items:center; flex-wrap:wrap;" id="create-share-cart-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="create_share_cart">
+        <button type="submit" class="btn btn-primary" id="create-share-cart-btn">➕ إنشاء رابط سلة</button>
+    </form>
+    <div id="manage-cart-share-wrap" class="manage-cart-share-wrap{% if cart_share_url %} manage-cart-share-wrap--open{% endif %}">
+        <input id="manage-cart-share-url" class="manage-cart-share-url-input" type="text" readonly value="{{ cart_share_url }}">
+        <button type="button" class="btn btn-secondary" id="btn-copy-manage-cart-share">📋 نسخ الرابط</button>
+        <a href="{{ cart_share_url }}" target="_blank" rel="noopener" class="btn btn-secondary" id="btn-open-manage-cart-share">↗ فتح</a>
+    </div>
+</div>
+{% endif %}
+
+{% if can_manage_order_operations %}
+<div class="manage-section">
+    <h2>📝 إضافة ملاحظة للسجل</h2>
+    <form method="post" style="display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap;" class="js-order-ajax-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="advance">
+        <input type="hidden" name="new_status" value="{{ order.status }}">
+        <div style="flex: 1; min-width: 250px;">
+            <input type="text" name="note" class="input" placeholder="اكتب ملاحظة لهذا الطلب...">
+        </div>
+        <button type="submit" class="btn btn-secondary">💬 إضافة ملاحظة</button>
+    </form>
+</div>
+{% endif %}
+
+<div class="manage-section">
+    <h2>👤 معلومات العميل</h2>
+    {% if can_edit_customer_basics %}
+    <form id="customer-basic-edit" method="post" style="margin-bottom: 1.25rem; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:1rem;">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="edit_customer_basic">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:0.85rem;">
+            <div>
+                <label style="display:block; margin-bottom:0.35rem; color:#6c757d; font-weight:700;">الاسم</label>
+                <input type="text" name="customer_name" class="input" value="{{ order.customer_name }}" required>
+            </div>
+            <div>
+                <label style="display:block; margin-bottom:0.35rem; color:#6c757d; font-weight:700;">الجوال</label>
+                <input type="text" name="customer_phone" class="input" value="{{ order.customer_phone }}" required>
+            </div>
+        </div>
+        <div style="margin-top:0.85rem;">
+            <label style="display:block; margin-bottom:0.35rem; color:#6c757d; font-weight:700;">العنوان</label>
+            <textarea name="address" class="input" rows="3" required>{{ order.address }}</textarea>
+        </div>
+        <div style="margin-top:0.85rem;">
+            <label style="display:block; margin-bottom:0.35rem; color:#6c757d; font-weight:700;">ملاحظات الطلب</label>
+            <textarea name="order_notes" class="input" rows="3">{{ order.notes }}</textarea>
+        </div>
+        <div style="margin-top:0.75rem; display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap;">
+            <span style="font-size:0.85rem; color:#64748b;">صلاحية ممثل خدمة العملاء: تعديل الاسم/الجوال/العنوان/الملاحظات فقط.</span>
+            <button type="submit" class="btn btn-primary">💾 حفظ التعديلات</button>
+        </div>
+    </form>
+    {% endif %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">الاسم:</strong>
+            <span>{{ order.customer_name }}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">الجوال:</strong>
+            <a href="tel:{{ order.customer_phone }}" style="color: #2c5f4f; font-weight: 600;">{{ order.customer_phone }}</a>
+        </div>
+        {% if order.customer_email %}
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">البريد:</strong>
+            <a href="mailto:{{ order.customer_email }}" style="color: #2c5f4f;">{{ order.customer_email }}</a>
+        </div>
+        {% endif %}
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">الحساب:</strong>
+            {% if order.user %}
+            <a href="{% url 'manage:user_detail' order.user.id %}" style="color: #2c5f4f; font-weight: 600;">🔗 {{ order.user.username }}</a>
+            {% else %}
+            <span class="customer-type-badge type-guest">👤 ضيف بدون حساب</span>
+            {% endif %}
+        </div>
+    </div>
+    <div style="margin-top: 1.5rem;">
+        <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">العنوان:</strong>
+        <p style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin: 0; white-space: pre-line; line-height: 1.8;">{{ order.address }}</p>
+    </div>
+    {% if order.notes %}
+    <div style="margin-top: 1rem;">
+        <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">ملاحظات العميل:</strong>
+        <p style="background: #fff3cd; padding: 1rem; border-radius: 8px; margin: 0; white-space: pre-line;">{{ order.notes }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="manage-section">
+    <h2>💳 الدفع والتوصيل</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">طريقة الدفع:</strong>
+            <span>{% if order.payment_method == 'cash_on_delivery' %}💵 الدفع عند الاستلام{% else %}💳 بطاقة (فيزا / مدى){% endif %}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">حالة الدفع:</strong>
+            <span class="badge order-pay-pill order-pay-pill--{% if order.payment_status == 'paid' %}paid{% elif order.payment_status == 'failed' %}failed{% elif order.payment_status == 'refunded' %}refunded{% else %}pending{% endif %}" id="order-payment-status-pill">
+                {{ order.get_payment_status_display }}
+            </span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">رسوم التوصيل:</strong>
+            <span>{{ order.delivery_fee }} ر.س</span>
+        </div>
+    </div>
+</div>
+
+<div class="manage-section">
+    <h2>🚚 الشحن (محاكاة)</h2>
+    {% if shipment %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">شركة الشحن:</strong>
+            <span>{{ shipment.get_provider_display }}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">رقم التتبع:</strong>
+            <span style="font-family: monospace; font-weight: 700; color:#2c5f4f;" id="shipment-tracking-number">{{ shipment.tracking_number }}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">حالة الشحنة:</strong>
+            <span class="badge" id="shipment-status-badge" style="background:#e0f2fe;color:#0369a1;">{{ shipment.get_status_display }}</span>
+        </div>
+        {% if shipment.last_event %}
+        <div style="grid-column: 1 / -1;" id="shipment-last-event-wrap">
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">آخر تحديث:</strong>
+            <div style="background:#f8f9fa;border-radius:10px;padding:0.85rem 1rem; white-space: pre-line;" id="shipment-last-event-text">{{ shipment.last_event }}</div>
+        </div>
+        {% endif %}
+    </div>
+    {% if can_manage_order_operations %}
+    <div style="margin-top: 1rem; display:flex; gap:0.75rem; flex-wrap:wrap;">
+        <form method="post" style="display:inline; min-width: 280px;" class="js-order-ajax-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="shipment_assign_courier">
+            <label style="display:block; margin-bottom:0.35rem; color:#6c757d; font-weight:700;">إسناد المندوب:</label>
+            <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+                <select name="courier_id" class="input" style="min-width:240px;">
+                    <option value="">بدون (غير مسند)</option>
+                    {% for c in couriers %}
+                    <option value="{{ c.id }}" {% if shipment.courier and shipment.courier.id == c.id %}selected{% endif %}>
+                        {{ c.username }}
+                    </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-secondary">💾 حفظ</button>
+            </div>
+        </form>
+        <form method="post" style="display:inline;" class="js-order-ajax-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="shipment_advance">
+            <button type="submit" class="btn btn-primary">➡️ تحديث حالة الشحنة</button>
+        </form>
+    </div>
+    {% endif %}
+    {% else %}
+    <p class="empty-msg" style="margin-top:0;">لا توجد شحنة لهذا الطلب بعد.</p>
+    {% if can_manage_order_operations %}
+        <form method="post" style="display:inline;" class="js-order-ajax-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="shipment_create">
+        <button type="submit" class="btn btn-primary">➕ إنشاء شحنة (محاكاة)</button>
+    </form>
+    {% endif %}
+    {% endif %}
+</div>
+
+<div class="manage-section" style="border: 2px solid rgba(44,95,79,0.2); background: linear-gradient(180deg, #f8faf9 0%, #fff 100%);">
+    <h2>📄 بوليصة الشحن</h2>
+    <p style="color:#6c757d; font-size:0.9rem; margin-top:0;">تُنشأ تلقائياً عند طباعة البوليصة من المستودع أو من هنا (قيم موحّدة: رقم البوليصة ونص الباركود). يمكنك أدناه طباعة نسخة أو استعادة السجل.</p>
+    {% if order.status != 'cancelled' %}
+    <div style="margin: 1rem 0; padding: 1rem; background: #fff; border: 1px solid #dee2e6; border-radius: 10px;">
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+            <a href="{% url 'manage:order_shipping_label_print' order.id %}" target="_blank" rel="noopener noreferrer" class="btn btn-primary">🖨️ طباعة بوليصة الشحن</a>
+            <form method="post" style="display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;" class="js-order-ajax-form" data-confirm="سيتم إنشاء أو تحديث سجل البوليصة من كود الملصق الموحّد للطلب. المتابعة؟">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="waybill_restore">
+                <button type="submit" class="btn btn-secondary">
+                    🔄 استعادة / تجديد تسجيل البوليصة
+                </button>
+            </form>
+        </div>
+        <p style="margin: 0.75rem 0 0; font-size: 0.85rem; color: #6c757d;">يفتح الطباعة في نافذة جديدة بنفس تنسيق بوليصة المستودع، ويُحدَّث سجل البوليصة تلقائياً عند الفتح.</p>
+    </div>
+    {% endif %}
+    {% if shipping_waybill %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-top: 1rem;">
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">رقم البوليصة</strong>
+            <span style="font-family: monospace; font-weight: 800; font-size: 1.05rem; color: #2c5f4f;">{{ shipping_waybill.waybill_number }}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">قيمة الباركود (محفوظة)</strong>
+            {% if shipping_waybill.barcode_value %}
+            <code style="display:block; background:#f1f5f9; padding:0.65rem 0.85rem; border-radius:8px; font-size:0.85rem; word-break:break-all;">{{ shipping_waybill.barcode_value }}</code>
+            {% else %}
+            <span style="color:#94a3b8;">— لم يُدخل</span>
+            {% endif %}
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">الكود الداخلي للملصق</strong>
+            {% if shipping_waybill.linked_internal_code %}
+            <div style="display:flex; flex-wrap:wrap; align-items:center; gap:0.5rem;">
+                <code id="internal-label-code" style="background:#ecfdf5; padding:0.35rem 0.6rem; border-radius:6px;">{{ shipping_waybill.linked_internal_code }}</code>
+                <button type="button" class="btn btn-secondary" id="btn-copy-internal-label" style="padding:0.35rem 0.85rem; font-size:0.85rem;" data-copy="{{ shipping_waybill.linked_internal_code|escape }}" title="نسخ الكود">📋 نسخ</button>
+            </div>
+            <span id="copy-internal-label-feedback" style="display:none; font-size:0.85rem; color:#059669; font-weight:700; margin-top:0.35rem;">✓ تم النسخ</span>
+            {% else %}
+            <span style="color:#94a3b8;">—</span>
+            {% endif %}
+        </div>
+        {% if shipping_waybill.linked_internal_code %}
+        <div style="grid-column: 1 / -1;">
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">باركود</strong>
+            <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 14px; padding: 1rem;">
+                <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1.25rem 1rem; max-width: 300px; margin: 0 auto; text-align: center;">
+                    <img src="{% url 'manage:order_waybill_qr' order.id %}" width="190" height="190" alt="رمز QR للبوليصة" style="display: block; margin: 0 auto; image-rendering: pixelated;" loading="lazy">
+                    <div style="margin-top: 0.85rem; font-family: ui-monospace, 'Cascadia Code', monospace; font-weight: 800; font-size: 1rem; letter-spacing: 0.08em; color: #0f172a;">{{ shipping_waybill.linked_internal_code }}</div>
+                </div>
+                <p style="text-align: center; margin: 0.65rem 0 0; font-size: 0.8rem; color: #64748b;">نفس تنسيق البوليصة المطبوعة — المحتوى المرمّز: <code style="background:#fff;padding:0.15rem 0.4rem;border-radius:6px;">{% if shipping_waybill.barcode_value %}{{ shipping_waybill.barcode_value }}{% else %}DLBK:{{ shipping_waybill.linked_internal_code }}{% endif %}</code></p>
+            </div>
+        </div>
+        {% endif %}
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">أنشأها</strong>
+            <span>{% if shipping_waybill.created_by %}{{ shipping_waybill.created_by.username }}{% else %}—{% endif %}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">تاريخ التسجيل</strong>
+            <span>{{ shipping_waybill.created_at|date:"Y-m-d H:i" }}</span>
+        </div>
+        <div>
+            <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">آخر تحديث</strong>
+            <span>{{ shipping_waybill.updated_at|date:"Y-m-d H:i" }}</span>
+            {% if shipping_waybill.updated_by %}
+            <div style="font-size:0.85rem; color:#64748b; margin-top:0.25rem;">بواسطة {{ shipping_waybill.updated_by.username }}</div>
+            {% endif %}
+        </div>
+    </div>
+    {% if shipping_waybill.notes %}
+    <div style="margin-top: 1rem;">
+        <strong style="display: block; margin-bottom: 0.5rem; color: #6c757d;">ملاحظات المستودع</strong>
+        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:0.85rem 1rem; white-space: pre-line;">{{ shipping_waybill.notes }}</div>
+    </div>
+    {% endif %}
+    {% if shipping_waybill.shipment_id %}
+    <p style="margin-top:1rem; font-size:0.85rem; color:#64748b;">مرتبطة بشحنة النظام رقم <strong>#{{ shipping_waybill.shipment_id }}</strong></p>
+    {% endif %}
+    {% else %}
+    <p class="empty-msg" style="margin-top:0.5rem;">لم يُسجّل بعد بوليصة شحن لهذا الطلب من المستودع.</p>
+    {% endif %}
+</div>
+
+<div class="manage-section">
+    <h2>🛍️ عناصر الطلب ({{ order.items.count }})</h2>
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الصورة</th>
+                    <th>SKU</th>
+                    <th>المنتج</th>
+                    <th>السعر</th>
+                    <th>الكمية</th>
+                    <th>المجموع</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items.all %}
+                <tr>
+                    <td><strong>{{ forloop.counter }}</strong></td>
+                    <td>
+                        {% if item.display_image_url %}
+                        <img src="{{ item.display_image_url }}" alt="{{ item.display_product_name }}" class="table-thumbnail">
+                        {% else %}
+                        <div class="table-placeholder">{{ item.display_product_name|slice:":1"|default:"?" }}</div>
+                        {% endif %}
+                    </td>
+                    <td><code style="background:#f8f9fa;padding:0.2rem 0.5rem;border-radius:4px;font-size:0.85rem;">{{ item.display_sku }}</code></td>
+                    <td>
+                        <strong>{{ item.display_product_name }}</strong>
+                        {% if item.display_variant_label %}
+                        <div style="margin-top:.25rem; font-size:.82rem; color:#475569;">النسخة: {{ item.display_variant_label }}</div>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.price }} ر.س</td>
+                    <td><strong>{{ item.quantity }}</strong></td>
+                    <td><strong style="color: #2c5f4f;">{{ item.subtotal }} ر.س</strong></td>
+                </tr>
+                {% endfor %}
+                <tr style="background: #f8f9fa; font-weight: bold;">
+                    <td colspan="5" style="text-align: left; padding: 0.75rem 1rem;">المجموع الفرعي:</td>
+                    <td colspan="2" style="color: #2c5f4f;">{{ order.subtotal }} ر.س</td>
+                </tr>
+                {% if order.delivery_fee %}
+                <tr style="background: #f8f9fa;">
+                    <td colspan="5" style="text-align: left; padding: 0.5rem 1rem; color: #6c757d;">رسوم التوصيل:</td>
+                    <td colspan="2" style="color: #6c757d;">{{ order.delivery_fee }} ر.س</td>
+                </tr>
+                {% endif %}
+                <tr style="background: #e8f5e9; font-weight: 900; font-size: 1.1rem;">
+                    <td colspan="5" style="text-align: left; padding: 0.75rem 1rem;">المجموع الكلي:</td>
+                    <td colspan="2" style="color: #2c5f4f; font-size: 1.25rem;">{{ order.total }} ر.س</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="manage-section">
+    <h2>🕐 السجل الزمني للطلب</h2>
+    {% if history %}
+    <div class="timeline">
+        {% for entry in history %}
+        <div class="timeline-item">
+            <div class="timeline-dot {% if entry.is_automatic %}auto{% endif %}"></div>
+            <div class="timeline-body">
+                <div class="timeline-header">
+                    <div class="timeline-change">
+                        {% if entry.old_status and entry.old_status != entry.new_status %}
+                            {{ entry.old_status }} → <strong>{{ entry.new_status }}</strong>
+                        {% else %}
+                            {{ entry.new_status }}
+                        {% endif %}
+                        {% if entry.old_payment_status and entry.new_payment_status and entry.old_payment_status != entry.new_payment_status %}
+                        &nbsp;|&nbsp; دفع: {{ entry.old_payment_status }} → <strong>{{ entry.new_payment_status }}</strong>
+                        {% endif %}
+                    </div>
+                    <div class="timeline-meta">
+                        {% if entry.is_automatic %}🤖 تلقائي{% else %}👤 {% if entry.changed_by %}{{ entry.changed_by.username }}{% else %}ضيف{% endif %}{% endif %}
+                        &nbsp;·&nbsp; {{ entry.created_at|date:"Y-m-d H:i" }}
+                    </div>
+                </div>
+                {% if entry.note %}
+                    {% if 'تعديل بيانات العميل الأساسية' in entry.note %}
+                    <div class="timeline-note timeline-note-edit">
+                        <span class="timeline-note-badge">✏️ تعديل بيانات عميل</span>
+                        <div>{{ entry.note|linebreaksbr }}</div>
+                    </div>
+                    {% else %}
+                    <div class="timeline-note">💬 {{ entry.note }}</div>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-msg">لا يوجد سجل لهذا الطلب بعد.</p>
+    {% endif %}
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('btn-copy-internal-label');
+  if (!btn) return;
+  var feedback = document.getElementById('copy-internal-label-feedback');
+  btn.addEventListener('click', function () {
+    var text = btn.getAttribute('data-copy') || (document.getElementById('internal-label-code') && document.getElementById('internal-label-code').textContent) || '';
+    text = (text || '').trim();
+    if (!text) return;
+    function showOk() {
+      if (feedback) { feedback.style.display = 'block'; setTimeout(function () { feedback.style.display = 'none'; }, 2500); }
+    }
+    copyTextToClipboard(text, showOk);
+  });
+})();
+</script>
+<script>
+(function () {
+  var createForm = document.getElementById('create-share-cart-form');
+  var createBtn = document.getElementById('create-share-cart-btn');
+  var wrap = document.getElementById('manage-cart-share-wrap');
+  var shareInput = document.getElementById('manage-cart-share-url');
+  var openBtn = document.getElementById('btn-open-manage-cart-share');
+  if (createForm && createBtn && shareInput && openBtn && wrap) {
+    createForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      createBtn.disabled = true;
+      fetch(getFormActionUrl(createForm), {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+        },
+        body: new FormData(createForm)
+      })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success || !data.share_url) throw new Error('share_failed');
+        shareInput.value = data.share_url;
+        openBtn.href = data.share_url;
+        wrap.classList.add('manage-cart-share-wrap--open');
+        createBtn.disabled = false;
+      })
+      .catch(function () {
+        createBtn.disabled = false;
+      });
+    });
+  }
+
+  var btn = document.getElementById('btn-copy-manage-cart-share');
+  var input = document.getElementById('manage-cart-share-url');
+  if (!btn || !input) return;
+  btn.addEventListener('click', function () {
+    var text = (input.value || '').trim();
+    if (!text) return;
+    function ok() {
+      btn.textContent = '✅ تم النسخ';
+      setTimeout(function () { btn.textContent = '📋 نسخ الرابط'; }, 1800);
+    }
+    copyTextToClipboard(text, ok);
+  });
+})();
+</script>
+
+<div id="cancelModal" class="cancel-modal">
+    <div class="cancel-modal-box">
+        <h3>❌ إلغاء الطلب #{{ order.id }}</h3>
+        <form method="post" id="cancel-order-form" class="js-order-ajax-form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="cancel">
+            <div class="form-group">
+                <label>سبب الإلغاء:</label>
+                <select name="cancel_reason" class="input" required>
+                    {% for val, lbl in cancel_reasons %}
+                    <option value="{{ val }}">{{ lbl }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>ملاحظة إضافية (اختياري):</label>
+                <textarea name="note" class="input" rows="3" placeholder="أي تفاصيل إضافية..."></textarea>
+            </div>
+            <div style="background: #fff3cd; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1rem; color: #856404;">
+                ⚠️ سيتم إعادة كميات المنتجات إلى المخزون تلقائياً عند الإلغاء.
+            </div>
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('cancelModal').classList.remove('open')">تراجع</button>
+                <button type="submit" class="btn btn-danger">تأكيد الإلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+(function () {
+  function refreshManageSectionById(sectionId) {
+    var target = document.getElementById(sectionId);
+    if (!target) return Promise.resolve();
+    return fetch(window.location.href, {
+      credentials: 'same-origin',
+      headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' }
+    })
+      .then(function (r) {
+        if (!r.ok) throw new Error('bad status');
+        return r.text();
+      })
+      .then(function (html) {
+        var doc = new DOMParser().parseFromString(html, 'text/html');
+        var src = doc.getElementById(sectionId);
+        if (src && target) target.innerHTML = src.innerHTML;
+      })
+      .catch(function () {});
+  }
+  var statusFlow = ['pending', 'confirmed', 'processing', 'ready_to_ship', 'shipped', 'delivered'];
+  var statusMeta = {
+    pending: { icon: '⏳', label: 'قيد الانتظار' },
+    confirmed: { icon: '✅', label: 'تم التأكيد' },
+    processing: { icon: '⚙️', label: 'قيد التجهيز' },
+    ready_to_ship: { icon: '📦', label: 'جاهز للشحن' },
+    shipped: { icon: '🚚', label: 'تم الشحن' },
+    delivered: { icon: '🎉', label: 'تم التوصيل' },
+    cancelled: { icon: '❌', label: 'ملغي' }
+  };
+  function applyOrderStatusVisual(statusCode, statusDisplay, statusIcon) {
+    var meta = statusMeta[statusCode] || {};
+    var icon = statusIcon || meta.icon || '';
+    var label = statusDisplay || meta.label || '';
+    var orderStatusCard = document.getElementById('order-status-card-value');
+    if (orderStatusCard && (icon || label)) {
+      orderStatusCard.textContent = ((icon || '') + ' ' + (label || '')).trim();
+    }
+    var steps = document.querySelectorAll('[data-status-step]');
+    var targetIdx = statusFlow.indexOf(statusCode);
+    steps.forEach(function (step) {
+      var code = step.getAttribute('data-status-step');
+      var idx = statusFlow.indexOf(code);
+      step.classList.remove('done', 'active', 'cancelled');
+      if (statusCode === 'cancelled') {
+        step.classList.add('cancelled');
+        return;
+      }
+      if (targetIdx < 0 || idx < 0) return;
+      if (idx < targetIdx) step.classList.add('done');
+      else if (idx === targetIdx) step.classList.add('active');
+    });
+    var deliveredThanks = document.getElementById('order-delivered-thanks');
+    if (deliveredThanks) {
+      if (statusCode === 'delivered') deliveredThanks.classList.remove('order-delivered-thanks--hidden');
+      else deliveredThanks.classList.add('order-delivered-thanks--hidden');
+    }
+  }
+  function renderAdvanceActions(nextStatuses) {
+    var wrap = document.getElementById('order-advance-actions-wrap');
+    if (!wrap) return;
+    if (!Array.isArray(nextStatuses) || !nextStatuses.length) {
+      wrap.innerHTML = '';
+      return;
+    }
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    var html = '<h3>تقدم حالة الطلب إلى:</h3><div class="action-btns">';
+    nextStatuses.forEach(function (st) {
+      var code = (st && st.code) ? String(st.code) : '';
+      var label = (st && st.label) ? String(st.label) : code;
+      if (!code) return;
+      html += ''
+        + '<form method="post" style="display: inline;" class="js-order-ajax-form" data-confirm="تأكيد الانتقال إلى: ' + esc(label) + '؟">'
+        + '<input type="hidden" name="csrfmiddlewaretoken" value="' + esc(window.MANAGE_CSRF_TOKEN || '') + '">'
+        + '<input type="hidden" name="action" value="advance">'
+        + '<input type="hidden" name="new_status" value="' + esc(code) + '">'
+        + '<button type="submit" class="btn-advance">▶ ' + esc(label) + '</button>'
+        + '</form>';
+    });
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+  function applyOrderSnapshotData(data, actionType) {
+    if (!data) return;
+    applyOrderStatusVisual(data.order_status, data.order_status_display, data.order_status_icon);
+    if (data.order_status) currentOrderStatusCode = data.order_status;
+    if (data.order_status_display) currentOrderStatusLabel = data.order_status_display;
+    if (data.order_status_icon) currentOrderStatusIcon = data.order_status_icon;
+
+    var payStatusCard = document.getElementById('order-payment-status-card-value');
+    if (payStatusCard) {
+      payStatusCard.textContent = ((data.payment_status_icon || '') + ' ' + (data.payment_status_display || '')).trim();
+    }
+    var payCard = document.getElementById('order-payment-status-card');
+    if (payCard && data.payment_status) {
+      var pcm = 'status-card--pay-pending';
+      if (data.payment_status === 'paid') pcm = 'status-card--pay-paid';
+      else if (data.payment_status === 'failed') pcm = 'status-card--pay-failed';
+      else if (data.payment_status === 'refunded') pcm = 'status-card--pay-refunded';
+      payCard.className = 'status-card ' + pcm;
+    }
+    var payPill = document.getElementById('order-payment-status-pill');
+    if (payPill && data.payment_status_display) {
+      payPill.textContent = data.payment_status_display;
+      var ps = data.payment_status || 'pending';
+      if (ps !== 'paid' && ps !== 'failed' && ps !== 'refunded') ps = 'pending';
+      payPill.className = 'badge order-pay-pill order-pay-pill--' + ps;
+    }
+
+    var tracking = document.getElementById('shipment-tracking-number');
+    if (tracking && data.shipment_tracking_number) tracking.textContent = data.shipment_tracking_number;
+    var shipmentStatus = document.getElementById('shipment-status-badge');
+    if (shipmentStatus && data.shipment_status_display) shipmentStatus.textContent = data.shipment_status_display;
+    var shipmentEvent = document.getElementById('shipment-last-event-text');
+    var shipmentEventWrap = document.getElementById('shipment-last-event-wrap');
+    if (shipmentEvent && typeof data.shipment_last_event === 'string') {
+      shipmentEvent.textContent = data.shipment_last_event;
+      if (shipmentEventWrap) shipmentEventWrap.style.display = data.shipment_last_event ? '' : 'none';
+    }
+
+    if (data.hide_actions) {
+      var actionsSection = document.getElementById('order-actions-section');
+      if (actionsSection) actionsSection.style.display = 'none';
+    } else {
+      var actionsSectionShow = document.getElementById('order-actions-section');
+      if (actionsSectionShow) actionsSectionShow.style.display = '';
+      renderAdvanceActions(data.next_statuses || []);
+      var markPaidWrap = document.getElementById('order-mark-paid-wrap');
+      if (markPaidWrap) markPaidWrap.style.display = data.show_mark_paid ? '' : 'none';
+      var cancelWrap = document.getElementById('order-cancel-wrap');
+      if (cancelWrap) cancelWrap.style.display = data.can_be_cancelled ? '' : 'none';
+    }
+    if (actionType === 'shipment_create' || actionType === 'shipment_advance' || actionType === 'shipment_assign_courier' || actionType === 'waybill_restore' || actionType === 'live') {
+      refreshManageSectionById('order-shipping-section');
+      refreshManageSectionById('order-actions-section');
+    }
+  }
+  var currentOrderStatusCode = "{{ order.status|default:'' }}";
+  var currentOrderStatusLabel = "{{ order.get_status_display|escapejs }}";
+  var currentOrderStatusIcon = "{% if order.status == 'pending' %}⏳{% elif order.status == 'confirmed' %}✅{% elif order.status == 'processing' %}⚙️{% elif order.status == 'ready_to_ship' %}📦{% elif order.status == 'shipped' %}🚚{% elif order.status == 'delivered' %}🎉{% else %}❌{% endif %}";
+
+  document.addEventListener('submit', function (e) {
+    var form = e.target.closest('form.js-order-ajax-form');
+    if (!form) return;
+    if (form.id === 'create-share-cart-form') return;
+    e.preventDefault();
+
+    var confirmMsg = form.getAttribute('data-confirm');
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+
+    var submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.disabled = true;
+    var actionInput = form.querySelector('input[name="action"]');
+    var actionType = actionInput ? actionInput.value : '';
+    var prevStatusCode = currentOrderStatusCode;
+    var prevStatusLabel = currentOrderStatusLabel;
+    var prevStatusIcon = currentOrderStatusIcon;
+    if (actionType === 'advance') {
+      var nextStatusInput = form.querySelector('input[name="new_status"]');
+      var nextStatusCode = nextStatusInput ? nextStatusInput.value : '';
+      if (nextStatusCode) {
+        // تحديث بصري فوري قبل رجوع الرد من السيرفر.
+        applyOrderStatusVisual(nextStatusCode);
+      }
+    }
+
+    fetch(getFormActionUrl(form), {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'failed');
+      applyOrderSnapshotData(data, actionType);
+
+      if (form.id === 'cancel-order-form') {
+        var modal = document.getElementById('cancelModal');
+        if (modal) modal.classList.remove('open');
+      }
+
+      showManageSuccess(data.message || 'تم تنفيذ العملية بنجاح.');
+      if (submitBtn) submitBtn.disabled = false;
+    })
+    .catch(function (err) {
+      if (submitBtn) submitBtn.disabled = false;
+      if (actionType === 'advance') {
+        applyOrderStatusVisual(prevStatusCode, prevStatusLabel, prevStatusIcon);
+      }
+      showManageError((err && err.message && err.message !== 'failed') ? err.message : 'تعذر تنفيذ العملية. حاول مرة أخرى.');
+    });
+  });
+  var liveUrl = "{% url 'manage:order_detail_live_state' order.id %}";
+  var liveSignature = "{{ order.status|default:'' }}|{{ order.payment_status|default:'' }}|{% if shipment %}{{ shipment.status|default:'' }}{% endif %}";
+  setInterval(function () {
+    if (document.hidden) return;
+    fetch(liveUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success) return;
+        var sig = data.signature || '';
+        if (sig && sig !== liveSignature) {
+          liveSignature = sig;
+          applyOrderSnapshotData(data, 'live');
+        }
+      })
+      .catch(function () {});
+  }, 3000);
+})();
+</script>
+{% endblock %}

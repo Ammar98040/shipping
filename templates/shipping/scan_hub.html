@@ -1,0 +1,125 @@
+{% extends "shipping/base_shipping.html" %}
+{% block title %}البوليصة — اختر المرحلة{% endblock %}
+
+{% block content %}
+<style>
+  .hub-wrap{max-width: 720px; margin: 1.25rem auto; padding: 0 0.5rem;}
+  .hub-hero{
+    background: linear-gradient(135deg, rgba(37,99,235,0.14), rgba(14,165,233,0.08));
+    border: 1px solid rgba(37,99,235,0.18);
+    border-radius: 16px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+  .hub-hero h1{margin:0; font-size:1.15rem;}
+  .hub-hero p{margin:0.45rem 0 0; color:#475569; font-weight:800; line-height:1.6;}
+  .hub-steps{
+    background:#f8fafc;
+    border:1px solid rgba(15,23,42,0.1);
+    border-radius:14px;
+    padding:1rem 1.15rem;
+    margin-bottom:1.25rem;
+    font-weight:800;
+    color:#334155;
+    font-size:0.92rem;
+    line-height:1.75;
+  }
+  .hub-steps strong{color:#0f172a;}
+  .hub-cards{display:grid; gap:1rem;}
+  .hub-card{
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    background:#fff;
+    border:1px solid rgba(15,23,42,0.12);
+    border-radius:16px;
+    padding:1.15rem 1.25rem;
+    box-shadow: 0 8px 24px rgba(15,23,42,0.06);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .hub-card:hover{
+    border-color: rgba(37,99,235,0.35);
+    box-shadow: 0 12px 32px rgba(37,99,235,0.12);
+  }
+  .hub-card h2{margin:0 0 0.35rem; font-size:1.05rem; color:#0f172a;}
+  .hub-card p{margin:0; color:#64748b; font-weight:800; font-size:0.92rem; line-height:1.55;}
+  .hub-card .tag{display:inline-block; margin-top:0.65rem; font-size:0.78rem; font-weight:900; color:#2563eb; background:#eff6ff; border-radius:999px; padding:0.25rem 0.6rem;}
+  .delivered-celebration{
+    max-width: 720px; margin: 2rem auto; text-align: center;
+    background: linear-gradient(180deg, #ecfdf5 0%, #fff 55%);
+    border: 2px solid #34d399; border-radius: 20px;
+    padding: 2.5rem 1.5rem; box-shadow: 0 12px 40px rgba(16, 185, 129, 0.15);
+  }
+  .delivered-celebration h2{ margin:0 0 0.75rem; font-size: 1.45rem; color: #065f46; line-height: 1.6; }
+  .delivered-celebration p{ margin:0; color:#047857; font-weight:800; font-size:1rem; }
+  .delivered-celebration .actions{ margin-top: 1.5rem; display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap; }
+  body.theme-dark .hub-hero{
+    background: linear-gradient(135deg, rgba(37,99,235,0.26), rgba(14,165,233,0.16));
+    border-color: rgba(125,211,252,0.28);
+  }
+  body.theme-dark .hub-hero h1{color:#f8fafc;}
+  body.theme-dark .hub-hero p{color:#cbd5e1;}
+  body.theme-dark .hub-steps{
+    background:#0f172a;
+    border-color: rgba(148,163,184,0.24);
+    color:#cbd5e1;
+  }
+  body.theme-dark .hub-steps strong{color:#f8fafc;}
+  body.theme-dark .hub-card{
+    background:#0f172a;
+    border-color: rgba(148,163,184,0.24);
+    box-shadow: 0 12px 30px rgba(2,6,23,0.45);
+  }
+  body.theme-dark .hub-card h2{color:#f8fafc;}
+  body.theme-dark .hub-card p{color:#cbd5e1;}
+  body.theme-dark .hub-card .tag{
+    color:#93c5fd;
+    background:#1e3a8a;
+  }
+  body.theme-dark .delivered-celebration{
+    background: linear-gradient(180deg, #052e2b 0%, #0f172a 70%);
+    border-color: #0f766e;
+    box-shadow: 0 12px 40px rgba(6,78,59,0.35);
+  }
+  body.theme-dark .delivered-celebration h2,
+  body.theme-dark .delivered-celebration p{
+    color:#86efac;
+  }
+</style>
+
+<div class="hub-wrap">
+  {% if show_delivered_ok %}
+  <div class="delivered-celebration" role="status">
+    <h2>🤲 الحمد لله<br>تم تسليم الطلب للعميل بنجاح</h2>
+    <p>تم تأكيد التسليم عبر رمز OTP. يمكنك متابعة الشحنات من القائمة.</p>
+    <div class="actions">
+      <a class="btn btn-primary" href="{% url 'shipping:shipments_list' %}">📋 شحناتي</a>
+      <a class="btn btn-secondary" href="{% url 'shipping:dashboard' %}">🏠 لوحة المندوب</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="hub-hero">
+    <h1>📷 مسار البوليصة</h1>
+    <p>المراحل متسلسلة: لا يُفعّل تسليم العميل قبل تسجيل استلام الشحنة من المتجر بنفس كود البوليصة.</p>
+  </div>
+
+  <div class="hub-steps" role="note">
+    <strong>ترتيب العمل:</strong><br>
+    ١) تجهيز الطلب في المستودع (موظف المستودع) — ٢) <strong>أنت</strong>: استلام من المتجر عبر المسح — ٣) <strong>أنت</strong>: تسليم للعميل (OTP).
+  </div>
+
+  <div class="hub-cards">
+    <a class="hub-card" href="{% url 'shipping:scan_pickup' %}">
+      <h2>📦 استلام من المتجر</h2>
+      <p>امسح QR أو أدخل كود البوليصة عند استلام الطرد من المتجر. هذه هي المرحلة الثانية في المسار.</p>
+      <span class="tag">ابدأ هنا عند أخذ الشحنة من المتجر</span>
+    </a>
+    <a class="hub-card" href="{% url 'shipping:scan_deliver' %}">
+      <h2>✅ تسليم للعميل (OTP)</h2>
+      <p>بعد تسجيل الاستلام من المتجر، استخدم نفس الكود هنا لإرسال رمز التأكيد للعميل وإتمام التسليم.</p>
+      <span class="tag">متاح فقط بعد «استلام من المتجر»</span>
+    </a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

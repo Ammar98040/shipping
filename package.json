@@ -1,0 +1,27 @@
+{
+  "name": "shop",
+  "version": "1.0.0",
+  "description": "متجر إلكتروني بتجربة دولاب **تفاعلية ثلاثية الأبعاد**: **خانات → رفوف → أصناف → منتجات**.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Ammar98040/shipping.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Ammar98040/shipping/issues"
+  },
+  "homepage": "https://github.com/Ammar98040/shipping#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  }
+}

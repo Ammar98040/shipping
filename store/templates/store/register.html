@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}إنشاء حساب جديد{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-brand-logo" aria-hidden="true">
+                <span class="auth-logo-top"></span>
+                <span class="auth-logo-body"></span>
+                <span class="auth-logo-door auth-logo-door--left"></span>
+                <span class="auth-logo-door auth-logo-door--right"></span>
+            </div>
+            <h1 class="auth-title">إنشاء حساب جديد</h1>
+            <p class="auth-subtitle">ابدأ رحلتك مع دولاب بخطوات بسيطة</p>
+        </div>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="message {{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <form method="post" class="auth-form" id="store-register-form">
+            {% csrf_token %}
+            
+            {% for field in form %}
+            <div class="auth-field {% if field.errors %}has-error{% endif %}">
+                <span class="auth-field-icon">
+                    {% if field.name == 'username' %}
+                    👤
+                    {% elif field.name == 'email' %}
+                    ✉️
+                    {% elif field.name == 'phone' %}
+                    📱
+                    {% elif field.name == 'password1' or field.name == 'password2' %}
+                    🔒
+                    {% else %}
+                    ✨
+                    {% endif %}
+                </span>
+                {{ field }}
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {% if field.errors %}
+                <div class="field-errors">
+                    {% for error in field.errors %}
+                    <p class="error-text">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            
+            {% if form.non_field_errors %}
+            <div class="field-errors">
+                {% for error in form.non_field_errors %}
+                <p class="error-text">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if turnstile_site_key %}
+            {% include 'partials/turnstile_widget.html' %}
+            {% endif %}
+            
+            <button type="submit" class="btn-submit" id="store-register-submit-btn">إنشاء حساب</button>
+            <div id="store-register-inline-msg" style="display:none; margin-top:0.75rem; font-weight:800;"></div>
+        </form>
+        
+        <div class="auth-links">
+            <p>لديك حساب بالفعل؟ <a href="{% url 'user_login' %}">تسجيل الدخول</a></p>
+            <p><a href="{% url 'wardrobe' %}">العودة للرئيسية</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/auth-floating.js' %}"></script>
+<script>
+(function () {
+    var form = document.getElementById('store-register-form');
+    var btn = document.getElementById('store-register-submit-btn');
+    var msg = document.getElementById('store-register-inline-msg');
+    if (!form || !btn || !msg) return;
+    function showMsg(text, ok) {
+        msg.style.display = 'block';
+        msg.style.color = ok ? '#065f46' : '#b91c1c';
+        msg.textContent = text;
+    }
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        btn.disabled = true;
+        msg.style.display = 'none';
+        fetch(form.action || window.location.href, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+          var ct = (r.headers.get('content-type') || '').toLowerCase();
+          if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+          return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر إنشاء الحساب');
+            showMsg(data.message || 'تم إرسال رمز التحقق.', true);
+            btn.disabled = false;
+            if (data.redirect_url) setTimeout(function () { window.location.href = data.redirect_url; }, 350);
+        })
+        .catch(function (err) {
+            showMsg((err && err.message) ? err.message : 'تعذر إنشاء الحساب.', false);
+            btn.disabled = false;
+        });
+    });
+})();
+</script>
+{% endblock %}

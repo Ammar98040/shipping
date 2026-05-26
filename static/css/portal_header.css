@@ -1,0 +1,453 @@
+/**
+ * هيدر بوابات المستودع والشحن — قائمة مستخدم واحدة (مثل واجهة العميل)
+ */
+.portal-inner {
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0.78rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: nowrap;
+}
+
+.portal-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-decoration: none;
+    color: #fff;
+    font-weight: 800;
+    font-size: 1.08rem;
+    letter-spacing: -0.02em;
+    transition: opacity 0.2s;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 14px;
+    padding: 0.42rem 0.72rem;
+}
+
+.portal-logo:hover {
+    color: #fff;
+    opacity: 0.92;
+}
+
+.portal-logo-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.95);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.15));
+}
+
+.portal-badge {
+    background: rgba(255, 255, 255, 0.18);
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.portal-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+}
+
+.warehouse-status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.58rem;
+    padding: 0.42rem 0.82rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.33);
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    font-size: 0.84rem;
+    font-weight: 800;
+    box-shadow: 0 6px 16px rgba(2, 6, 23, 0.26);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.warehouse-status-dot {
+    width: 0.62rem;
+    height: 0.62rem;
+    border-radius: 50%;
+    background: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.3);
+}
+
+.warehouse-status-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.08rem;
+}
+
+.warehouse-status-caption {
+    font-size: 0.64rem;
+    font-weight: 900;
+    opacity: 0.88;
+    letter-spacing: 0.01em;
+}
+
+.warehouse-status-text {
+    font-size: 0.86rem;
+    font-weight: 900;
+    line-height: 1.1;
+}
+
+.warehouse-status-indicator--on .warehouse-status-dot {
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.28);
+    animation: wh-status-pulse 1.6s ease-in-out infinite;
+}
+
+.warehouse-status-indicator--off .warehouse-status-dot {
+    background: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.28);
+}
+
+@keyframes wh-status-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.28);
+    }
+    50% {
+        transform: scale(1.14);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.16);
+    }
+}
+
+/* زر القائمة: صورة + اسم + سهم */
+.portal-dropdown {
+    position: relative;
+}
+
+.portal-menu-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.42rem 0.82rem 0.42rem 0.6rem;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    min-height: 48px;
+}
+
+.portal-menu-btn:hover {
+    background: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.38);
+}
+
+.portal-menu-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+}
+
+.portal-menu-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.portal-menu-name {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.portal-menu-chevron {
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+/* القائمة المنبثقة — بيضاء مثل واجهة العميل */
+.portal-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    inset-inline-end: 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.12rem;
+    width: max-content;
+    max-width: min(92vw, 22rem);
+    padding: 0.45rem;
+    background: linear-gradient(180deg, #fff 0%, #fafbfc 100%);
+    border-radius: 14px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16), 0 0 0 1px rgba(44, 95, 79, 0.1);
+    z-index: 200;
+}
+
+.portal-menu-link {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: 11px;
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 0.92rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.portal-menu-link--button {
+    width: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: inherit;
+}
+
+.portal-menu-icon {
+    flex-shrink: 0;
+    width: 2.15rem;
+    height: 2.15rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--icon-bg, #f1f5f9);
+    color: var(--icon-fg, #64748b);
+}
+
+.portal-menu-icon svg {
+    display: block;
+}
+
+.portal-menu-label {
+    flex: 1;
+    min-width: 0;
+}
+
+.portal-menu-link:hover {
+    background: rgba(44, 95, 79, 0.08);
+    color: #2c5f4f;
+}
+
+.portal-menu-link--logout:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+}
+
+.portal-menu-link--logout:hover .portal-menu-icon {
+    background: #fecaca !important;
+    color: #991b1b !important;
+}
+
+.portal-menu-sep {
+    margin: 0.3rem 0.15rem;
+    border: none;
+    border-top: 1px solid #e8ecf0;
+}
+
+/* ألوان الهيدر */
+.wh-portal-header {
+    background: linear-gradient(145deg, #0b4a45 0%, #0f766e 40%, #175f57 100%);
+    color: #fff;
+    padding: 0.5rem 0;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07) inset, 0 10px 28px rgba(10, 40, 35, 0.35);
+}
+
+.ship-portal-header {
+    background: linear-gradient(150deg, #102e86 0%, #1d4ed8 46%, #0ea5e9 100%);
+    color: #fff;
+    padding: 0.62rem 0;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 10px 30px rgba(15, 40, 80, 0.42);
+}
+
+body.theme-dark .ship-portal-header {
+    background: linear-gradient(150deg, #071a52 0%, #0f2460 46%, #0c4a6e 100%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 10px 28px rgba(2, 6, 23, 0.55);
+}
+
+@media (max-width: 560px) {
+    .portal-inner {
+        gap: 0.5rem;
+        align-items: flex-start;
+    }
+    .ship-portal-header .warehouse-status-indicator {
+        padding: 0.34rem 0.58rem;
+        min-width: 0;
+        max-width: 42vw;
+    }
+    .ship-portal-header .warehouse-status-caption {
+        display: none;
+    }
+    .ship-portal-header .warehouse-status-text {
+        font-size: 0.8rem;
+    }
+    .portal-logo {
+        min-width: 0;
+        overflow: hidden;
+        font-size: 0.93rem;
+        padding: 0.34rem 0.54rem;
+    }
+    .portal-logo span:not(.portal-logo-mark) {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .portal-menu-btn {
+        min-height: 42px;
+        padding: 0.34rem 0.56rem 0.34rem 0.5rem;
+    }
+    .portal-menu-name {
+        max-width: 72px;
+    }
+}
+
+.wh-main,
+.ship-main {
+    max-width: 1200px;
+    margin: 1.75rem auto;
+    padding: 0 1rem;
+}
+
+body.theme-dark .wh-portal-header {
+    background: linear-gradient(145deg, #072220 0%, #0b3d39 42%, #0d4f47 100%);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 12px 26px rgba(2, 6, 23, 0.55);
+}
+
+body.theme-dark .portal-logo,
+body.theme-dark .portal-menu-btn,
+body.theme-dark .warehouse-status-indicator {
+    background: rgba(15, 23, 42, 0.36);
+    border-color: rgba(148, 163, 184, 0.35);
+}
+
+body.theme-dark .portal-menu {
+    background: linear-gradient(180deg, #0f172a 0%, #111827 100%);
+    box-shadow: 0 14px 34px rgba(0, 0, 0, 0.58);
+}
+
+body.theme-dark .portal-menu-link {
+    color: #e2e8f0;
+}
+
+body.theme-dark .portal-menu-link:hover {
+    background: rgba(45, 212, 191, 0.16);
+    color: #5eead4;
+}
+
+body.theme-dark .portal-menu-sep {
+    border-top-color: rgba(148, 163, 184, 0.25);
+}
+
+@media (max-width: 768px) {
+    .portal-inner {
+        flex-wrap: nowrap;
+        gap: 0.6rem;
+    }
+
+    .portal-logo {
+        width: auto;
+        justify-content: flex-start;
+        font-size: 0.98rem;
+        padding: 0.36rem 0.62rem;
+        min-width: 0;
+    }
+
+    .portal-right {
+        width: auto;
+        justify-content: flex-end;
+    }
+
+    .portal-menu-name {
+        max-width: 84px;
+    }
+
+    .warehouse-status-indicator {
+        padding: 0.3rem 0.55rem;
+        font-size: 0.75rem;
+        gap: 0.36rem;
+    }
+}
+
+/* فلتر الحالة (قوائم الشحنات / الطلبات الجديدة) */
+.ship-filter {
+    position: relative;
+    display: inline-block;
+}
+
+.ship-filter summary {
+    list-style: none;
+    cursor: pointer;
+    user-select: none;
+    font-weight: 900;
+    padding: 0.55rem 0.85rem;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    color: #0f172a;
+    white-space: nowrap;
+}
+
+.ship-filter summary::-webkit-details-marker {
+    display: none;
+}
+
+.ship-filter-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: max-content;
+    max-width: min(92vw, 420px);
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.15);
+    border-radius: 14px;
+    padding: 0.5rem;
+    box-shadow: 0 16px 36px rgba(15, 23, 42, 0.18);
+    z-index: 80;
+}
+
+.ship-filter-menu a {
+    display: block;
+    padding: 0.7rem 0.9rem;
+    border-radius: 12px;
+    color: #0f172a;
+    text-decoration: none;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.ship-filter-menu a:hover {
+    background: rgba(37, 99, 235, 0.08);
+}
+
+@media (max-width: 768px) {
+    .ship-filter-menu {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        transform: translate(-50%, -50%);
+        max-width: 92vw;
+    }
+}

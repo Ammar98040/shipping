@@ -1,0 +1,319 @@
+{% extends "warehouse/base_warehouse.html" %}
+{% block title %}طلبات تجهيز | بوابة المستودع{% endblock %}
+{% block extra_css %}
+<style>
+  .wh-jobs-title {
+    margin-bottom: 0.9rem;
+  }
+  .wh-jobs-section {
+    border: 1px solid #bfdbfe;
+    background: linear-gradient(180deg, #f8fbff 0%, #f1f7ff 100%);
+  }
+  .wh-jobs-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.9rem;
+  }
+  .wh-jobs-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    padding: 0.35rem 0.72rem;
+    font-weight: 800;
+    font-size: 0.82rem;
+  }
+  .wh-jobs-pill--count {
+    background: #dbeafe;
+    color: #1e40af;
+    border: 1px solid #93c5fd;
+  }
+  .wh-jobs-pill--live {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #6ee7b7;
+  }
+  .wh-jobs-wrap {
+    overflow-x: auto;
+  }
+  .wh-jobs-table {
+    min-width: 700px;
+  }
+  .wh-jobs-phone a {
+    color: #0f766e;
+    font-weight: 800;
+    text-decoration: none;
+  }
+  .wh-jobs-phone a:hover {
+    color: #115e59;
+    text-decoration: underline;
+  }
+  .wh-jobs-btn {
+    min-height: 42px;
+    border-radius: 11px;
+    font-weight: 800;
+    box-shadow: 0 8px 18px rgba(37, 99, 235, 0.24);
+  }
+  .wh-jobs-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  body.theme-dark .wh-jobs-title {
+    color: #f8fafc;
+  }
+  body.theme-dark .wh-jobs-section {
+    border-color: rgba(37, 99, 235, 0.38);
+    background: linear-gradient(180deg, #0e1c33 0%, #0f172a 100%);
+  }
+  body.theme-dark .wh-jobs-pill--count {
+    background: #132a4d;
+    color: #93c5fd;
+    border-color: #1d4ed8;
+  }
+  body.theme-dark .wh-jobs-pill--live {
+    background: #062925;
+    color: #34d399;
+    border-color: #0f766e;
+  }
+  body.theme-dark .wh-jobs-phone a {
+    color: #5eead4;
+  }
+  body.theme-dark .wh-jobs-phone a:hover {
+    color: #2dd4bf;
+  }
+  body.theme-dark .wh-jobs-btn {
+    box-shadow: 0 10px 22px rgba(2, 6, 23, 0.45);
+  }
+  body.theme-dark .wh-jobs-btn.btn-primary {
+    background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%);
+    border-color: #0f766e;
+  }
+  body.theme-dark .wh-jobs-btn.btn-primary:hover {
+    background: linear-gradient(135deg, #0d9488 0%, #14b8a6 100%);
+  }
+  body.theme-dark #warehouse-jobs-empty {
+    color: #94a3b8;
+  }
+  body.theme-dark .wh-jobs-table td::before {
+    color: #94a3b8;
+  }
+  @media (max-width: 768px) {
+    body.theme-dark .wh-jobs-table tbody tr {
+      background: #0f172a;
+      border-color: rgba(148, 163, 184, 0.24);
+      box-shadow: 0 10px 18px rgba(2, 6, 23, 0.45);
+    }
+  }
+  @media (max-width: 768px) {
+    .wh-jobs-title {
+      font-size: 1.4rem;
+    }
+    .wh-jobs-wrap {
+      overflow: visible;
+    }
+    .wh-jobs-table {
+      width: 100%;
+      min-width: 0;
+    }
+    .wh-jobs-table thead {
+      display: none;
+    }
+    .wh-jobs-table tbody {
+      display: grid;
+      gap: 0.72rem;
+    }
+    .wh-jobs-table tbody tr {
+      display: grid;
+      gap: 0.4rem;
+      padding: 0.75rem;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #dbeafe;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+    }
+    .wh-jobs-table td {
+      border: none;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      font-size: 0.9rem;
+    }
+    .wh-jobs-table td::before {
+      content: attr(data-label);
+      color: #64748b;
+      font-weight: 700;
+    }
+    .wh-jobs-table td:last-child::before {
+      content: '';
+    }
+    .wh-jobs-table td:last-child {
+      justify-content: flex-end;
+      margin-top: 0.35rem;
+    }
+    .wh-jobs-btn {
+      width: 100%;
+    }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<h1 class="manage-page-title wh-jobs-title">🆕 طلبات تجهيز جديدة</h1>
+
+<div class="manage-section wh-jobs-section">
+  <div class="wh-jobs-toolbar">
+    <span class="wh-jobs-pill wh-jobs-pill--count">📦 إجمالي الطلبات المتاحة: <strong id="warehouse-jobs-count">{{ items|length }}</strong></span>
+    <span class="wh-jobs-pill wh-jobs-pill--live">🟢 تحديث مباشر</span>
+  </div>
+  <div class="manage-table-container wh-jobs-wrap" id="warehouse-jobs-table-wrap" {% if not items %}style="display:none;"{% endif %}>
+    <table class="manage-table wh-jobs-table">
+      <thead>
+        <tr>
+          <th>رقم الطلب</th>
+          <th>العميل</th>
+          <th>الجوال</th>
+          <th>عدد المنتجات</th>
+          <th>التاريخ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="warehouse-jobs-tbody">
+        {% for o in items %}
+        <tr id="warehouse-order-row-{{ o.id }}">
+          <td data-label="رقم الطلب"><strong>#{{ o.id }}</strong></td>
+          <td data-label="العميل">👤 {{ o.customer_name }}</td>
+          <td data-label="الجوال" class="wh-jobs-phone"><a href="tel:{{ o.customer_phone }}">📞 {{ o.customer_phone }}</a></td>
+          <td data-label="عدد المنتجات"><strong>🧺 {{ o.items.count }}</strong></td>
+          <td data-label="التاريخ">🕒 {{ o.created_at|date:"Y-m-d H:i" }}</td>
+          <td data-label="">
+            <form method="post" action="{% url 'warehouse:accept_order' o.id %}" style="margin:0;" class="js-warehouse-accept-form" data-order-id="{{ o.id }}">
+              {% csrf_token %}
+              <button class="btn btn-primary wh-jobs-btn">✅ استلام الطلب</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <p class="empty-msg" id="warehouse-jobs-empty" {% if items %}style="display:none;"{% endif %}>لا توجد طلبات تجهيز حالياً.</p>
+</div>
+
+{% if items.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=items query_string='' %}
+{% endif %}
+<script>
+(function () {
+  document.addEventListener('submit', function (e) {
+    var form = e.target.closest('form.js-warehouse-accept-form');
+    if (!form) return;
+    e.preventDefault();
+    if (!window.confirm('هل تريد استلام هذا الطلب للتجهيز؟')) return;
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': window.WAREHOUSE_CSRF_TOKEN || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'failed');
+      var orderId = form.getAttribute('data-order-id');
+      var row = document.getElementById('warehouse-order-row-' + orderId);
+      if (row) row.remove();
+      if (data.detail_url) window.location.href = data.detail_url;
+      if (btn) btn.disabled = false;
+    })
+    .catch(function (err) {
+      if (btn) btn.disabled = false;
+      showManageError((err && err.message && err.message !== 'failed') ? err.message : 'تعذر استلام الطلب.', { durationMs: 3200 });
+    });
+  });
+})();
+
+(function () {
+  var tbody = document.getElementById('warehouse-jobs-tbody');
+  var wrap = document.getElementById('warehouse-jobs-table-wrap');
+  var empty = document.getElementById('warehouse-jobs-empty');
+  var countEl = document.getElementById('warehouse-jobs-count');
+  if (!tbody || !wrap || !empty) return;
+  var liveUrl = "{% url 'warehouse:available_orders_live' %}";
+  var csrf = window.WAREHOUSE_CSRF_TOKEN || '';
+  var lastSig = '';
+
+  function esc(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderRows(items) {
+    if (!Array.isArray(items)) items = [];
+    if (!items.length) {
+      tbody.innerHTML = '';
+      wrap.style.display = 'none';
+      empty.style.display = '';
+      if (countEl) countEl.textContent = '0';
+      return;
+    }
+    var html = items.map(function (o) {
+      return '' +
+        '<tr id="warehouse-order-row-' + esc(o.id) + '">' +
+          '<td data-label="رقم الطلب"><strong>#' + esc(o.id) + '</strong></td>' +
+          '<td data-label="العميل">👤 ' + esc(o.customer_name) + '</td>' +
+          '<td data-label="الجوال" class="wh-jobs-phone"><a href="tel:' + esc(o.customer_phone) + '">📞 ' + esc(o.customer_phone) + '</a></td>' +
+          '<td data-label="عدد المنتجات"><strong>🧺 ' + esc(o.items_count) + '</strong></td>' +
+          '<td data-label="التاريخ">🕒 ' + esc(o.created_at) + '</td>' +
+          '<td data-label="">' +
+            '<form method="post" action="' + esc(o.accept_url) + '" style="margin:0;" class="js-warehouse-accept-form" data-order-id="' + esc(o.id) + '">' +
+              '<input type="hidden" name="csrfmiddlewaretoken" value="' + esc(csrf) + '">' +
+              '<button class="btn btn-primary wh-jobs-btn">✅ استلام الطلب</button>' +
+            '</form>' +
+          '</td>' +
+        '</tr>';
+    }).join('');
+    tbody.innerHTML = html;
+    wrap.style.display = '';
+    empty.style.display = 'none';
+    if (countEl) countEl.textContent = String(items.length);
+  }
+
+  function pollLive() {
+    if (document.hidden) return;
+    fetch(liveUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) {
+        var ct = (r.headers.get('content-type') || '').toLowerCase();
+        if (!ct.includes('application/json')) return null;
+        return r.json();
+      })
+      .then(function (data) {
+        if (!data || !data.success || !Array.isArray(data.items)) return;
+        var sig = data.items.map(function (o) { return String(o.id); }).join('|');
+        if (sig === lastSig) return;
+        lastSig = sig;
+        renderRows(data.items);
+      })
+      .catch(function () {});
+  }
+
+  setInterval(pollLive, 4000);
+})();
+</script>
+{% endblock %}
+

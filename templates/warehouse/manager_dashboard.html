@@ -1,0 +1,81 @@
+{% extends "warehouse/base_warehouse.html" %}
+{% block title %}لوحة التحكم — مسؤول المستودع{% endblock %}
+
+{% block extra_css %}
+<style>
+  .mgr-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .mgr-stat { background: #fff; border-radius: 14px; padding: 1.25rem 1rem; text-align: center; border: 1px solid rgba(15,23,42,.1); box-shadow: 0 4px 14px rgba(15,23,42,.07); }
+  .mgr-stat-num { font-size: 2.4rem; font-weight: 900; color: #0f766e; line-height: 1; }
+  .mgr-stat-label { font-size: .88rem; color: #64748b; font-weight: 700; margin-top: .4rem; }
+  .mgr-stat--warn .mgr-stat-num { color: #b45309; }
+  .mgr-stat--danger .mgr-stat-num { color: #b91c1c; }
+  .assign-form { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .assign-form select { border-radius: 9px; padding: .35rem .6rem; border: 1px solid #e2e8f0; font-size: .85rem; }
+  .assign-form button { padding: .35rem .7rem; border-radius: 9px; border: none; background: #0f766e; color: #fff; font-weight: 800; cursor: pointer; font-size: .85rem; }
+  body.theme-dark .mgr-stat { background: #0f172a; border-color: rgba(148,163,184,.22); }
+  body.theme-dark .mgr-stat-label { color: #94a3b8; }
+  body.theme-dark .assign-form select { background: #111827; color: #f8fafc; border-color: rgba(148,163,184,.3); }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1 class="manage-page-title">🏭 لوحة تحكم مسؤول المستودع</h1>
+
+<div class="mgr-stats">
+  <div class="mgr-stat mgr-stat--warn">
+    <div class="mgr-stat-num">{{ stats.unassigned }}</div>
+    <div class="mgr-stat-label">طلبات غير مسندة</div>
+  </div>
+  <div class="mgr-stat">
+    <div class="mgr-stat-num">{{ stats.processing }}</div>
+    <div class="mgr-stat-label">قيد التجهيز</div>
+  </div>
+  <div class="mgr-stat">
+    <div class="mgr-stat-num">{{ stats.ready }}</div>
+    <div class="mgr-stat-label">جاهز للشحن</div>
+  </div>
+  <div class="mgr-stat">
+    <div class="mgr-stat-num">{{ stats.total_today }}</div>
+    <div class="mgr-stat-label">طلبات اليوم</div>
+  </div>
+</div>
+
+<div class="manage-section">
+  <h2>آخر الطلبات النشطة</h2>
+  {% if recent_orders %}
+  <div class="manage-table-container">
+    <table class="manage-table">
+      <thead><tr><th>رقم الطلب</th><th>العميل</th><th>الحالة</th><th>المجهّز</th><th>إسناد</th></tr></thead>
+      <tbody>
+        {% for order in recent_orders %}
+        <tr>
+          <td><a href="{% url 'warehouse:order_detail' order.pk %}">#{{ order.id }}</a></td>
+          <td>{{ order.customer_name }}</td>
+          <td>{{ order.get_status_display }}</td>
+          <td>{{ order.packer.username|default:"—" }}</td>
+          <td>
+            <form method="post" action="{% url 'warehouse:assign_order' order.pk %}" class="assign-form">
+              {% csrf_token %}
+              <select name="packer_id">
+                <option value="">— إلغاء الإسناد —</option>
+                {% for packer in packers %}
+                <option value="{{ packer.pk }}" {% if order.packer_id == packer.pk %}selected{% endif %}>{{ packer.username }}</option>
+                {% endfor %}
+              </select>
+              <button type="submit">حفظ</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-msg">لا توجد طلبات نشطة حالياً.</p>
+  {% endif %}
+  <div style="margin-top:1rem;">
+    <a href="{% url 'warehouse:manager_orders' %}" class="btn btn-primary">عرض كل الطلبات</a>
+    <a href="{% url 'warehouse:manager_team' %}" class="btn btn-secondary" style="margin-right:.6rem;">فريق التجهيز</a>
+  </div>
+</div>
+{% endblock %}

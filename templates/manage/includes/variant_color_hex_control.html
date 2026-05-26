@@ -1,0 +1,43 @@
+{# حقل لون النسخة: قائمة ألوان شائعة + منتقى كامل + حقل hex للإرسال #}
+<div class="color-hex-controls form-group" style="grid-column: 1 / -1;">
+    <label>HEX اللون</label>
+    <div style="display:flex; flex-wrap:wrap; gap:.5rem; align-items:center;">
+        <select class="input js-color-preset" aria-label="ألوان شائعة" style="min-width:12rem; flex:1;">
+            <option value="">— اختر لوناً شائعاً —</option>
+            <option value="#000000">أسود</option>
+            <option value="#FFFFFF">أبيض</option>
+            <option value="#F5F5DC">بيج</option>
+            <option value="#C0C0C0">فضي</option>
+            <option value="#808080">رمادي</option>
+            <option value="#2F4F4F">رمادي داكن</option>
+            <option value="#FF0000">أحمر</option>
+            <option value="#8B0000">أحمر داكن</option>
+            <option value="#FF6B6B">وردي فاتح</option>
+            <option value="#FF1493">وردي زاهي</option>
+            <option value="#FFA500">برتقالي</option>
+            <option value="#FFD700">ذهبي</option>
+            <option value="#FFFF00">أصفر</option>
+            <option value="#00FF00">أخضر ليموني</option>
+            <option value="#008000">أخضر داكن</option>
+            <option value="#00CED1">فيروزي</option>
+            <option value="#0000FF">أزرق</option>
+            <option value="#000080">أزرق داكن</option>
+            <option value="#4169E1">أزرق ملكي</option>
+            <option value="#4B0082">نيلي</option>
+            <option value="#800080">بنفسجي</option>
+            <option value="#E6E6FA">لافندر</option>
+            <option value="#8B4513">بني</option>
+            <option value="#A0522D">بني فاتح</option>
+            <option value="#D2691E">شوكولاتة</option>
+            <option value="#F5DEB3">قمحي</option>
+            <option value="__custom__">لون مخصص (من المنتقى)</option>
+        </select>
+        <label class="muted-text" style="display:inline-flex; align-items:center; gap:.35rem; margin:0;">
+            <span>كل الألوان</span>
+            <input type="color" class="js-color-picker" value="#000000" title="اختر أي لون" style="width:44px;height:36px;padding:0;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;">
+        </label>
+        <input name="color_hex" class="input js-color-hex" value="{{ color_hex|default:'' }}" placeholder="#RRGGBB" maxlength="7" readonly style="max-width:7.5rem; font-family:monospace; background:#f8fafc;">
+        <span class="js-color-preview" style="width:28px;height:28px;border-radius:50%;border:1px solid #cbd5e1;display:inline-block;background:#ffffff;flex-shrink:0;"></span>
+    </div>
+    <small class="muted-text" style="display:block; margin-top:.35rem;">اختر لوناً من القائمة أو استخدم «كل الألوان»؛ يُحدَّث الرمز تلقائياً.</small>
+</div>

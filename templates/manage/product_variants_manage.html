@@ -1,0 +1,680 @@
+{% extends "manage/base_manage.html" %}
+{% load l10n %}
+{% block title %}نسخ المنتج{% endblock %}
+{% block manage_content %}
+<h1 class="manage-page-title">🎨 نسخ المنتج: {{ product.name_ar }}</h1>
+<p class="muted-text" style="margin-top:-.3rem; margin-bottom: .8rem;">SKU المنتج الأساسي: <strong>{{ product.sku }}</strong></p>
+<p class="muted-text" style="margin-bottom:1rem; line-height:1.65; max-width:52rem;">
+    المنتج <strong>الرئيسي</strong> هو السجل الواحد في صفحة «تعديل المنتج» ويُعرض في المتجر كمنتج واحد في المقدمة.
+    النسخ التالية هي <strong>ألوان أو صور مختلفة لنفس المنتج</strong> وليست منتجات مكررة — كل نسخة تمثل لوناً (أو صورة لون) تحت هذا المنتج فقط.
+</p>
+
+<div class="list-actions">
+    <a href="{% url 'manage:product_edit' product.pk %}" class="btn btn-secondary">↩ العودة لتعديل المنتج</a>
+    <a href="{% url 'manage:product_list' %}" class="btn">📦 كل المنتجات</a>
+    <a href="{% url 'manage:variants_inventory_export_csv' %}" class="btn">⬇️ تصدير مخزون النسخ CSV</a>
+</div>
+
+<div class="manage-section">
+    <h3 style="margin-bottom: .8rem;">➕ إضافة نسخة جديدة</h3>
+    <p class="muted-text" style="margin-top:-.4rem; margin-bottom:.65rem; max-width:48rem;">
+        لا يُنشئ النظام أي نسخة تلقائياً. عند إنشاء منتج جديد تبقى قائمة النسخ فارغة حتى تضيف أول نسخة هنا.
+        املأ اللون و(اختياري) السعر والمخزون ثم «إضافة النسخة» — رمز SKU يُولَّد من رمز المنتج الرئيسي إذا ترك حقل SKU فارغاً.
+    </p>
+    <form method="post" class="manage-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_variant">
+        <div class="form-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.8rem;">
+            <div class="form-group">
+                <label>SKU النسخة</label>
+                <input class="input js-autocode-input" name="code" placeholder="سيتم توليده تلقائيا إذا تركته فارغًا">
+            </div>
+            <div class="form-group">
+                <label>اسم النسخة</label>
+                <input class="input" name="title">
+            </div>
+            <div class="form-group">
+                <label>اسم اللون</label>
+                <input class="input" name="color_name">
+            </div>
+            {% include 'manage/includes/variant_color_hex_control.html' %}
+            <div class="form-group">
+                <label>سعر النسخة (اختياري)</label>
+                <input class="input" name="price" type="number" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+                <label>المخزون</label>
+                <input class="input" name="stock_quantity" type="number" min="0" value="0">
+            </div>
+            <div class="form-group">
+                <label>ترتيب العرض</label>
+                <input class="input" name="sort_order" type="number" min="0" value="0">
+            </div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+                <label style="display:flex; align-items:center; gap:.4rem;"><input type="checkbox" class="checkbox" name="is_active" checked> نشطة</label>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">💾 إضافة النسخة</button>
+        </div>
+    </form>
+</div>
+
+{% for variant in variants %}
+<div class="manage-section js-variant-card" data-variant-id="{{ variant.id }}" style="margin-top: 1rem;">
+    <h3 style="margin-bottom: .8rem;">🧩 {{ variant.color_name|default:variant.title|default:variant.code }}</h3>
+
+    <form id="variant-update-{{ variant.id }}" method="post" enctype="multipart/form-data" class="manage-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="update_variant">
+        <input type="hidden" name="variant_id" value="{{ variant.id }}">
+        <div class="form-grid" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.8rem;">
+            <div class="form-group"><label>SKU النسخة</label><input class="input" name="code" value="{{ variant.code }}" {% if variant.order_items.count %}readonly title="لا يمكن تعديل SKU بعد ارتباط النسخة بطلبات"{% endif %} required></div>
+            <div class="form-group"><label>اسم النسخة</label><input class="input" name="title" value="{{ variant.title }}"></div>
+            <div class="form-group"><label>اسم اللون</label><input class="input" name="color_name" value="{{ variant.color_name }}"></div>
+            {% include 'manage/includes/variant_color_hex_control.html' with color_hex=variant.color_hex %}
+            <div class="form-group"><label>سعر النسخة</label><input class="input" name="price" type="number" min="0" step="0.01" value="{% if variant.price is not None %}{% localize off %}{{ variant.price }}{% endlocalize %}{% endif %}"></div>
+            <div class="form-group"><label>المخزون</label><input class="input" name="stock_quantity" type="number" min="0" value="{{ variant.stock_quantity }}"></div>
+            <div class="form-group"><label>ترتيب العرض</label><input class="input" name="sort_order" type="number" min="0" value="{{ variant.sort_order }}"></div>
+            <div class="form-group" style="display:flex; align-items:flex-end;">
+                <label style="display:flex; align-items:center; gap:.4rem;"><input type="checkbox" class="checkbox" name="is_active" {% if variant.is_active %}checked{% endif %}> نشطة</label>
+            </div>
+        </div>
+        <div class="form-group" style="margin-top:.6rem;">
+            <label>صورة اللون (صورة واحدة لكل لون)</label>
+            <div class="drop-zone js-drop-zone" data-target-input="variant-images-{{ variant.id }}">
+                <p style="margin:0;">اسحب صورة اللون هنا أو اضغط للاختيار</p>
+                <small style="color:#6b7280;">يُحفظ الملف مع زر «حفظ التعديلات» أدناه ويستبدل الصورة السابقة لهذا اللون.</small>
+            </div>
+            <input id="variant-images-{{ variant.id }}" class="input js-file-input" type="file" name="variant_image" accept="image/*">
+        </div>
+    </form>
+
+    {% if variant.images.all %}
+    <div class="variant-images-grid" style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.8rem;">
+        {% for img in variant.images.all %}
+        <div class="js-variant-image-card" data-image-id="{{ img.id }}" style="border:1px solid #e5e7eb; border-radius:10px; padding:.4rem; background:#fff;">
+            <img src="{{ img.image.url }}" alt="variant" style="width:90px; height:90px; object-fit:cover; border-radius:8px; display:block;">
+            <div style="display:flex; flex-direction:column; gap:.35rem; margin-top:.4rem;">
+                {% if img.is_primary %}
+                <span class="badge badge-active">رئيسية</span>
+                {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="set_primary_image">
+                    <input type="hidden" name="variant_id" value="{{ variant.id }}">
+                    <input type="hidden" name="image_id" value="{{ img.id }}">
+                    <button type="submit" class="btn btn-sm">تعيين رئيسية</button>
+                </form>
+                {% endif %}
+                <form method="post" class="js-confirm-form" data-confirm="حذف الصورة؟">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_image">
+                    <input type="hidden" name="variant_id" value="{{ variant.id }}">
+                    <input type="hidden" name="image_id" value="{{ img.id }}">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑 حذف</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if variant.open_order_items_exist %}
+    <p class="form-error" style="margin-top:.85rem; margin-bottom:0;">
+        لا يمكن حذف هذه النسخة: يوجد طلب لم يُكتمل توصيله بعد (حتى تصبح حالة الطلب «تم التوصيل» أو «ملغي»).
+    </p>
+    {% endif %}
+    <div class="variant-actions-bar">
+        <button type="submit" class="btn btn-primary" form="variant-update-{{ variant.id }}">💾 حفظ التعديلات</button>
+        <form method="post" style="display:inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="duplicate_variant">
+            <input type="hidden" name="variant_id" value="{{ variant.id }}">
+            <button type="submit" class="btn btn-sm" title="ينشئ نسخة لون جديدة تحت نفس المنتج (لون/صورة إضافية)">📄 نسخ النسخة</button>
+        </form>
+        <form method="post" style="display:inline;" class="js-confirm-form" {% if variant.open_order_items_exist %}data-blocked="1"{% else %}data-confirm="حذف النسخة بالكامل؟"{% endif %}>
+            {% csrf_token %}
+            <input type="hidden" name="action" value="delete_variant">
+            <input type="hidden" name="variant_id" value="{{ variant.id }}">
+            <button type="submit" class="btn btn-danger btn-sm" {% if variant.open_order_items_exist %}disabled title="لا يمكن الحذف: يوجد طلب غير مُسلَّم وغير ملغٍ"{% endif %}>🗑 حذف النسخة</button>
+        </form>
+    </div>
+    <p class="muted-text" style="margin-top:.5rem; font-size:.82rem;">«نسخ النسخة» يضيف صف لون جديد لنفس المنتج (ليس منتجًا جديدًا في القائمة).</p>
+</div>
+{% empty %}
+<div class="manage-section"><p class="empty-msg">لا توجد نسخ بعد — استخدم النموذج أعلاه لإضافة أول نسخة (لون / صورة لون / سعر نسخة).</p></div>
+{% endfor %}
+
+<div class="manage-section" id="product-gallery-section" style="margin-top:1rem;">
+    <h3 style="margin-bottom:.8rem;">🖼️ معرض صور المنتج العام (غير مرتبط بالألوان)</h3>
+    <form method="post" enctype="multipart/form-data" class="manage-form">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="upload_product_gallery">
+        <div class="form-group">
+            <label>إضافة صور للمنتج</label>
+            <div class="drop-zone js-drop-zone" data-target-input="product-gallery-input">
+                <p style="margin:0;">اسحب صور المنتج هنا أو اضغط للاختيار</p>
+                <small style="color:#6b7280;">هذه الصور مستقلة عن صور الألوان</small>
+            </div>
+            <input id="product-gallery-input" class="input js-file-input" type="file" name="product_gallery_images" accept="image/*" multiple required>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">🖼️ رفع صور المعرض</button>
+        </div>
+    </form>
+
+    {% if gallery_images %}
+    <p class="muted-text" style="margin-top:.5rem; margin-bottom:.5rem; font-size:.88rem;">اسحب البطاقات لترتيب المعرض، ثم استخدم «حفظ جميع التعديلات» أسفل المعرض لحفظ الترتيب مع الأسماء والأسعار والكميات.</p>
+    <div class="variant-images-grid js-sortable-images" style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.8rem;">
+        {% for img in gallery_images %}
+        <div draggable="true" class="js-sortable-item" data-image-id="{{ img.id }}" style="border:1px solid #e5e7eb; border-radius:10px; padding:.4rem; background:#fff; cursor:grab;">
+            <img src="{{ img.image.url }}" alt="gallery" style="width:90px; height:90px; object-fit:cover; border-radius:8px; display:block;">
+            <div style="margin-top:.35rem; font-size:.78rem; color:#334155; line-height:1.5;">
+                <input type="hidden" class="js-gallery-image-id" value="{{ img.id }}">
+                <div><strong>SKU:</strong> <input class="input" value="{{ img.code }}" readonly style="margin-top:.2rem; font-size:.75rem;"></div>
+                <div style="margin-top:.25rem;"><strong>الاسم:</strong> <input class="input js-bulk-title" value="{{ img.title }}" style="margin-top:.2rem; font-size:.75rem;"></div>
+                <div style="margin-top:.25rem;"><strong>السعر:</strong> <input class="input js-bulk-price" type="text" inputmode="decimal" value="{{ img.price|default:'' }}" style="margin-top:.2rem; font-size:.75rem;"></div>
+                <div style="margin-top:.25rem;"><strong>الكمية:</strong> <input class="input js-bulk-stock" type="number" min="0" value="{{ img.stock_quantity }}" style="margin-top:.2rem; font-size:.75rem;"></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:.35rem; margin-top:.4rem;">
+                {% if img.is_primary %}
+                <span class="badge badge-active">رئيسية</span>
+                {% else %}
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="set_primary_gallery_image">
+                    <input type="hidden" name="image_id" value="{{ img.id }}">
+                    <button type="submit" class="btn btn-sm">تعيين رئيسية</button>
+                </form>
+                {% endif %}
+                <form method="post" class="js-confirm-form" data-confirm="حذف الصورة؟">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="delete_gallery_image">
+                    <input type="hidden" name="image_id" value="{{ img.id }}">
+                    <button type="submit" class="btn btn-sm btn-danger">🗑 حذف</button>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="form-actions" style="margin-top:.8rem;">
+        <button type="button" id="btn-save-all-gallery-meta" class="btn btn-primary">💾 حفظ جميع التعديلات</button>
+    </div>
+    {% endif %}
+</div>
+<div id="variants-inline-msg" style="display:none; margin-top:0.8rem; font-weight:800;"></div>
+
+<style>
+.variant-actions-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .55rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+}
+.drop-zone {
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    background: #f8fafc;
+    padding: .85rem;
+    text-align: center;
+    cursor: pointer;
+    margin-bottom: .45rem;
+}
+.drop-zone.is-dragover {
+    border-color: #2c5f4f;
+    background: #ecfdf5;
+}
+.js-drop-zone .js-drop-preview-img {
+    max-width: 120px;
+    max-height: 120px;
+    border-radius: 8px;
+    margin: 0.5rem auto 0;
+    display: block;
+    object-fit: cover;
+}
+.js-sortable-item.is-dragging {
+    opacity: .55;
+}
+</style>
+<script>
+(function() {
+  var baseSku = "{{ product.sku|default:''|escapejs }}";
+  if (baseSku) {
+    var autoInput = document.querySelector('.js-autocode-input');
+    if (autoInput && !autoInput.value) {
+      autoInput.value = baseSku + '-V001';
+    }
+  }
+
+  document.querySelectorAll('.js-drop-zone').forEach(function(zone) {
+    var inputId = zone.getAttribute('data-target-input');
+    var input = document.getElementById(inputId);
+    if (!input) return;
+
+    zone.addEventListener('click', function() { input.click(); });
+    ['dragenter', 'dragover'].forEach(function(evt) {
+      zone.addEventListener(evt, function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.add('is-dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach(function(evt) {
+      zone.addEventListener(evt, function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        zone.classList.remove('is-dragover');
+      });
+    });
+    zone.addEventListener('drop', function(e) {
+      if (!e.dataTransfer || !e.dataTransfer.files || !e.dataTransfer.files.length) return;
+      var dt = new DataTransfer();
+      Array.prototype.forEach.call(e.dataTransfer.files, function(file) { dt.items.add(file); });
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
+
+  document.querySelectorAll('.js-variant-card .js-file-input').forEach(function (input) {
+    var lastBlobUrl = null;
+    input.addEventListener('change', function () {
+      var card = input.closest('.js-variant-card');
+      var zone = card ? card.querySelector('.js-drop-zone') : null;
+      if (!zone) return;
+      if (lastBlobUrl) {
+        try { URL.revokeObjectURL(lastBlobUrl); } catch (e) {}
+        lastBlobUrl = null;
+      }
+      var existing = zone.querySelector('.js-drop-preview-img');
+      if (existing) {
+        if (existing.src && existing.src.indexOf('blob:') === 0) {
+          try { URL.revokeObjectURL(existing.src); } catch (e) {}
+        }
+        existing.remove();
+      }
+      if (!input.files || !input.files[0]) return;
+      lastBlobUrl = URL.createObjectURL(input.files[0]);
+      var el = document.createElement('img');
+      el.className = 'js-drop-preview-img';
+      el.src = lastBlobUrl;
+      el.alt = '';
+      zone.appendChild(el);
+    });
+  });
+
+  function normalizeHex(s) {
+    if (!s) return '';
+    s = String(s).trim();
+    if (/^#[0-9A-Fa-f]{6}$/i.test(s)) return s.toUpperCase();
+    if (/^#[0-9A-Fa-f]{3}$/i.test(s)) {
+      var a = s.substring(1);
+      return ('#' + a[0] + a[0] + a[1] + a[1] + a[2] + a[2]).toUpperCase();
+    }
+    return '';
+  }
+
+  function wireColorControls(root) {
+    (root || document).querySelectorAll('.color-hex-controls').forEach(function(box) {
+      var preset = box.querySelector('.js-color-preset');
+      var picker = box.querySelector('.js-color-picker');
+      var hexInput = box.querySelector('.js-color-hex');
+      var preview = box.querySelector('.js-color-preview');
+      if (!picker || !hexInput) return;
+
+      function applyPreview(hex) {
+        var h = normalizeHex(hex);
+        if (preview) preview.style.background = h || '#ffffff';
+        if (h) {
+          try { picker.value = h; } catch (e) {}
+        }
+      }
+
+      function syncPresetFromHex() {
+        var h = normalizeHex(hexInput.value);
+        if (!preset || !h) return;
+        var found = false;
+        for (var i = 0; i < preset.options.length; i++) {
+          var opt = preset.options[i];
+          if (!opt.value || opt.value === '__custom__') continue;
+          if (normalizeHex(opt.value) === h) {
+            preset.selectedIndex = i;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          for (var j = 0; j < preset.options.length; j++) {
+            if (preset.options[j].value === '__custom__') {
+              preset.selectedIndex = j;
+              break;
+            }
+          }
+        }
+      }
+
+      preset && preset.addEventListener('change', function() {
+        var v = preset.value;
+        if (!v || v === '__custom__') return;
+        hexInput.value = normalizeHex(v);
+        applyPreview(hexInput.value);
+      });
+
+      picker.addEventListener('input', function() {
+        hexInput.value = normalizeHex(picker.value);
+        applyPreview(hexInput.value);
+        syncPresetFromHex();
+      });
+
+      var initial = normalizeHex(hexInput.value);
+      if (initial) {
+        hexInput.value = initial;
+        applyPreview(initial);
+        syncPresetFromHex();
+      } else {
+        hexInput.value = '';
+        applyPreview('#FFFFFF');
+        if (preset) preset.selectedIndex = 0;
+      }
+    });
+  }
+  wireColorControls(document);
+
+  document.querySelectorAll('.js-sortable-images').forEach(function(container) {
+    var dragged = null;
+    container.querySelectorAll('.js-sortable-item').forEach(function(item) {
+      item.addEventListener('dragstart', function() {
+        dragged = item;
+        item.classList.add('is-dragging');
+      });
+      item.addEventListener('dragend', function() {
+        item.classList.remove('is-dragging');
+      });
+      item.addEventListener('dragover', function(e) {
+        e.preventDefault();
+      });
+      item.addEventListener('drop', function(e) {
+        e.preventDefault();
+        if (!dragged || dragged === item) return;
+        var rect = item.getBoundingClientRect();
+        var after = (e.clientX - rect.left) > (rect.width / 2);
+        if (after) {
+          item.after(dragged);
+        } else {
+          item.before(dragged);
+        }
+      });
+    });
+  });
+
+  function collectGalleryOrderedIds() {
+    var sec = document.getElementById('product-gallery-section');
+    if (!sec) return '';
+    var container = sec.querySelector('.js-sortable-images');
+    if (!container) return '';
+    var ids = [];
+    container.querySelectorAll('.js-sortable-item').forEach(function (item) {
+      var id = item.getAttribute('data-image-id');
+      if (id) ids.push(id);
+    });
+    return ids.join(',');
+  }
+
+  function getCsrfToken() {
+    var input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : '';
+  }
+
+  function submitBulkGalleryMeta() {
+    var form = document.createElement('form');
+    form.method = 'post';
+    form.style.display = 'none';
+
+    var csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrfmiddlewaretoken';
+    csrf.value = getCsrfToken();
+    form.appendChild(csrf);
+
+    var action = document.createElement('input');
+    action.type = 'hidden';
+    action.name = 'action';
+    action.value = 'update_gallery_meta_bulk';
+    form.appendChild(action);
+
+    var ordered = document.createElement('input');
+    ordered.type = 'hidden';
+    ordered.name = 'ordered_ids';
+    ordered.value = collectGalleryOrderedIds();
+    form.appendChild(ordered);
+
+    document.querySelectorAll('#product-gallery-section .js-sortable-item').forEach(function(card) {
+      var idEl = card.querySelector('.js-gallery-image-id');
+      var titleEl = card.querySelector('.js-bulk-title');
+      var priceEl = card.querySelector('.js-bulk-price');
+      var stockEl = card.querySelector('.js-bulk-stock');
+      if (!idEl) return;
+      var id = idEl.value;
+
+      var imgId = document.createElement('input');
+      imgId.type = 'hidden';
+      imgId.name = 'gallery_image_id';
+      imgId.value = id;
+      form.appendChild(imgId);
+
+      var t = document.createElement('input');
+      t.type = 'hidden';
+      t.name = 'title_' + id;
+      t.value = titleEl ? titleEl.value : '';
+      form.appendChild(t);
+
+      var p = document.createElement('input');
+      p.type = 'hidden';
+      p.name = 'price_' + id;
+      p.value = priceEl ? priceEl.value : '';
+      form.appendChild(p);
+
+      var s = document.createElement('input');
+      s.type = 'hidden';
+      s.name = 'stock_' + id;
+      s.value = stockEl ? stockEl.value : '0';
+      form.appendChild(s);
+    });
+
+    document.body.appendChild(form);
+    form.submit();
+  }
+
+  var saveGalleryBtn = document.getElementById('btn-save-all-gallery-meta');
+  if (saveGalleryBtn) {
+    saveGalleryBtn.addEventListener('click', function () {
+      submitBulkGalleryMeta();
+    });
+  }
+})();
+
+(function () {
+  function showMsg(text, ok) {
+    var el = document.getElementById('variants-inline-msg');
+    if (!el) return;
+    el.style.display = 'block';
+    el.style.color = ok ? '#065f46' : '#991b1b';
+    el.textContent = text || '';
+    setTimeout(function () { el.style.display = 'none'; }, 2800);
+  }
+  function actionOf(form) {
+    var a = form.querySelector('input[name="action"]');
+    return a ? (a.value || '').trim() : '';
+  }
+  var ajaxActions = {
+    add_variant: true,
+    update_variant: true,
+    duplicate_variant: true,
+    delete_variant: true,
+    set_primary_image: true,
+    delete_image: true,
+    reorder_images: true,
+    upload_product_gallery: true,
+    set_primary_gallery_image: true,
+    delete_gallery_image: true,
+    update_gallery_meta: true,
+    update_gallery_meta_bulk: true,
+    reorder_gallery_images: true
+  };
+  document.addEventListener('submit', function (e) {
+    var form = e.target.closest('form');
+    if (!form) return;
+    var action = actionOf(form);
+    if (!ajaxActions[action]) return;
+    if (form.getAttribute('data-blocked') === '1') {
+      e.preventDefault();
+      showMsg('لا يمكن تنفيذ هذا الإجراء حالياً.', false);
+      return;
+    }
+    var confirmMsg = form.getAttribute('data-confirm');
+    if (confirmMsg && !window.confirm(confirmMsg)) {
+      e.preventDefault();
+      return;
+    }
+    e.preventDefault();
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+    fetch(getFormActionUrl(form), {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر تنفيذ العملية');
+      showMsg(data.message || 'تمت العملية بنجاح.', true);
+
+      function clearVariantUploadUI(vid) {
+        var card = document.querySelector('.js-variant-card[data-variant-id="' + vid + '"]');
+        if (!card) return;
+        var finput = card.querySelector('.js-file-input');
+        if (finput) {
+          try { finput.value = ''; } catch (e) {}
+        }
+        var zone = card.querySelector('.js-drop-zone');
+        if (zone) {
+          var p = zone.querySelector('.js-drop-preview-img');
+          if (p && p.src && p.src.indexOf('blob:') === 0) {
+            try { URL.revokeObjectURL(p.src); } catch (e) {}
+          }
+          if (p) p.remove();
+        }
+      }
+
+      function applyVariantImageToCard(vid, vi) {
+        if (!vi || !vi.url) return;
+        clearVariantUploadUI(vid);
+        var card = document.querySelector('.js-variant-card[data-variant-id="' + vid + '"]');
+        if (!card) return;
+        var grid = card.querySelector('.variant-images-grid');
+        if (!grid) {
+          grid = document.createElement('div');
+          grid.className = 'variant-images-grid';
+          grid.style.cssText = 'display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.8rem;';
+          var bar = card.querySelector('.variant-actions-bar');
+          card.insertBefore(grid, bar);
+        }
+        var tok = (document.querySelector('input[name="csrfmiddlewaretoken"]') || {}).value || '';
+
+        var wrap = document.createElement('div');
+        wrap.className = 'js-variant-image-card';
+        wrap.setAttribute('data-image-id', String(vi.id));
+        wrap.style.cssText = 'border:1px solid #e5e7eb; border-radius:10px; padding:.4rem; background:#fff;';
+
+        var imgEl = document.createElement('img');
+        imgEl.src = vi.url;
+        imgEl.alt = 'variant';
+        imgEl.style.cssText = 'width:90px; height:90px; object-fit:cover; border-radius:8px; display:block;';
+
+        var col = document.createElement('div');
+        col.style.cssText = 'display:flex; flex-direction:column; gap:.35rem; margin-top:.4rem;';
+
+        var badge = document.createElement('span');
+        badge.className = 'badge badge-active';
+        badge.textContent = 'رئيسية';
+
+        var delForm = document.createElement('form');
+        delForm.method = 'post';
+        delForm.className = 'js-confirm-form';
+        delForm.setAttribute('data-confirm', 'حذف الصورة؟');
+
+        var csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrfmiddlewaretoken';
+        csrf.value = tok;
+        var h1 = document.createElement('input');
+        h1.type = 'hidden'; h1.name = 'action'; h1.value = 'delete_image';
+        var h2 = document.createElement('input');
+        h2.type = 'hidden'; h2.name = 'variant_id'; h2.value = String(vid);
+        var h3 = document.createElement('input');
+        h3.type = 'hidden'; h3.name = 'image_id'; h3.value = String(vi.id);
+        var delBtn = document.createElement('button');
+        delBtn.type = 'submit';
+        delBtn.className = 'btn btn-sm btn-danger';
+        delBtn.textContent = '🗑 حذف';
+        delForm.appendChild(csrf);
+        delForm.appendChild(h1);
+        delForm.appendChild(h2);
+        delForm.appendChild(h3);
+        delForm.appendChild(delBtn);
+
+        col.appendChild(badge);
+        col.appendChild(delForm);
+        wrap.appendChild(imgEl);
+        wrap.appendChild(col);
+        grid.innerHTML = '';
+        grid.appendChild(wrap);
+      }
+
+      var vidStr = data.variant_id != null ? String(data.variant_id) : '';
+      if (data.variant_image && vidStr) {
+        applyVariantImageToCard(vidStr, data.variant_image);
+      }
+      if (data.remove_variant && data.variant_id != null) {
+        var vcard = document.querySelector('.js-variant-card[data-variant-id="' + String(data.variant_id) + '"]');
+        if (vcard) vcard.remove();
+      }
+      if (data.removed_image && data.image_id != null) {
+        var iid = String(data.image_id);
+        var sel = data.removed_from === 'gallery'
+          ? '#product-gallery-section .js-sortable-item[data-image-id="' + iid + '"]'
+          : '.js-variant-image-card[data-image-id="' + iid + '"]';
+        document.querySelectorAll(sel).forEach(function (node) {
+          var grid = node.closest('.variant-images-grid');
+          node.remove();
+          if (!grid) return;
+          if (data.removed_from === 'gallery') {
+            if (!grid.querySelector('.js-sortable-item')) grid.remove();
+          } else if (!grid.querySelector('.js-variant-image-card')) {
+            grid.remove();
+          }
+        });
+      }
+      if (btn) btn.disabled = false;
+      if (data.requires_refresh) {
+        setTimeout(function () { window.location.reload(); }, 350);
+      }
+    })
+    .catch(function (err) {
+      showMsg((err && err.message) ? err.message : 'تعذر تنفيذ العملية.', false);
+      if (btn) btn.disabled = false;
+    });
+  });
+})();
+</script>
+{% endblock %}

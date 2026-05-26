@@ -1,0 +1,92 @@
+            <div class="profile-edit-field">
+                <label class="profile-edit-label" for="{{ form.phone.id_for_label }}">
+                    <span class="profile-edit-label-icon" aria-hidden="true">📱</span>
+                    {{ form.phone.label }}
+                </label>
+                <p class="profile-edit-hint">{{ form.phone.help_text }}</p>
+                <div class="profile-input-wrap profile-input-wrap--ltr">
+                    {{ form.phone }}
+                    <span class="profile-input-icon" aria-hidden="true">📞</span>
+                </div>
+                {% if form.phone.errors %}<div class="field-errors">{% for e in form.phone.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <div class="profile-edit-field">
+                <label class="profile-edit-label" for="{{ form.birth_date.id_for_label }}">
+                    <span class="profile-edit-label-icon" aria-hidden="true">📅</span>
+                    {{ form.birth_date.label }}
+                </label>
+                <p class="profile-edit-hint">{{ form.birth_date.help_text }}</p>
+                <div class="profile-input-wrap">
+                    {{ form.birth_date }}
+                    <span class="profile-input-icon" aria-hidden="true">🎂</span>
+                </div>
+                {% if form.birth_date.errors %}<div class="field-errors">{% for e in form.birth_date.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <div class="profile-edit-field profile-edit-field--avatar">
+                <label class="profile-edit-label" for="{{ form.avatar.id_for_label }}">
+                    <span class="profile-edit-label-icon" aria-hidden="true">🖼️</span>
+                    {{ form.avatar.label }}
+                </label>
+                <p class="profile-edit-hint">{{ form.avatar.help_text }}</p>
+                <div class="profile-avatar-slot">
+                    <div class="profile-dropzone" id="avatar-dropzone" data-dropzone aria-label="منطقة رفع الصورة">
+                        <div class="profile-dropzone-inner">
+                            <div class="profile-dropzone-preview" id="avatar-preview-box">
+                                {% if profile.avatar %}
+                                <img id="avatar-preview-img" src="{{ profile.avatar.url }}" alt="">
+                                <span id="avatar-placeholder" class="profile-dropzone-placeholder" style="display:none;" aria-hidden="true">📷</span>
+                                {% else %}
+                                <span id="avatar-placeholder" class="profile-dropzone-placeholder" aria-hidden="true">📷</span>
+                                <img id="avatar-preview-img" src="" alt="" hidden>
+                                {% endif %}
+                            </div>
+                            <div class="profile-dropzone-text">
+                                <strong>اسحب الصورة هنا وأفلتها</strong>
+                                <span>أو انقر في هذه المنطقة لاختيار ملف</span>
+                                <span class="profile-dropzone-meta">JPG · PNG · WebP · GIF</span>
+                            </div>
+                        </div>
+                        {{ form.avatar }}
+                    </div>
+                </div>
+                {% if form.avatar.errors %}<div class="field-errors">{% for e in form.avatar.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <div class="profile-edit-field">
+                <label class="profile-edit-label" for="{{ form.first_name.id_for_label }}">
+                    <span class="profile-edit-label-icon" aria-hidden="true">✍️</span>
+                    {{ form.first_name.label }}
+                </label>
+                <div class="profile-input-wrap">
+                    {{ form.first_name }}
+                    <span class="profile-input-icon" aria-hidden="true">👤</span>
+                </div>
+                {% if form.first_name.errors %}<div class="field-errors">{% for e in form.first_name.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <div class="profile-edit-field">
+                <label class="profile-edit-label" for="{{ form.last_name.id_for_label }}">
+                    <span class="profile-edit-label-icon" aria-hidden="true">👥</span>
+                    {{ form.last_name.label }}
+                </label>
+                <div class="profile-input-wrap">
+                    {{ form.last_name }}
+                    <span class="profile-input-icon" aria-hidden="true">🏷️</span>
+                </div>
+                {% if form.last_name.errors %}<div class="field-errors">{% for e in form.last_name.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+            </div>
+
+            <div class="profile-edit-field">
+                <label class="profile-edit-label" for="{{ form.email.id_for_label }}">
+                    <span class="profile-edit-label-icon" aria-hidden="true">✉️</span>
+                    {{ form.email.label }}
+                </label>
+                <p class="profile-edit-hint">للتواصل والتنبيهات؛ يُفضّل بريداً صالحاً.</p>
+                <div class="profile-input-wrap profile-input-wrap--ltr">
+                    {{ form.email }}
+                    <span class="profile-input-icon" aria-hidden="true">@</span>
+                </div>
+                {% if form.email.errors %}<div class="field-errors">{% for e in form.email.errors %}<p class="error-text">{{ e }}</p>{% endfor %}</div>{% endif %}
+            </div>

@@ -1,0 +1,121 @@
+﻿{% extends "base.html" %}
+{% load static %}
+{% block title %}سلة مشتركة{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/cart.css' %}?v=20">
+<style>
+.cart-share-lede { text-align: center; max-width: 36rem; margin: -0.35rem auto 1.25rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="cart-page">
+  <h1 class="page-title">🔗 سلة مشتركة</h1>
+  <p class="page-subtitle">اختر كيف تريد تطبيق هذه السلة على سلتك الحالية.</p>
+  <p class="store-field-hint cart-share-lede">الرابط شخصي من جلسة نسخ السلة؛ «إضافة» تحافظ على عناصرك الحالية، و«استبدال» يستبدل السلة بالكامل.</p>
+
+  <div class="cart-container">
+    <div class="cart-items">
+      {% if rows %}
+        {% for r in rows %}
+        <div class="cart-item">
+          <div class="item-image">
+            {% if r.product.image %}
+            <img src="{{ r.product.image.url }}" alt="{{ r.product.name_ar }}" class="store-media-fill">
+            {% else %}
+            <div class="image-placeholder">{{ r.product.name_ar|slice:":1" }}</div>
+            {% endif %}
+          </div>
+          <div class="item-details">
+            <a href="{% url 'product' r.product.id %}" class="item-name">{{ r.product.name_ar }}</a>
+            <p class="item-price">{{ r.unit_price }} ر.س × {{ r.quantity }}</p>
+            {% if not r.available %}
+            <p class="stock-warning">⚠️ غير متاح حالياً</p>
+            {% endif %}
+          </div>
+          <div class="item-total item-total-desk">
+            <span class="total-price">{{ r.subtotal }} ر.س</span>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="store-empty-state">
+        <p class="store-empty-state__title">السلة المشتركة فارغة</p>
+        <p class="store-empty-state__text">ربما انتهت صلاحية الرابط أو أزيلت المنتجات.</p>
+        <div class="store-empty-state__actions">
+          <a href="{% url 'cart_view' %}" class="store-btn store-btn--primary">سلتي</a>
+          <a href="{% url 'wardrobe' %}" class="store-btn store-btn--secondary">الدولاب</a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <aside class="cart-summary">
+      <h2>خيارات التطبيق</h2>
+      <div class="summary-row total-row">
+        <span>الإجمالي التقريبي</span>
+        <span>{{ rows_total }} ر.س</span>
+      </div>
+      <form method="post" action="{% url 'cart_share_apply' share.token %}" class="js-cart-share-apply-form">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="merge">
+        <button type="submit" class="btn-checkout">➕ إضافة إلى سلتي (Merge)</button>
+      </form>
+      <form method="post" action="{% url 'cart_share_apply' share.token %}" style="margin-top:0.6rem;" class="js-cart-share-apply-form" data-confirm="سيتم استبدال السلة الحالية بالكامل. هل تريد المتابعة؟">
+        {% csrf_token %}
+        <input type="hidden" name="mode" value="replace">
+        <button type="submit" class="btn-continue">♻️ استبدال سلتي (Replace)</button>
+      </form>
+      <div id="cart-share-inline-msg" style="display:none; margin-top:0.7rem; font-weight:800;"></div>
+      <a href="{% url 'cart_view' %}" class="btn-continue" style="margin-top:0.6rem;">🛒 الرجوع للسلة</a>
+    </aside>
+  </div>
+</div>
+<script>
+(function () {
+  var msg = document.getElementById('cart-share-inline-msg');
+  function showMsg(text, ok) {
+    if (!msg) return;
+    msg.style.display = 'block';
+    msg.style.color = ok ? '#065f46' : '#b91c1c';
+    msg.textContent = text;
+  }
+  document.addEventListener('submit', function (e) {
+    var form = e.target.closest('form.js-cart-share-apply-form');
+    if (!form) return;
+    e.preventDefault();
+    var confirmMsg = form.getAttribute('data-confirm');
+    if (confirmMsg && !window.confirm(confirmMsg)) return;
+    var btn = form.querySelector('button[type="submit"]');
+    if (btn) btn.disabled = true;
+
+    fetch(form.action, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': (form.querySelector('[name=csrfmiddlewaretoken]') || {}).value || ''
+      },
+      body: new FormData(form)
+    })
+    .then(function (r) {
+      var ct = (r.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) throw new Error('انتهت الجلسة أو تم تحويل الصفحة. حدّث الصفحة ثم أعد المحاولة.');
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data || !data.success) throw new Error((data && data.error) ? data.error : 'تعذر تطبيق السلة');
+      showMsg(data.warning ? (data.message + ' — ' + data.warning) : data.message, true);
+      if (btn) btn.disabled = false;
+      if (data.redirect_url) {
+        setTimeout(function () { window.location.href = data.redirect_url; }, 500);
+      }
+    })
+    .catch(function (err) {
+      showMsg((err && err.message) ? err.message : 'تعذر تطبيق السلة.', false);
+      if (btn) btn.disabled = false;
+    });
+  });
+})();
+</script>
+{% endblock %}
+

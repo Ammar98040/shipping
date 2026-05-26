@@ -1,0 +1,317 @@
+{% extends "manage/base_manage.html" %}
+{% load static %}
+{% block title %}خدمة العملاء{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/support_chat.css' %}?v=20">
+{% endblock %}
+
+{% block manage_content %}
+<div style="max-width:1100px; margin: 0 auto; padding: 0 1rem;">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:1rem; flex-wrap:wrap; margin: 1.25rem 0;">
+        <h1 style="margin:0;">💬 خدمة العملاء</h1>
+        {% if is_manager %}
+        <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+            <a class="btn btn-primary btn-sm" href="{% url 'manage:support_team_accounts' %}">👥 موظفو خدمة العملاء</a>
+            <a class="btn btn-secondary btn-sm" href="{% url 'manage:support_portal' %}?tab=unanswered"{% if tab == 'unanswered' %} style="border-color:#b45309;"{% endif %}>غير المُجاب</a>
+            <a class="btn btn-secondary btn-sm" href="{% url 'manage:support_portal' %}?tab=active"{% if tab == 'active' %} style="border-color:#0369a1;"{% endif %}>المحادثات النشطة</a>
+            <a class="btn btn-secondary btn-sm" href="{% url 'manage:support_portal' %}?tab=ended"{% if tab == 'ended' %} style="border-color:#2c5f4f;"{% endif %}>المحادثات المنتهية</a>
+            <a class="btn btn-secondary btn-sm" href="{% url 'manage:support_portal' %}?tab=archived"{% if tab == 'archived' %} style="border-color:#2c5f4f;"{% endif %}>الأرشيف</a>
+        </div>
+        {% else %}
+        <form method="post" action="{% url 'manage:support_toggle_availability' request.user.id %}" class="js-agent-availability-form" style="display:flex; gap:0.5rem; align-items:center;">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            {% if agent_is_available %}
+            <input type="hidden" name="is_available" value="0">
+            <span class="badge badge-active js-agent-availability-badge">🟢 متوفر</span>
+            <button type="submit" class="btn btn-secondary btn-sm js-agent-availability-btn">إيقاف التوفر</button>
+            {% else %}
+            <input type="hidden" name="is_available" value="1">
+            <span class="badge js-agent-availability-badge" style="background:#fff1e6; color:#9a3412;">⚪ غير متوفر</span>
+            <button type="submit" class="btn btn-primary btn-sm js-agent-availability-btn">تفعيل التوفر</button>
+            {% endif %}
+        </form>
+        {% endif %}
+    </div>
+
+    {% if is_manager %}
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:0.75rem; margin-bottom:1rem;">
+        <div style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:0.75rem; background:#fff;">
+            <div style="font-size:0.88rem; color:#6c757d;">غير المُجاب الآن</div>
+            <div style="font-size:1.35rem; font-weight:900;">{{ support_metrics.unanswered_total|default:0 }}</div>
+        </div>
+        <div style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:0.75rem; background:#fffbeb;">
+            <div style="font-size:0.88rem; color:#92400e;">تنبيه SLA (7+ دقائق)</div>
+            <div style="font-size:1.35rem; font-weight:900; color:#b45309;">{{ support_metrics.warning_count|default:0 }}</div>
+        </div>
+        <div style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:0.75rem; background:#fef2f2;">
+            <div style="font-size:0.88rem; color:#991b1b;">حرج SLA (20+ دقيقة)</div>
+            <div style="font-size:1.35rem; font-weight:900; color:#dc2626;">{{ support_metrics.critical_count|default:0 }}</div>
+        </div>
+        <div style="border:1px solid rgba(0,0,0,0.08); border-radius:12px; padding:0.75rem; background:#eff6ff;">
+            <div style="font-size:0.88rem; color:#1e3a8a;">متوسط أول رد (تقريبي)</div>
+            <div style="font-size:1.35rem; font-weight:900; color:#1d4ed8;">{{ support_metrics.avg_first_response_minutes|default:0 }} د</div>
+        </div>
+    </div>
+
+    <div class="manage-section" style="padding:1rem;">
+            <h2 style="margin-top:0;">
+                {% if tab == 'unanswered' %}
+                🚨 قائمة المحادثات غير المُجابة
+                {% elif tab == 'active' %}
+                🟢 قائمة المحادثات النشطة
+                {% else %}
+                📚 قائمة المحادثات
+                {% endif %}
+            </h2>
+            {% if agent_id %}
+            <div style="color:#6c757d; margin-bottom:1rem;">
+                الفلتر: الموظف رقم {{ agent_id }}
+            </div>
+            {% endif %}
+            <div style="overflow:auto;">
+                <table style="width:100%; border-collapse:collapse; min-width:720px;">
+                    <thead>
+                        <tr>
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">#</th>
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">العميل</th>
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">الحالة</th>
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">الموظف</th>
+                            {% if tab == 'unanswered' or tab == 'active' %}
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">مدة الانتظار</th>
+                            {% endif %}
+                            {% if tab == 'ended' or tab == 'archived' %}
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">مدة المحادثة</th>
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">مدة انتظار أول رد</th>
+                            {% endif %}
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">التحديث</th>
+                            <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in threads %}
+                        <tr>
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05); font-weight:900;">{{ t.id }}</td>
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">{{ t.customer_display }}</td>
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">{{ t.get_status_display }}</td>
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">
+                                {% if t.assigned_staff %}{{ t.assigned_staff.username }}{% else %}-{% endif %}
+                            </td>
+                            {% if tab == 'unanswered' or tab == 'active' %}
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);" class="js-pending-cell" data-pending-seconds="{{ t.pending_seconds|default:0 }}">
+                                {% if t.sla_state == 'critical' %}
+                                <span class="badge js-pending-badge" style="background:#fee2e2; color:#b91c1c;">🔴 {{ t.pending_label }}</span>
+                                {% elif t.sla_state == 'warning' %}
+                                <span class="badge js-pending-badge" style="background:#fef3c7; color:#b45309;">🟠 {{ t.pending_label }}</span>
+                                {% else %}
+                                <span class="badge js-pending-badge" style="background:#dcfce7; color:#166534;">🟢 {{ t.pending_label }}</span>
+                                {% endif %}
+                            </td>
+                            {% endif %}
+                            {% if tab == 'ended' or tab == 'archived' %}
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">
+                                <span class="badge" style="background:#eff6ff; color:#1d4ed8;">{{ t.conversation_label }}</span>
+                            </td>
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">
+                                <span class="badge" style="background:#fff7ed; color:#c2410c;">{{ t.waiting_response_label }}</span>
+                            </td>
+                            {% endif %}
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05); color:#6c757d;">{{ t.updated_at|date:"Y-m-d H:i" }}</td>
+                            <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">
+                                <div style="display:flex; gap:0.5rem; align-items:center;">
+                                    <a class="btn btn-secondary btn-sm" href="{% url 'manage:support_thread_detail' t.id %}">فتح</a>
+                                    {% if tab != 'archived' %}
+                                    <form method="post" action="{% url 'manage:support_archive_thread' t.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('أرشفة المحادثة؟')">أرشفة</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{% if tab == 'unanswered' or tab == 'active' %}7{% elif tab == 'ended' or tab == 'archived' %}8{% else %}6{% endif %}" style="padding:1rem; color:#6c757d;">لا توجد محادثات.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+    </div>
+    {% else %}
+    <div class="manage-section" style="padding:1rem; max-width:900px; margin:0 auto;">
+        <h2 style="margin-top:0;">📌 محادثاتي</h2>
+        <div style="overflow:auto;">
+            <table style="width:100%; border-collapse:collapse; min-width:680px;">
+                <thead>
+                    <tr>
+                        <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">#</th>
+                        <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">العميل</th>
+                        <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">الحالة</th>
+                        <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">التحديث</th>
+                        <th style="text-align:right; padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.08);">فتح</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in threads %}
+                    <tr>
+                        <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05); font-weight:900;">{{ t.id }}</td>
+                        <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">{{ t.customer_display }}</td>
+                        <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">{{ t.get_status_display }}</td>
+                        <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05); color:#6c757d;">{{ t.updated_at|date:"Y-m-d H:i" }}</td>
+                        <td style="padding:0.6rem; border-bottom:1px solid rgba(0,0,0,0.05);">
+                            <a class="btn btn-secondary btn-sm" href="{% url 'manage:support_thread_detail' t.id %}">فتح</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" style="padding:1rem; color:#6c757d;">لا توجد محادثات.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    var baseUrl = "{% url 'manage:support_portal_signature_json' %}";
+    var params = new URLSearchParams(window.location.search || '');
+    if (!params.get('tab')) {
+        {% if is_manager %}
+        params.set('tab', '{{ tab|default:"unanswered" }}');
+        {% endif %}
+    }
+    var pollUrl = baseUrl + (params.toString() ? ('?' + params.toString()) : '');
+    var lastSig = null;
+
+    async function poll() {
+        try {
+            var res = await fetch(pollUrl, { credentials: 'same-origin' });
+            var data = await res.json();
+            if (!data.success) return;
+            if (lastSig === null) {
+                lastSig = data.signature || '';
+                return;
+            }
+            if ((data.signature || '') !== lastSig) {
+                window.location.reload();
+            }
+        } catch (e) {}
+    }
+
+    poll();
+    setInterval(poll, 3500);
+})();
+</script>
+<script>
+(function () {
+    var WARNING_SECONDS = 7 * 60;
+    var CRITICAL_SECONDS = 20 * 60;
+    var pendingCells = Array.prototype.slice.call(document.querySelectorAll('.js-pending-cell[data-pending-seconds]'));
+    if (!pendingCells.length) return;
+
+    function formatClock(totalSeconds) {
+        var mins = Math.floor(totalSeconds / 60);
+        var secs = totalSeconds % 60;
+        return String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+    }
+
+    function renderState(cell, seconds) {
+        var badge = cell.querySelector('.js-pending-badge');
+        if (!badge) return;
+        var icon = '🟢';
+        var bg = '#dcfce7';
+        var color = '#166534';
+        if (seconds >= CRITICAL_SECONDS) {
+            icon = '🔴';
+            bg = '#fee2e2';
+            color = '#b91c1c';
+        } else if (seconds >= WARNING_SECONDS) {
+            icon = '🟠';
+            bg = '#fef3c7';
+            color = '#b45309';
+        }
+        badge.style.background = bg;
+        badge.style.color = color;
+        badge.textContent = icon + ' ' + formatClock(seconds);
+    }
+
+    function tick() {
+        pendingCells.forEach(function (cell) {
+            var current = parseInt(cell.getAttribute('data-pending-seconds') || '0', 10);
+            if (isNaN(current) || current < 0) current = 0;
+            current += 1;
+            cell.setAttribute('data-pending-seconds', String(current));
+            renderState(cell, current);
+        });
+    }
+
+    pendingCells.forEach(function (cell) {
+        var initial = parseInt(cell.getAttribute('data-pending-seconds') || '0', 10);
+        renderState(cell, isNaN(initial) ? 0 : Math.max(0, initial));
+    });
+    setInterval(tick, 1000);
+})();
+</script>
+<script>
+(function () {
+    document.addEventListener('submit', function (e) {
+        var form = e.target.closest('form.js-agent-availability-form');
+        if (!form) return;
+        e.preventDefault();
+        var btn = form.querySelector('.js-agent-availability-btn');
+        var badge = form.querySelector('.js-agent-availability-badge');
+        var hidden = form.querySelector('input[name="is_available"]');
+        if (btn) btn.disabled = true;
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': window.MANAGE_CSRF_TOKEN || ''
+            },
+            body: new FormData(form)
+        })
+        .then(function (r) {
+            var ct = (r.headers.get('content-type') || '').toLowerCase();
+            if (!ct.includes('application/json')) throw new Error('session_or_redirect');
+            return r.json();
+        })
+        .then(function (data) {
+            if (!data || !data.success) throw new Error('failed');
+            if (badge) {
+                if (data.is_available) {
+                    badge.className = 'badge badge-active js-agent-availability-badge';
+                    badge.style.background = '';
+                    badge.style.color = '';
+                } else {
+                    badge.className = 'badge js-agent-availability-badge';
+                    badge.style.background = '#fff1e6';
+                    badge.style.color = '#9a3412';
+                }
+                badge.textContent = data.badge_text || '';
+            }
+            if (btn) {
+                btn.textContent = data.button_text || '';
+                btn.classList.remove('btn-primary', 'btn-secondary');
+                btn.classList.add(data.button_class || 'btn-primary');
+                btn.disabled = false;
+            }
+            if (hidden) hidden.value = data.is_available ? '0' : '1';
+        })
+        .catch(function () {
+            if (btn) btn.disabled = false;
+            showManageError('تعذر تحديث حالة التوفر. حاول مرة أخرى.');
+        });
+    });
+})();
+</script>
+{% endblock %}
+
+

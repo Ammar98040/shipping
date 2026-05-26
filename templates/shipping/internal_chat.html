@@ -1,0 +1,14 @@
+{% extends "shipping/base_shipping.html" %}
+{% load static %}
+{% block title %}محادثات داخلية - الشحن{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/support_chat.css' %}?v=26">
+{% endblock %}
+
+{% block content %}
+{% include "partials/internal_chat_body.html" %}
+{% endblock %}
+
+{% block extra_js %}
+{% include "partials/internal_chat_compose_js.html" %}
+{% endblock %}

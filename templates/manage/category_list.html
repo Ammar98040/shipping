@@ -1,0 +1,113 @@
+{% extends "manage/base_manage.html" %}
+{% block title %}الأصناف{% endblock %}
+{% block manage_content %}
+<h1 class="manage-page-title">📁 الأصناف</h1>
+
+<div class="manage-filters">
+    <form method="get" class="filters-form" id="categoryFilterForm">
+        <div class="filter-group">
+            <label for="compartment">الخانة:</label>
+            <select name="compartment" id="compartment" class="input filter-select" onchange="updateShelves()">
+                <option value="">الكل</option>
+                {% for comp in compartments %}
+                <option value="{{ comp.id }}" {% if current_compartment == comp.id|stringformat:"s" %}selected{% endif %}>
+                    {{ comp.name_ar }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="shelf">الرف:</label>
+            <select name="shelf" id="shelf" class="input filter-select" onchange="this.form.submit()">
+                <option value="">الكل</option>
+                {% for sh in shelves %}
+                <option value="{{ sh.id }}" {% if current_shelf == sh.id|stringformat:"s" %}selected{% endif %}>
+                    {{ sh.compartment.name_ar }} - {{ sh.name_ar }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="search">بحث:</label>
+            <input type="text" name="search" id="search" class="input filter-search" value="{{ search_query }}" placeholder="ابحث بالاسم...">
+        </div>
+        
+        <button type="submit" class="btn btn-primary btn-filter">بحث</button>
+        {% if current_compartment or current_shelf or search_query %}
+        <a href="{% url 'manage:category_list' %}" class="btn btn-clear">مسح الفلاتر</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="list-actions">
+    <a href="{% url 'manage:category_add' %}" class="btn btn-primary">➕ إضافة صنف جديد</a>
+    <span class="results-count">📊 {{ items.paginator.count }} نتيجة</span>
+</div>
+
+<div class="manage-section">
+    {% if items %}
+    <div class="manage-table-container">
+        <table class="manage-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الصورة</th>
+                    <th>الخانة</th>
+                    <th>الرف</th>
+                    <th>الترتيب</th>
+                    <th>الاسم</th>
+                    <th>عدد المنتجات</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><strong>{{ forloop.counter }}</strong></td>
+                    <td>
+                        {% if item.image %}
+                        <img src="{{ item.image.url }}" alt="{{ item.name_ar }}" class="table-thumbnail">
+                        {% else %}
+                        <div class="table-placeholder">{{ item.name_ar|slice:":1" }}</div>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge badge-compartment">{{ item.shelf.compartment.name_ar }}</span></td>
+                    <td><span class="badge badge-shelf">{{ item.shelf.name_ar }}</span></td>
+                    <td>{{ item.order }}</td>
+                    <td><strong>{{ item.name_ar }}</strong></td>
+                    <td><span class="badge badge-active">{{ item.products_count }}</span></td>
+                    <td>
+                        {% if item.is_active %}
+                        <span class="badge badge-active">✓ نشط</span>
+                        {% else %}
+                        <span class="badge badge-inactive">✗ غير نشط</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'manage:category_edit' item.pk %}" class="btn btn-sm">✏️ تعديل</a>
+                        <a href="{% url 'manage:category_delete' item.pk %}" class="btn btn-sm btn-danger">🗑️ حذف</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="empty-msg">لا توجد نتائج. <a href="{% url 'manage:category_add' %}">إضافة صنف</a></p>
+    {% endif %}
+</div>
+{% if items.has_other_pages %}
+{% include "manage/pagination_include.html" with page_obj=items query_string=query_string %}
+{% endif %}
+<script>
+function updateShelves() {
+    const form = document.getElementById('categoryFilterForm');
+    const shelfSelect = document.getElementById('shelf');
+    shelfSelect.value = '';
+    form.submit();
+}
+</script>
+{% endblock %}

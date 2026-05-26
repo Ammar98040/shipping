@@ -1,0 +1,32 @@
+# اختبارات تلقائية + فحص Ruff (Pyflakes F).
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+      - name: Ruff (Pyflakes)
+        run: python -m ruff check store config
+      - name: Django check
+        run: python manage.py check
+        env:
+          USE_SQLITE: "1"
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production
+      - name: Tests
+        run: python manage.py test store.tests
+        env:
+          USE_SQLITE: "1"
+          DJANGO_SECRET_KEY: ci-test-secret-key-not-for-production

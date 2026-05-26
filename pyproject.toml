@@ -1,0 +1,23 @@
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "**/migrations/**",
+    "__pycache__",
+    "staticfiles",
+    "media",
+]
+
+[tool.ruff.lint]
+# مرحلة أولى: قواعد Pyflakes (F) — استثناء F401 في ملفات إعادة التصدير لـ Django urls
+select = ["F", "I", "W291", "W293"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401", "F403"]
+# يعيد تصدير دوال لـ store.urls — الاستيراد «غير مستخدم» داخل الملف لكنه مطلوب للمساحة الاسمية
+"store/views.py" = ["F401"]
+# يعيد تصدير دوال من views_manage_notifications لـ urls_manage
+"store/views_manage.py" = ["F401"]

@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول | دولابك — الإدارة</title>
+    <link rel="stylesheet" href="{% static 'css/base.css' %}">
+    <link rel="stylesheet" href="{% static 'css/manage.css' %}">
+    <link rel="stylesheet" href="{% static 'css/auth.css' %}">
+</head>
+<body class="manage-body manage-login-page dir-rtl">
+    <div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-brand-logo" aria-hidden="true">
+                <span class="auth-logo-top"></span>
+                <span class="auth-logo-body"></span>
+                <span class="auth-logo-door auth-logo-door--left"></span>
+                <span class="auth-logo-door auth-logo-door--right"></span>
+            </div>
+            <h1 class="auth-title">دولابك — لوحة الإدارة</h1>
+            <p class="auth-subtitle">تسجيل الدخول للحساب الإداري</p>
+        </div>
+        {% if messages %}
+        <ul class="manage-messages">
+            {% for message in messages %}
+            <li class="manage-message {{ message.tags }}">{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+        {% if request.GET.system_wiped %}
+        <ul class="manage-messages">
+            <li class="manage-message success">تم مسح النظام بالكامل. أنشئ حساب سوبر يوزر جديداً على الخادم إذا احتجت.</li>
+        </ul>
+        {% endif %}
+        <form method="post" action="{% url 'manage:login' %}" class="auth-form">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.GET.next }}">
+            <div class="auth-field">
+                <span class="auth-field-icon">👤</span>
+                <input type="text" name="username" id="id_username" class="input" required autofocus placeholder=" ">
+                <label for="id_username">اسم المستخدم</label>
+            </div>
+            <div class="auth-field">
+                <span class="auth-field-icon">🔒</span>
+                <input type="password" name="password" id="id_password" class="input" required placeholder=" ">
+                <label for="id_password">كلمة المرور</label>
+            </div>
+            {% if show_login_turnstile %}
+            {% include 'partials/turnstile_widget.html' %}
+            {% endif %}
+            <button type="submit" class="btn-submit">دخول</button>
+        </form>
+        <div class="auth-links">
+            <p><a href="{% url 'manage:forgot_password' %}">هل نسيت كلمة المرور؟</a></p>
+            <p><a href="{% url 'wardrobe' %}">العودة للمتجر</a></p>
+        </div>
+    </div>
+    </div>
+    <script src="{% static 'js/auth-floating.js' %}"></script>
+</body>
+</html>
